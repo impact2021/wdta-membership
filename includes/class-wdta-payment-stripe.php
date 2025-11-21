@@ -37,8 +37,11 @@ class WDTA_Payment_Stripe {
     public function init() {
         add_action('wp_ajax_wdta_create_stripe_session', array($this, 'create_checkout_session'));
         add_action('wp_ajax_nopriv_wdta_create_stripe_session', array($this, 'create_checkout_session'));
+        add_action('wp_ajax_wdta_create_payment_intent', array($this, 'create_payment_intent'));
+        add_action('wp_ajax_nopriv_wdta_create_payment_intent', array($this, 'create_payment_intent'));
         add_action('rest_api_init', array($this, 'register_webhook_endpoint'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_stripe_scripts'));
     }
     
     /**
@@ -226,5 +229,83 @@ class WDTA_Payment_Stripe {
         $message .= "Best regards,\nWDTA Team";
         
         wp_mail($to, $subject, $message);
+    }
+    
+    /**
+     * Enqueue Stripe scripts
+     */
+    public function enqueue_stripe_scripts() {
+        $public_key = get_option('wdta_stripe_public_key');
+        
+        if (!$public_key) {
+            return;
+        }
+        
+        // Enqueue Stripe.js
+        wp_enqueue_script('stripe-js', 'https://js.stripe.com/v3/', array(), null, false);
+        
+        // Pass Stripe public key to frontend
+        wp_localize_script('stripe-js', 'wdtaStripe', array(
+            'publicKey' => $public_key,
+            'ajaxurl' => admin_url('admin-ajax.php')
+        ));
+    }
+    
+    /**
+     * Create Payment Intent for inline payment form
+     */
+    public function create_payment_intent() {
+        check_ajax_referer('wdta_membership_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in'));
+            return;
+        }
+        
+        $user_id = get_current_user_id();
+        $user = get_userdata($user_id);
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        
+        $secret_key = get_option('wdta_stripe_secret_key');
+        
+        if (!$secret_key) {
+            wp_send_json_error(array('message' => 'Stripe not configured'));
+            return;
+        }
+        
+        // Create pending membership record
+        $expiry_date = $year . '-03-31';
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_amount' => 950.00,
+            'payment_method' => 'stripe',
+            'payment_status' => 'pending',
+            'expiry_date' => $expiry_date,
+            'status' => 'pending'
+        ));
+        
+        // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
+        // \Stripe\Stripe::setApiKey($secret_key);
+        // $paymentIntent = \Stripe\PaymentIntent::create([
+        //     'amount' => 95000, // $950.00 in cents
+        //     'currency' => 'aud',
+        //     'description' => 'WDTA Membership ' . $year,
+        //     'metadata' => [
+        //         'user_id' => $user_id,
+        //         'year' => $year,
+        //         'user_email' => $user->user_email,
+        //         'user_name' => $user->display_name,
+        //     ],
+        // ]);
+        
+        // For now, return mock payment intent data
+        $client_secret = 'pi_test_' . uniqid() . '_secret_' . uniqid();
+        
+        wp_send_json_success(array(
+            'clientSecret' => $client_secret,
+            'amount' => 950.00,
+            'currency' => 'AUD'
+        ));
     }
 }

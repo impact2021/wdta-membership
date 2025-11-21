@@ -81,6 +81,21 @@ class WDTA_Membership {
         // Add shortcodes
         add_shortcode('wdta_membership_form', array($this, 'membership_form_shortcode'));
         add_shortcode('wdta_membership_status', array($this, 'membership_status_shortcode'));
+        
+        // Enqueue frontend styles
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_styles'));
+    }
+    
+    /**
+     * Enqueue frontend styles
+     */
+    public function enqueue_frontend_styles() {
+        wp_enqueue_style(
+            'wdta-frontend-css',
+            WDTA_MEMBERSHIP_PLUGIN_URL . 'assets/css/frontend.css',
+            array(),
+            WDTA_MEMBERSHIP_VERSION
+        );
     }
     
     /**

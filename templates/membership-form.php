@@ -34,9 +34,26 @@ $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current
         <div class="wdta-payment-methods">
             <h3>Choose Payment Method:</h3>
             
-            <div class="wdta-payment-option">
-                <h4>Pay with Credit Card (Stripe)</h4>
-                <button id="wdta-stripe-button" class="button button-primary">Pay with Card - $950 AUD</button>
+            <div class="wdta-payment-option wdta-stripe-payment">
+                <h4>Pay with Credit Card</h4>
+                <p class="wdta-payment-description">Secure payment via Stripe</p>
+                
+                <form id="wdta-stripe-payment-form">
+                    <div id="wdta-card-element" class="wdta-card-element">
+                        <!-- Stripe Card Element will be inserted here -->
+                    </div>
+                    
+                    <div id="wdta-card-errors" class="wdta-error-message" role="alert"></div>
+                    
+                    <button id="wdta-stripe-submit" class="button button-primary" type="submit">
+                        <span id="wdta-button-text">Pay $950 AUD</span>
+                        <span id="wdta-spinner" class="wdta-spinner" style="display:none;"></span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="wdta-payment-divider">
+                <span>OR</span>
             </div>
             
             <div class="wdta-payment-option">
@@ -80,27 +97,114 @@ $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current
 <?php if (is_user_logged_in() && !$has_active): ?>
 <script>
 jQuery(document).ready(function($) {
-    // Stripe payment
-    $('#wdta-stripe-button').on('click', function(e) {
-        e.preventDefault();
+    // Initialize Stripe Elements
+    var stripe = null;
+    var elements = null;
+    var cardElement = null;
+    var clientSecret = null;
+    
+    // Check if Stripe is available and public key is set
+    if (typeof wdtaStripe !== 'undefined' && wdtaStripe.publicKey) {
+        stripe = Stripe(wdtaStripe.publicKey);
+        elements = stripe.elements();
         
+        // Create card element
+        var style = {
+            base: {
+                color: '#32325d',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: '#aab7c4'
+                }
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+            }
+        };
+        
+        cardElement = elements.create('card', {style: style});
+        cardElement.mount('#wdta-card-element');
+        
+        // Handle real-time validation errors
+        cardElement.on('change', function(event) {
+            var displayError = document.getElementById('wdta-card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+        
+        // Create Payment Intent when form is ready
         $.ajax({
-            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            url: wdtaStripe.ajaxurl,
             type: 'POST',
             data: {
-                action: 'wdta_create_stripe_session',
+                action: 'wdta_create_payment_intent',
                 nonce: '<?php echo wp_create_nonce('wdta_membership_nonce'); ?>',
                 year: <?php echo $current_year; ?>
             },
             success: function(response) {
                 if (response.success) {
-                    window.location.href = response.data.url;
+                    clientSecret = response.data.clientSecret;
                 } else {
-                    $('#wdta-message').html('<p class="error">' + response.data.message + '</p>');
+                    $('#wdta-card-errors').text(response.data.message);
+                }
+            }
+        });
+    }
+    
+    // Handle Stripe form submission
+    $('#wdta-stripe-payment-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!stripe || !cardElement || !clientSecret) {
+            $('#wdta-card-errors').text('Payment system not properly initialized. Please refresh and try again.');
+            return;
+        }
+        
+        setLoading(true);
+        
+        // Confirm the payment with Stripe
+        stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    email: '<?php echo esc_js(wp_get_current_user()->user_email); ?>',
+                    name: '<?php echo esc_js(wp_get_current_user()->display_name); ?>'
+                }
+            }
+        }).then(function(result) {
+            if (result.error) {
+                // Show error to customer
+                $('#wdta-card-errors').text(result.error.message);
+                setLoading(false);
+            } else {
+                // Payment succeeded
+                if (result.paymentIntent.status === 'succeeded') {
+                    $('#wdta-message').html('<div class="wdta-success-message"><p>✓ Payment successful! Your membership is now active.</p></div>');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
                 }
             }
         });
     });
+    
+    function setLoading(isLoading) {
+        if (isLoading) {
+            $('#wdta-stripe-submit').prop('disabled', true);
+            $('#wdta-button-text').hide();
+            $('#wdta-spinner').show();
+        } else {
+            $('#wdta-stripe-submit').prop('disabled', false);
+            $('#wdta-button-text').show();
+            $('#wdta-spinner').hide();
+        }
+    }
     
     // Bank transfer form
     $('#wdta-bank-transfer-form').on('submit', function(e) {
