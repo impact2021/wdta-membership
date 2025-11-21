@@ -60,7 +60,7 @@ class WDTA_Email_Notifications {
      */
     public static function send_reminder_1_month($user_id, $year) {
         $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st');
+        $subject = get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st, ' . $year);
         $template = get_option('wdta_email_reminder_1month', self::get_default_template('1_month'));
         
         $message = self::parse_template($template, $user, $year);
@@ -72,7 +72,7 @@ class WDTA_Email_Notifications {
      */
     public static function send_reminder_1_week($user_id, $year) {
         $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1week_subject', 'WDTA Membership Renewal - Due in 1 Week');
+        $subject = get_option('wdta_email_reminder_1week_subject', 'WDTA Membership Renewal - Due in 1 Week (January 1st, ' . $year . ')');
         $template = get_option('wdta_email_reminder_1week', self::get_default_template('1_week'));
         
         $message = self::parse_template($template, $user, $year);
@@ -84,7 +84,7 @@ class WDTA_Email_Notifications {
      */
     public static function send_reminder_1_day($user_id, $year) {
         $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1day_subject', 'WDTA Membership Renewal - Due Tomorrow');
+        $subject = get_option('wdta_email_reminder_1day_subject', 'WDTA Membership Renewal - Due Tomorrow (January 1st, ' . $year . ')');
         $template = get_option('wdta_email_reminder_1day', self::get_default_template('1_day'));
         
         $message = self::parse_template($template, $user, $year);

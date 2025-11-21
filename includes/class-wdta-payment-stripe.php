@@ -99,11 +99,35 @@ class WDTA_Payment_Stripe {
             'status' => 'pending'
         ));
         
-        // In production, this would create a Stripe checkout session
+        // In production, this would create a Stripe checkout session with metadata
+        // Example Stripe API call (requires Stripe PHP SDK):
+        // $session = \Stripe\Checkout\Session::create([
+        //     'payment_method_types' => ['card'],
+        //     'line_items' => [[
+        //         'price_data' => [
+        //             'currency' => 'aud',
+        //             'product_data' => ['name' => 'WDTA Membership ' . $year],
+        //             'unit_amount' => 95000, // $950.00 in cents
+        //         ],
+        //         'quantity' => 1,
+        //     ]],
+        //     'mode' => 'payment',
+        //     'success_url' => home_url('/membership-success/'),
+        //     'cancel_url' => home_url('/membership/'),
+        //     'metadata' => [
+        //         'user_id' => $user_id,
+        //         'year' => $year,
+        //     ],
+        // ]);
+        
         // For now, return mock session data
         $session_data = array(
             'id' => 'cs_test_' . uniqid(),
-            'url' => home_url('/stripe-checkout/?session=' . uniqid())
+            'url' => home_url('/stripe-checkout/?session=' . uniqid()),
+            'metadata' => array(
+                'user_id' => $user_id,
+                'year' => $year
+            )
         );
         
         wp_send_json_success(array(

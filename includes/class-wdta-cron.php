@@ -42,20 +42,22 @@ class WDTA_Cron {
     public static function process_email_notifications() {
         $current_date = date('Y-m-d');
         $current_month_day = date('m-d');
+        // For December reminders, we're reminding about next year's membership (due Jan 1st of next year)
+        // For Jan-Mar reminders, we're reminding about current year's membership (deadline Mar 31st)
         $next_year = date('Y') + 1;
         $current_year = date('Y');
         
         // Determine which emails to send based on date
         switch ($current_month_day) {
-            case '12-01': // December 1st - 1 month before
+            case '12-01': // December 1st - 1 month before Jan 1st (next year's membership)
                 self::send_reminder_emails($next_year, '1_month');
                 break;
                 
-            case '12-25': // December 25th - 1 week before
+            case '12-25': // December 25th - 1 week before Jan 1st (next year's membership)
                 self::send_reminder_emails($next_year, '1_week');
                 break;
                 
-            case '12-31': // December 31st - 1 day before
+            case '12-31': // December 31st - 1 day before Jan 1st (next year's membership)
                 self::send_reminder_emails($next_year, '1_day');
                 break;
                 
@@ -157,13 +159,15 @@ class WDTA_Cron {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
-        // Update all memberships that expired on March 31st and are still pending
+        // Update all memberships that expired on March 31st:
+        // 1. Those with unpaid status (payment never completed)
+        // 2. Those that were active but now past expiry date
         $wpdb->query($wpdb->prepare(
             "UPDATE $table_name 
             SET status = 'expired' 
             WHERE membership_year = %d 
             AND expiry_date = %s 
-            AND payment_status != 'completed'",
+            AND (payment_status != 'completed' OR status = 'active')",
             $year,
             $year . '-03-31'
         ));
