@@ -19,11 +19,20 @@ $can_pay_next_year = ($current_month >= 11);
 $next_year_membership = $user_id && $can_pay_next_year ? WDTA_Database::get_user_membership($user_id, $next_year) : null;
 $has_next_year_active = $user_id && $can_pay_next_year ? WDTA_Database::has_active_membership($user_id, $next_year) : false;
 
+// Check if user should see year selector
+// Show year selector only if:
+// 1. It's November or later AND
+// 2. Either they haven't paid for current year OR they've paid but can also pay for next year
+$show_year_selector = $can_pay_next_year && (!$has_active || !$has_next_year_active);
+
 // Determine which year to show payment form for
-$payment_year = isset($_GET['year']) ? intval($_GET['year']) : $current_year;
+// If current year is already paid, default to next year (from November onwards)
+$default_year = ($has_active && $can_pay_next_year) ? $next_year : $current_year;
+$payment_year = isset($_GET['year']) ? intval($_GET['year']) : $default_year;
+
 // Only allow current year or next year (if from November onwards)
 if ($payment_year != $current_year && (!$can_pay_next_year || $payment_year != $next_year)) {
-    $payment_year = $current_year;
+    $payment_year = $default_year;
 }
 
 $payment_year_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $payment_year) : null;
@@ -35,16 +44,20 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <p>Please <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> to purchase or renew your membership.</p>
     <?php else: ?>
         
-        <?php if ($can_pay_next_year): ?>
+        <?php if ($show_year_selector): ?>
             <div class="wdta-year-selector">
                 <h3>Select Membership Year:</h3>
                 <div class="wdta-year-buttons">
-                    <a href="?year=<?php echo $current_year; ?>" class="button <?php echo $payment_year == $current_year ? 'button-primary' : ''; ?>">
-                        <?php echo $current_year; ?> Membership
-                    </a>
-                    <a href="?year=<?php echo $next_year; ?>" class="button <?php echo $payment_year == $next_year ? 'button-primary' : ''; ?>">
-                        <?php echo $next_year; ?> Membership
-                    </a>
+                    <?php if (!$has_active): ?>
+                        <a href="?year=<?php echo $current_year; ?>" class="button <?php echo $payment_year == $current_year ? 'button-primary' : ''; ?>">
+                            <?php echo $current_year; ?> Membership
+                        </a>
+                    <?php endif; ?>
+                    <?php if (!$has_next_year_active): ?>
+                        <a href="?year=<?php echo $next_year; ?>" class="button <?php echo $payment_year == $next_year ? 'button-primary' : ''; ?>">
+                            <?php echo $next_year; ?> Membership
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
