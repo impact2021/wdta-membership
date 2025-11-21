@@ -23,6 +23,11 @@ class WDTA_Cron {
             wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_expiry_check');
         }
         
+        // Schedule daily role check
+        if (!wp_next_scheduled('wdta_daily_role_check')) {
+            wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_role_check');
+        }
+        
         // Add actions
         add_action('wdta_daily_email_check', array(__CLASS__, 'process_email_notifications'));
         add_action('wdta_daily_expiry_check', array(__CLASS__, 'process_membership_expiry'));
@@ -34,6 +39,7 @@ class WDTA_Cron {
     public static function clear_scheduled_events() {
         wp_clear_scheduled_hook('wdta_daily_email_check');
         wp_clear_scheduled_hook('wdta_daily_expiry_check');
+        wp_clear_scheduled_hook('wdta_daily_role_check');
     }
     
     /**

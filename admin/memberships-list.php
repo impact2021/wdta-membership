@@ -41,6 +41,7 @@ if (!defined('ABSPATH')) {
         <thead>
             <tr>
                 <th>User</th>
+                <th>User Role</th>
                 <th>Year</th>
                 <th>Payment Method</th>
                 <th>Payment Status</th>
@@ -55,7 +56,7 @@ if (!defined('ABSPATH')) {
         <tbody>
             <?php if (empty($memberships)): ?>
                 <tr>
-                    <td colspan="10">No memberships found.</td>
+                    <td colspan="11">No memberships found.</td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($memberships as $membership): ?>
@@ -64,6 +65,18 @@ if (!defined('ABSPATH')) {
                         <td>
                             <?php echo esc_html($user ? $user->display_name : 'Unknown'); ?>
                             <br><small><?php echo esc_html($user ? $user->user_email : ''); ?></small>
+                        </td>
+                        <td>
+                            <?php 
+                            if ($user && !empty($user->roles)) {
+                                $role = $user->roles[0];
+                                echo '<span class="user-role user-role-' . esc_attr($role) . '">';
+                                echo esc_html(WDTA_User_Roles::get_role_display_name($role));
+                                echo '</span>';
+                            } else {
+                                echo '-';
+                            }
+                            ?>
                         </td>
                         <td><?php echo esc_html($membership->membership_year); ?></td>
                         <td><?php echo esc_html(ucwords(str_replace('_', ' ', $membership->payment_method))); ?></td>

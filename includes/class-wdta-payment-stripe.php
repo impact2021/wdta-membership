@@ -205,6 +205,9 @@ class WDTA_Payment_Stripe {
             'status' => 'active'
         ));
         
+        // Update user role
+        do_action('wdta_membership_activated', $user_id, $year);
+        
         // Send confirmation email
         $this->send_payment_confirmation($user_id, $year);
     }

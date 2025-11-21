@@ -72,6 +72,15 @@ class WDTA_Admin {
             'wdta-settings',
             array($this, 'settings_page')
         );
+        
+        add_submenu_page(
+            'wdta-memberships',
+            'Documentation',
+            'Documentation',
+            'manage_options',
+            'wdta-documentation',
+            array($this, 'documentation_page')
+        );
     }
     
     /**
@@ -125,6 +134,13 @@ class WDTA_Admin {
         }
         
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/settings.php';
+    }
+    
+    /**
+     * Documentation page
+     */
+    public function documentation_page() {
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/documentation.php';
     }
     
     /**

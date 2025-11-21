@@ -117,6 +117,9 @@ class WDTA_Payment_Bank {
             'status' => 'active'
         ));
         
+        // Update user role
+        do_action('wdta_membership_activated', $user_id, $year);
+        
         // Send confirmation email
         self::send_approval_confirmation($user_id, $year);
     }
