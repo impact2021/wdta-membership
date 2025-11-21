@@ -8,28 +8,64 @@ if (!defined('ABSPATH')) {
 }
 
 $current_year = date('Y');
+$current_month = date('n'); // 1-12
+$next_year = $current_year + 1;
 $user_id = get_current_user_id();
 $membership = $user_id ? WDTA_Database::get_user_membership($user_id, $current_year) : null;
 $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current_year) : false;
+
+// Check if user can pay for next year (from November 1st onwards)
+$can_pay_next_year = ($current_month >= 11);
+$next_year_membership = $user_id && $can_pay_next_year ? WDTA_Database::get_user_membership($user_id, $next_year) : null;
+$has_next_year_active = $user_id && $can_pay_next_year ? WDTA_Database::has_active_membership($user_id, $next_year) : false;
+
+// Determine which year to show payment form for
+$payment_year = isset($_GET['year']) ? intval($_GET['year']) : $current_year;
+// Only allow current year or next year (if from November onwards)
+if ($payment_year != $current_year && (!$can_pay_next_year || $payment_year != $next_year)) {
+    $payment_year = $current_year;
+}
+
+$payment_year_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $payment_year) : null;
+$payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id, $payment_year) : false;
 ?>
 
 <div class="wdta-membership-form">
     <?php if (!is_user_logged_in()): ?>
         <p>Please <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> to purchase or renew your membership.</p>
-    <?php elseif ($has_active): ?>
-        <div class="wdta-success-message">
-            <h3>✓ Your membership is active</h3>
-            <p>Your WDTA membership for <?php echo $current_year; ?> is active until March 31, <?php echo $current_year; ?>.</p>
-        </div>
-    <?php elseif ($membership && $membership->payment_status === 'pending_verification'): ?>
-        <div class="wdta-info-message">
-            <h3>Payment Pending Verification</h3>
-            <p>Your bank transfer payment is being verified. You will receive an email once your membership is activated.</p>
-        </div>
     <?php else: ?>
-        <h2>WDTA Membership - <?php echo $current_year; ?></h2>
-        <p><strong>Annual membership fee: $950 AUD</strong></p>
-        <p>Payment must be received by <strong>March 31, <?php echo $current_year; ?></strong></p>
+        
+        <?php if ($can_pay_next_year): ?>
+            <div class="wdta-year-selector">
+                <h3>Select Membership Year:</h3>
+                <div class="wdta-year-buttons">
+                    <a href="?year=<?php echo $current_year; ?>" class="button <?php echo $payment_year == $current_year ? 'button-primary' : ''; ?>">
+                        <?php echo $current_year; ?> Membership
+                    </a>
+                    <a href="?year=<?php echo $next_year; ?>" class="button <?php echo $payment_year == $next_year ? 'button-primary' : ''; ?>">
+                        <?php echo $next_year; ?> Membership
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($payment_year_active): ?>
+            <div class="wdta-success-message">
+                <h3>✓ Your membership is active</h3>
+                <p>Your WDTA membership for <?php echo $payment_year; ?> is active until December 31, <?php echo $payment_year; ?>.</p>
+                <?php if ($can_pay_next_year && $payment_year == $current_year && !$has_next_year_active): ?>
+                    <p><a href="?year=<?php echo $next_year; ?>" class="button">Pay for <?php echo $next_year; ?> Now</a></p>
+                <?php endif; ?>
+            </div>
+        <?php elseif ($payment_year_membership && $payment_year_membership->payment_status === 'pending_verification'): ?>
+            <div class="wdta-info-message">
+                <h3>Payment Pending Verification</h3>
+                <p>Your bank transfer payment is being verified. You will receive an email once your membership is activated.</p>
+            </div>
+        <?php else: ?>
+            <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
+            <p><strong>Annual membership fee: $950 AUD</strong></p>
+            <p>Payment must be received by <strong>March 31, <?php echo $payment_year; ?></strong></p>
         
         <div class="wdta-payment-methods">
             <h3>Choose Payment Method:</h3>
@@ -66,7 +102,7 @@ $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current
                         <li><strong>BSB:</strong> <?php echo esc_html(get_option('wdta_bank_bsb', 'To be configured')); ?></li>
                         <li><strong>Account Number:</strong> <?php echo esc_html(get_option('wdta_bank_account_number', 'To be configured')); ?></li>
                         <li><strong>Amount:</strong> $950 AUD</li>
-                        <li><strong>Reference:</strong> Your name and "WDTA <?php echo $current_year; ?>"</li>
+                        <li><strong>Reference:</strong> Your name and "WDTA <?php echo $payment_year; ?>"</li>
                     </ul>
                 </div>
                 
@@ -76,7 +112,7 @@ $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current
                         <p>
                             <label for="wdta_reference">Payment Reference:</label>
                             <input type="text" id="wdta_reference" name="reference" required 
-                                   placeholder="e.g., John Smith WDTA 2024">
+                                   placeholder="e.g., John Smith WDTA <?php echo $payment_year; ?>">
                         </p>
                         <p>
                             <label for="wdta_payment_date">Payment Date:</label>
@@ -90,11 +126,12 @@ $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current
             </div>
         </div>
         
-        <div id="wdta-message"></div>
+            <div id="wdta-message"></div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 
-<?php if (is_user_logged_in() && !$has_active): ?>
+<?php if (is_user_logged_in() && !$payment_year_active): ?>
 <script>
 jQuery(document).ready(function($) {
     // Initialize Stripe Elements
@@ -145,7 +182,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'wdta_create_payment_intent',
                 nonce: '<?php echo wp_create_nonce('wdta_membership_nonce'); ?>',
-                year: <?php echo $current_year; ?>
+                year: <?php echo $payment_year; ?>
             },
             success: function(response) {
                 if (response.success) {
@@ -213,7 +250,7 @@ jQuery(document).ready(function($) {
         var formData = $(this).serialize();
         formData += '&action=wdta_submit_bank_transfer';
         formData += '&nonce=<?php echo wp_create_nonce('wdta_membership_nonce'); ?>';
-        formData += '&year=<?php echo $current_year; ?>';
+        formData += '&year=<?php echo $payment_year; ?>';
         
         $.ajax({
             url: '<?php echo admin_url('admin-ajax.php'); ?>',

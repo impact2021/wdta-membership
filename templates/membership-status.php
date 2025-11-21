@@ -47,7 +47,7 @@ $current_year = date('Y');
             <?php endif; ?>
             <tr>
                 <th>Valid Until:</th>
-                <td><?php echo date('F j, Y', strtotime($membership->expiry_date)); ?></td>
+                <td><?php echo date('F j, Y', strtotime('December 31, ' . $membership->membership_year)); ?></td>
             </tr>
         </table>
         

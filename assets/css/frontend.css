@@ -7,6 +7,61 @@
     margin: 0 auto;
 }
 
+/* Year selector styles */
+.wdta-year-selector {
+    background: #f5f5f5;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.wdta-year-selector h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.wdta-year-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.wdta-year-buttons .button {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.wdta-year-buttons .button:not(.button-primary) {
+    background: #fff;
+    color: #333;
+    border: 2px solid #ddd;
+}
+
+.wdta-year-buttons .button:not(.button-primary):hover {
+    border-color: #999;
+    background: #f9f9f9;
+}
+
+.wdta-year-buttons .button-primary {
+    background: #635bff;
+    color: white;
+    border: 2px solid #635bff;
+}
+
+.wdta-year-buttons .button-primary:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+
 .wdta-success-message,
 .wdta-info-message,
 .wdta-error-message {
