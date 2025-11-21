@@ -88,14 +88,17 @@ class WDTA_Database {
             return false;
         }
         
-        // Check if payment is complete and not expired
-        if ($membership->payment_status === 'completed' && $membership->status === 'active') {
-            $expiry = strtotime($membership->expiry_date);
-            $today = strtotime(date('Y-m-d'));
-            return $expiry >= $today;
+        // Check if payment is complete and membership is active
+        // Payment status must be 'completed' and status must be 'active'
+        if ($membership->payment_status !== 'completed' || $membership->status !== 'active') {
+            return false;
         }
         
-        return false;
+        // Check if not expired (expiry date is in the future or today)
+        $expiry = strtotime($membership->expiry_date);
+        $today = strtotime(date('Y-m-d'));
+        
+        return $expiry >= $today;
     }
     
     /**

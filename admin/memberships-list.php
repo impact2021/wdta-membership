@@ -73,9 +73,9 @@ if (!defined('ABSPATH')) {
                             </span>
                         </td>
                         <td>$<?php echo number_format($membership->payment_amount, 2); ?> AUD</td>
-                        <td><?php echo $membership->payment_date ? date('Y-m-d', strtotime($membership->payment_date)) : '-'; ?></td>
+                        <td><?php echo $membership->payment_date ? wdta_format_date($membership->payment_date) : '-'; ?></td>
                         <td><?php echo esc_html($membership->payment_reference ?: '-'); ?></td>
-                        <td><?php echo esc_html($membership->expiry_date); ?></td>
+                        <td><?php echo wdta_format_date($membership->expiry_date); ?></td>
                         <td>
                             <span class="status-badge status-<?php echo esc_attr($membership->status); ?>">
                                 <?php echo esc_html(ucwords($membership->status)); ?>

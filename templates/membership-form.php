@@ -79,7 +79,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
             <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
             <div class="wdta-pricing-info">
                 <p><strong>Annual membership fee: $950 AUD</strong></p>
-                <p>Payment must be received by <strong>March 31, <?php echo $payment_year; ?></strong></p>
+                <p>Payment must be received by <strong><?php echo wdta_format_date('March 31, ' . $payment_year); ?></strong></p>
             </div>
         
         <div class="wdta-payment-methods">

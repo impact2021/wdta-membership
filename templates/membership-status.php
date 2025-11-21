@@ -42,12 +42,12 @@ $current_year = date('Y');
             <?php if ($membership->payment_date): ?>
             <tr>
                 <th>Payment Date:</th>
-                <td><?php echo date('F j, Y', strtotime($membership->payment_date)); ?></td>
+                <td><?php echo wdta_format_date($membership->payment_date); ?></td>
             </tr>
             <?php endif; ?>
             <tr>
                 <th>Valid Until:</th>
-                <td><?php echo date('F j, Y', strtotime('December 31, ' . $membership->membership_year)); ?></td>
+                <td><?php echo wdta_format_date('December 31, ' . $membership->membership_year); ?></td>
             </tr>
         </table>
         

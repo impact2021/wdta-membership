@@ -129,8 +129,8 @@ class WDTA_Payment_Bank {
         $to = $user->user_email;
         $subject = 'WDTA Membership Activated - ' . $year;
         $message = "Dear {$user->display_name},\n\n";
-        $message .= "Your bank transfer payment of \$950 AUD for {$year} has been verified.\n\n";
-        $message .= "Your WDTA membership is now active and will remain valid until March 31, {$year}.\n\n";
+        $message .= "Your bank transfer payment of \$950.00 AUD for {$year} has been verified.\n\n";
+        $message .= "Your WDTA membership is now active and will remain valid until " . wdta_format_date("December 31, {$year}") . ".\n\n";
         $message .= "Best regards,\nWDTA Team";
         
         wp_mail($to, $subject, $message);

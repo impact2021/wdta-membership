@@ -42,7 +42,17 @@ class WDTA_Email_Notifications {
      * Register settings
      */
     public function register_settings() {
-        // Email templates
+        // Email templates - subjects
+        register_setting('wdta_membership_settings', 'wdta_email_reminder_1month_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_reminder_1week_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_reminder_1day_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_overdue_1day_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_overdue_1week_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_jan_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_feb_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_mar_subject');
+        
+        // Email templates - content
         register_setting('wdta_membership_settings', 'wdta_email_from_name');
         register_setting('wdta_membership_settings', 'wdta_email_from_address');
         register_setting('wdta_membership_settings', 'wdta_email_reminder_1month');
@@ -159,8 +169,8 @@ class WDTA_Email_Notifications {
             '{user_name}' => $user->display_name,
             '{user_email}' => $user->user_email,
             '{year}' => $year,
-            '{amount}' => '$950 AUD',
-            '{deadline}' => 'March 31, ' . $year,
+            '{amount}' => '950.00',
+            '{deadline}' => wdta_format_date('March 31, ' . $year),
             '{renewal_url}' => home_url('/membership'),
             '{site_name}' => get_bloginfo('name')
         );
