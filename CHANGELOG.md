@@ -160,7 +160,7 @@ For bug reports, feature requests, or contributions:
 
 ## Credits
 
-Developed for WDTA (Western Dental Therapists Association)
+Developed for WDTA (Workplace Drug Testing Australia)
 Built on WordPress platform
 Stripe payment integration
 Follows WordPress coding standards

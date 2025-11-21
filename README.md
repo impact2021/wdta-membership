@@ -1,6 +1,6 @@
 # WDTA Membership Plugin
 
-A comprehensive WordPress membership plugin for WDTA that manages annual memberships with payment processing, access control, and automated email reminders.
+A comprehensive WordPress membership plugin for WDTA (Workplace Drug Testing Australia) that manages annual memberships with payment processing, access control, and automated email reminders.
 
 ## Features
 
@@ -75,6 +75,16 @@ The plugin sends automated reminder emails on the following schedule:
 **Shortcodes:**
 - `[wdta_membership_form]` - Display payment form and membership options
 - `[wdta_membership_status]` - Show current membership status
+
+**Custom Login Page:**
+The plugin creates a custom branded login page at `/member-login/` that replaces the default WordPress login. Features include:
+- Professional gradient design
+- Lost password functionality at `/member-login/lost-password/`
+- AJAX-powered login (no page refresh)
+- Remember me option
+- Automatic redirect from wp-login.php
+
+Members can log in at: `https://yoursite.com/member-login/`
 
 ### For Administrators
 

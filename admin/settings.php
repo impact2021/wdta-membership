@@ -141,7 +141,7 @@ $restricted_pages = get_option('wdta_restricted_pages', array());
         </table>
         
         <h2>Email Templates</h2>
-        <p class="description">Customize the email messages sent to members. Available placeholders: {user_name}, {user_email}, {year}, {amount}, {deadline}</p>
+        <p class="description">Customize the email messages sent to members. Available placeholders: {user_name}, {user_email}, {year}, {amount}, {deadline}, {renewal_url}, {site_name}</p>
         
         <table class="form-table">
             <tr>
@@ -151,18 +151,30 @@ $restricted_pages = get_option('wdta_restricted_pages', array());
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_reminder_1month" name="wdta_email_reminder_1month" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_reminder_1month', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_reminder_1month', 
 'Dear {user_name},
 
 This is a reminder that your WDTA membership for {year} will be due on January 1st, {year}.
 
 The annual membership fee is ${amount} AUD and must be paid by {deadline}.
 
-You can renew your membership at: ' . home_url('/membership') . '
+You can renew your membership at: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_reminder_1month',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -173,18 +185,30 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1week_subject', 'WDTA Membership - Due in 1 Week')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_reminder_1week" name="wdta_email_reminder_1week" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_reminder_1week', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_reminder_1week', 
 'Dear {user_name},
 
 Your WDTA membership renewal is due in one week (January 1st, {year}).
 
 Please ensure your payment of ${amount} AUD is made by {deadline}.
 
-Renew now at: ' . home_url('/membership') . '
+Renew now at: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_reminder_1week',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -195,8 +219,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1day_subject', 'WDTA Membership - Due Tomorrow')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_reminder_1day" name="wdta_email_reminder_1day" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_reminder_1day', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_reminder_1day', 
 'Dear {user_name},
 
 Final reminder: Your WDTA membership for {year} is due tomorrow!
@@ -204,10 +229,21 @@ Final reminder: Your WDTA membership for {year} is due tomorrow!
 Payment deadline: {deadline}
 Amount: ${amount} AUD
 
-Renew immediately at: ' . home_url('/membership') . '
+Renew immediately at: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_reminder_1day',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -218,8 +254,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_overdue_1day_subject', 'WDTA Membership - Payment Overdue')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_overdue_1day" name="wdta_email_overdue_1day" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_overdue_1day', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_overdue_1day', 
 'Dear {user_name},
 
 Your WDTA membership payment for {year} is now overdue.
@@ -228,10 +265,21 @@ To maintain access to member resources, please complete your payment of ${amount
 
 Final deadline: {deadline}
 
-Pay now at: ' . home_url('/membership') . '
+Pay now at: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_overdue_1day',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -242,8 +290,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_overdue_1week_subject', 'WDTA Membership - Urgent: Payment Required')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_overdue_1week" name="wdta_email_overdue_1week" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_overdue_1week', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_overdue_1week', 
 'Dear {user_name},
 
 URGENT: Your WDTA membership payment for {year} is now one week overdue.
@@ -251,10 +300,21 @@ URGENT: Your WDTA membership payment for {year} is now one week overdue.
 Amount due: ${amount} AUD
 Final deadline: {deadline}
 
-Please act now to avoid losing access: ' . home_url('/membership') . '
+Please act now to avoid losing access: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_overdue_1week',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -265,8 +325,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_overdue_end_jan_subject', 'WDTA Membership - 2 Months Until Access Revoked')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_overdue_end_jan" name="wdta_email_overdue_end_jan" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_overdue_end_jan', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_overdue_end_jan', 
 'Dear {user_name},
 
 Your WDTA membership payment for {year} remains outstanding.
@@ -274,10 +335,21 @@ Your WDTA membership payment for {year} remains outstanding.
 You have until {deadline} to complete payment to maintain access.
 
 Amount: ${amount} AUD
-Pay at: ' . home_url('/membership') . '
+Pay at: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_overdue_end_jan',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -288,8 +360,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_overdue_end_feb_subject', 'WDTA Membership - Final Month to Pay')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_overdue_end_feb" name="wdta_email_overdue_end_feb" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_overdue_end_feb', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_overdue_end_feb', 
 'Dear {user_name},
 
 FINAL NOTICE: You have one month remaining to pay your WDTA membership for {year}.
@@ -299,10 +372,21 @@ Amount: ${amount} AUD
 
 After this date, access to member resources will be revoked.
 
-Pay immediately: ' . home_url('/membership') . '
+Pay immediately: {renewal_url}
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_overdue_end_feb',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
             
@@ -313,8 +397,9 @@ WDTA Team')); ?></textarea>
                            value="<?php echo esc_attr(get_option('wdta_email_overdue_end_mar_subject', 'WDTA Membership - FINAL DAY to Pay')); ?>" 
                            class="large-text" placeholder="Email Subject">
                     <br><br>
-                    <textarea id="wdta_email_overdue_end_mar" name="wdta_email_overdue_end_mar" 
-                              rows="6" class="large-text"><?php echo esc_textarea(get_option('wdta_email_overdue_end_mar', 
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_overdue_end_mar', 
 'Dear {user_name},
 
 THIS IS YOUR FINAL DAY to pay your WDTA membership for {year}.
@@ -322,12 +407,23 @@ THIS IS YOUR FINAL DAY to pay your WDTA membership for {year}.
 Today is {deadline} - the absolute final deadline.
 
 Amount: ${amount} AUD
-Pay NOW: ' . home_url('/membership') . '
+Pay NOW: {renewal_url}
 
 After today, you will lose access to all member resources.
 
 Best regards,
-WDTA Team')); ?></textarea>
+WDTA Team'),
+                        'wdta_email_overdue_end_mar',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
                 </td>
             </tr>
         </table>
