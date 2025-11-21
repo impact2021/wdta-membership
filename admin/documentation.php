@@ -139,8 +139,23 @@ ln -s /path/to/wdta-membership /path/to/wordpress/wp-content/plugins/wdta-member
             <li>Option to pay for next year (from November onwards)</li>
         </ul>
         
-        <h3>Custom Login Page</h3>
-        <p>The custom login page doesn't use a shortcode. It's automatically available at:</p>
+        <h3>[wdta_login_form]</h3>
+        <p>Displays a login form anywhere on your site that you choose.</p>
+        <p><strong>Usage:</strong> Add to any page where you want members to log in</p>
+        <pre>[wdta_login_form]</pre>
+        <p><strong>Features:</strong></p>
+        <ul>
+            <li>Professional styled login form</li>
+            <li>Username and password fields</li>
+            <li>Remember me option</li>
+            <li>Lost password link</li>
+            <li>AJAX-powered (no page refresh)</li>
+            <li>Responsive mobile design</li>
+        </ul>
+        <p><strong>Example:</strong> Use this shortcode to add a login form to your homepage, sidebar, or any page where you want visitors to log in without going to a separate login page.</p>
+        
+        <h3>Custom Login Page (URL-based)</h3>
+        <p>In addition to the login form shortcode, the plugin also provides a dedicated login page at a custom URL:</p>
         <ul>
             <li><strong>Login:</strong> <code><?php echo home_url('/member-login/'); ?></code></li>
             <li><strong>Lost Password:</strong> <code><?php echo home_url('/member-login/lost-password/'); ?></code></li>

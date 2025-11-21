@@ -81,6 +81,7 @@ class WDTA_Membership {
         // Add shortcodes
         add_shortcode('wdta_membership_form', array($this, 'membership_form_shortcode'));
         add_shortcode('wdta_membership_status', array($this, 'membership_status_shortcode'));
+        add_shortcode('wdta_login_form', array($this, 'login_form_shortcode'));
         
         // Enqueue frontend styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_styles'));
@@ -120,6 +121,18 @@ class WDTA_Membership {
         
         ob_start();
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'templates/membership-status.php';
+        return ob_get_clean();
+    }
+    
+    /**
+     * Login form shortcode
+     */
+    public function login_form_shortcode($atts) {
+        // Enqueue jQuery if not already enqueued
+        wp_enqueue_script('jquery');
+        
+        ob_start();
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'templates/login-form-shortcode.php';
         return ob_get_clean();
     }
 }
