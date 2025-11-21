@@ -3,7 +3,7 @@
  * Plugin Name: WDTA Membership
  * Plugin URI: https://github.com/impact2021/wdta-membership
  * Description: Annual membership plugin with Stripe/bank transfer payments and automatic page access control. Membership fee is $950 AUD annually, due by March 31st.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: WDTA
  * Author URI: https://wdta.org
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('WDTA_MEMBERSHIP_VERSION', '1.0.0');
+define('WDTA_MEMBERSHIP_VERSION', '1.1.0');
 define('WDTA_MEMBERSHIP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WDTA_MEMBERSHIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WDTA_MEMBERSHIP_PLUGIN_FILE', __FILE__);
@@ -32,6 +32,7 @@ require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-payment-bank.php'
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-email-notifications.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-admin.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-cron.php';
+require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-custom-login.php';
 
 /**
  * Initialize the plugin
@@ -39,6 +40,10 @@ require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-cron.php';
 function wdta_membership_init() {
     $plugin = WDTA_Membership::get_instance();
     $plugin->init();
+    
+    // Initialize custom login
+    $custom_login = WDTA_Custom_Login::get_instance();
+    $custom_login->init();
 }
 add_action('plugins_loaded', 'wdta_membership_init');
 

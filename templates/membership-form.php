@@ -64,8 +64,10 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
             </div>
         <?php else: ?>
             <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
-            <p><strong>Annual membership fee: $950 AUD</strong></p>
-            <p>Payment must be received by <strong>March 31, <?php echo $payment_year; ?></strong></p>
+            <div class="wdta-pricing-info">
+                <p><strong>Annual membership fee: $950 AUD</strong></p>
+                <p>Payment must be received by <strong>March 31, <?php echo $payment_year; ?></strong></p>
+            </div>
         
         <div class="wdta-payment-methods">
             <h3>Choose Payment Method:</h3>
@@ -73,6 +75,21 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
             <div class="wdta-payment-option wdta-stripe-payment">
                 <h4>Pay with Credit Card</h4>
                 <p class="wdta-payment-description">Secure payment via Stripe</p>
+                
+                <div class="wdta-stripe-pricing">
+                    <div class="wdta-price-line">
+                        <span>Membership fee:</span>
+                        <span>$950.00 AUD</span>
+                    </div>
+                    <div class="wdta-price-line wdta-surcharge">
+                        <span>Card processing fee (2.2%):</span>
+                        <span>$20.90 AUD</span>
+                    </div>
+                    <div class="wdta-price-line wdta-total">
+                        <span><strong>Total amount:</strong></span>
+                        <span><strong>$970.90 AUD</strong></span>
+                    </div>
+                </div>
                 
                 <form id="wdta-stripe-payment-form">
                     <div id="wdta-card-element" class="wdta-card-element">
@@ -82,7 +99,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                     <div id="wdta-card-errors" class="wdta-error-message" role="alert"></div>
                     
                     <button id="wdta-stripe-submit" class="button button-primary" type="submit">
-                        <span id="wdta-button-text">Pay $950 AUD</span>
+                        <span id="wdta-button-text">Pay $970.90 AUD</span>
                         <span id="wdta-spinner" class="wdta-spinner" style="display:none;"></span>
                     </button>
                 </form>

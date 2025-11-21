@@ -95,7 +95,7 @@ class WDTA_Payment_Stripe {
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 950.00,
+            'payment_amount' => 970.90, // $950 + 2.2% surcharge
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -224,8 +224,12 @@ class WDTA_Payment_Stripe {
         $to = $user->user_email;
         $subject = 'WDTA Membership Payment Confirmed - ' . $year;
         $message = "Dear {$user->display_name},\n\n";
-        $message .= "Thank you for your WDTA membership payment of \$950 AUD for {$year}.\n\n";
-        $message .= "Your membership is now active and will remain valid until March 31, {$year}.\n\n";
+        $message .= "Thank you for your WDTA membership payment for {$year}.\n\n";
+        $message .= "Payment Details:\n";
+        $message .= "Membership fee: \$950.00 AUD\n";
+        $message .= "Card processing fee (2.2%): \$20.90 AUD\n";
+        $message .= "Total paid: \$970.90 AUD\n\n";
+        $message .= "Your membership is now active and will remain valid until December 31, {$year}.\n\n";
         $message .= "Best regards,\nWDTA Team";
         
         wp_mail($to, $subject, $message);
@@ -278,7 +282,7 @@ class WDTA_Payment_Stripe {
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 950.00,
+            'payment_amount' => 970.90, // $950 + 2.2% surcharge
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -288,7 +292,7 @@ class WDTA_Payment_Stripe {
         // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
         // \Stripe\Stripe::setApiKey($secret_key);
         // $paymentIntent = \Stripe\PaymentIntent::create([
-        //     'amount' => 95000, // $950.00 in cents
+        //     'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
         //     'currency' => 'aud',
         //     'description' => 'WDTA Membership ' . $year,
         //     'metadata' => [
