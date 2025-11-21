@@ -198,6 +198,50 @@ wdta-membership/
 - `wdta_restricted_pages` - Filter restricted page IDs
 - `wdta_email_template` - Filter email templates
 
+## Troubleshooting
+
+### Custom Login Page Shows 404
+
+If `/member-login/` shows a 404 error:
+
+1. Go to **Settings → Permalinks** in WordPress admin
+2. Click **"Save Changes"** (don't change anything, just click save)
+3. This flushes WordPress permalinks and registers the custom login route
+4. Now visit your login page at: `https://yoursite.com/member-login/`
+
+**Why this happens:** The custom login page uses WordPress rewrite rules. When installing via symlink, Git Updater, or manual upload, the plugin activation hook may not fire, so permalinks need to be manually flushed.
+
+**Note:** You only need to do this once after plugin installation or updates that add new routes.
+
+### Approved Bank Transfer Not Granting Access
+
+If a member's bank transfer was approved but they still can't access restricted pages:
+
+1. Go to **WDTA Membership → All Memberships**
+2. Find the member's record
+3. Verify the status shows "Active"
+4. Check the expiry date is in the future
+5. Ask the member to log out and log back in
+6. Clear any page caching plugins
+
+### Email Reminders Not Sending
+
+1. Check WordPress Cron is working: Install "WP Crontrol" plugin
+2. Verify email server settings are correct
+3. Check spam folders
+4. Test email delivery with a WordPress mail tester plugin
+
+### Stripe Webhook Not Working
+
+1. Verify webhook endpoint: `https://yoursite.com/wp-json/wdta/v1/stripe-webhook`
+2. Check webhook signing secret is entered correctly
+3. View webhook logs in Stripe Dashboard
+4. Ensure your site is accessible (not behind firewall/localhost)
+
+### Date Format Issues
+
+All dates are displayed in dd/mm/yyyy (Australian) format throughout the plugin. If you see different formats, clear your browser cache.
+
 ## Security
 
 - All AJAX requests use WordPress nonces
