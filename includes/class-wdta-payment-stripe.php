@@ -124,9 +124,10 @@ class WDTA_Payment_Stripe {
         // ]);
         
         // For now, return mock session data
+        $session_id = 'cs_test_' . bin2hex(random_bytes(16));
         $session_data = array(
-            'id' => 'cs_test_' . uniqid(),
-            'url' => home_url('/stripe-checkout/?session=' . uniqid()),
+            'id' => $session_id,
+            'url' => home_url('/stripe-checkout/?session=' . $session_id),
             'metadata' => array(
                 'user_id' => $user_id,
                 'year' => $year
@@ -290,7 +291,8 @@ class WDTA_Payment_Stripe {
         // ]);
         
         // For now, return mock payment intent data
-        $client_secret = 'pi_test_' . uniqid() . '_secret_' . uniqid();
+        // Generate a realistic-looking client secret that matches Stripe's format
+        $client_secret = 'pi_test_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
         
         wp_send_json_success(array(
             'clientSecret' => $client_secret,
