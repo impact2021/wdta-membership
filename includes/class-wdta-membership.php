@@ -91,6 +91,10 @@ class WDTA_Membership {
         
         // Redirect to my-account after login
         add_filter('login_redirect', array($this, 'redirect_after_login'), 10, 3);
+        
+        // AJAX login handler
+        add_action('wp_ajax_nopriv_wdta_ajax_login', array($this, 'handle_ajax_login'));
+        add_action('wp_ajax_wdta_ajax_login', array($this, 'handle_ajax_login'));
     }
     
     /**
@@ -163,5 +167,53 @@ class WDTA_Membership {
             }
         }
         return $redirect_to;
+    }
+    
+    /**
+     * Handle AJAX login request
+     */
+    public function handle_ajax_login() {
+        // Verify nonce if you want (optional for login)
+        
+        // Get posted data
+        $username = isset($_POST['username']) ? sanitize_text_field($_POST['username']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
+        $remember = isset($_POST['remember']) && $_POST['remember'] === '1';
+        
+        // Validate input
+        if (empty($username) || empty($password)) {
+            wp_send_json_error(array(
+                'message' => 'Please enter both username and password.'
+            ));
+        }
+        
+        // Attempt login
+        $creds = array(
+            'user_login'    => $username,
+            'user_password' => $password,
+            'remember'      => $remember
+        );
+        
+        $user = wp_signon($creds, false);
+        
+        if (is_wp_error($user)) {
+            wp_send_json_error(array(
+                'message' => $user->get_error_message()
+            ));
+        }
+        
+        // Login successful
+        // Determine redirect URL
+        $redirect_url = home_url('/my-account/');
+        
+        // If user is admin, use admin dashboard
+        if (in_array('administrator', $user->roles)) {
+            $redirect_url = admin_url();
+        }
+        
+        wp_send_json_success(array(
+            'message' => 'Login successful! Redirecting...',
+            'redirect' => $redirect_url
+        ));
     }
 }
