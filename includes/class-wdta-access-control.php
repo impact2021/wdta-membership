@@ -81,9 +81,23 @@ class WDTA_Access_Control {
             return;
         }
         
-        // Check membership status
+        // Check membership status - allow access if user has active_member role OR has active membership in database
         $user_id = get_current_user_id();
-        if (!WDTA_Database::has_active_membership($user_id)) {
+        $user = wp_get_current_user();
+        
+        $has_access = false;
+        
+        // Check if user has active_member role
+        if (in_array('active_member', $user->roles)) {
+            $has_access = true;
+        }
+        
+        // Also check database for active membership
+        if (!$has_access && WDTA_Database::has_active_membership($user_id)) {
+            $has_access = true;
+        }
+        
+        if (!$has_access) {
             $this->deny_access('membership_required');
             return;
         }
@@ -113,9 +127,23 @@ class WDTA_Access_Control {
             return $this->get_access_denied_message('login_required');
         }
         
-        // Check membership status
+        // Check membership status - allow access if user has active_member role OR has active membership in database
         $user_id = get_current_user_id();
-        if (!WDTA_Database::has_active_membership($user_id)) {
+        $user = wp_get_current_user();
+        
+        $has_access = false;
+        
+        // Check if user has active_member role
+        if (in_array('active_member', $user->roles)) {
+            $has_access = true;
+        }
+        
+        // Also check database for active membership
+        if (!$has_access && WDTA_Database::has_active_membership($user_id)) {
+            $has_access = true;
+        }
+        
+        if (!$has_access) {
             return $this->get_access_denied_message('membership_required');
         }
         
