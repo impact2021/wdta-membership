@@ -165,6 +165,16 @@ class WDTA_Cron {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
+        // Get all memberships that will expire
+        $expired_memberships = $wpdb->get_results($wpdb->prepare(
+            "SELECT user_id FROM $table_name 
+            WHERE membership_year = %d 
+            AND expiry_date = %s 
+            AND (payment_status != 'completed' OR status = 'active')",
+            $year,
+            $year . '-03-31'
+        ));
+        
         // Update all memberships that expired on March 31st:
         // 1. Those with unpaid status (payment never completed)
         // 2. Those that were active but now past expiry date
@@ -177,5 +187,10 @@ class WDTA_Cron {
             $year,
             $year . '-03-31'
         ));
+        
+        // Send expiry notification emails
+        foreach ($expired_memberships as $membership) {
+            WDTA_Email_Notifications::send_expiry_notification($membership->user_id, $year);
+        }
     }
 }

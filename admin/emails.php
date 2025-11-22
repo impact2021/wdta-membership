@@ -309,6 +309,218 @@ WDTA Team'),
             </tr>
         </table>
         
+        <h2>Transactional Emails</h2>
+        <p class="description">These emails are sent when specific events occur. You can configure recipients and enable/disable each email.</p>
+        
+        <table class="form-table">
+            <!-- Signup Confirmation Email -->
+            <tr>
+                <th scope="row"><label for="wdta_email_signup_confirmation">Signup Confirmation</label></th>
+                <td>
+                    <p>
+                        <label>
+                            <input type="checkbox" id="wdta_email_signup_enabled" name="wdta_email_signup_enabled" value="1" 
+                                   <?php checked(get_option('wdta_email_signup_enabled', '1'), '1'); ?>>
+                            Enable this email
+                        </label>
+                    </p>
+                    <p>
+                        <label for="wdta_email_signup_recipient">Recipient Email:</label><br>
+                        <input type="email" id="wdta_email_signup_recipient" name="wdta_email_signup_recipient" 
+                               value="<?php echo esc_attr(get_option('wdta_email_signup_recipient', get_option('admin_email'))); ?>" 
+                               class="regular-text" placeholder="admin@example.com">
+                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                    </p>
+                    <input type="text" id="wdta_email_signup_subject" name="wdta_email_signup_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_signup_subject', 'Welcome to WDTA Membership')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_signup_body', 
+'Dear {user_name},
+
+Thank you for signing up for WDTA membership!
+
+We have received your registration. To complete your membership, please make your payment of ${amount} AUD by {deadline}.
+
+You can make a payment at: {renewal_url}
+
+If you have any questions, please don\'t hesitate to contact us.
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_signup_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                </td>
+            </tr>
+            
+            <!-- Payment Confirmation Email -->
+            <tr>
+                <th scope="row"><label for="wdta_email_payment_confirmation">Payment Confirmation</label></th>
+                <td>
+                    <p>
+                        <label>
+                            <input type="checkbox" id="wdta_email_payment_enabled" name="wdta_email_payment_enabled" value="1" 
+                                   <?php checked(get_option('wdta_email_payment_enabled', '1'), '1'); ?>>
+                            Enable this email
+                        </label>
+                    </p>
+                    <p>
+                        <label for="wdta_email_payment_recipient">Recipient Email:</label><br>
+                        <input type="email" id="wdta_email_payment_recipient" name="wdta_email_payment_recipient" 
+                               value="<?php echo esc_attr(get_option('wdta_email_payment_recipient', get_option('admin_email'))); ?>" 
+                               class="regular-text" placeholder="admin@example.com">
+                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                    </p>
+                    <input type="text" id="wdta_email_payment_subject" name="wdta_email_payment_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_payment_body', 
+'Dear {user_name},
+
+Thank you for your payment!
+
+Your WDTA membership for {year} is now active. Your membership is valid until December 31, {year}.
+
+Payment Details:
+- Amount: ${amount} AUD
+- Payment Method: {payment_method}
+- Payment Date: {payment_date}
+
+You now have access to all member-only content on our website.
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_payment_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                </td>
+            </tr>
+            
+            <!-- Grace Period Email -->
+            <tr>
+                <th scope="row"><label for="wdta_email_grace_period">Grace Period Notification</label></th>
+                <td>
+                    <p>
+                        <label>
+                            <input type="checkbox" id="wdta_email_grace_enabled" name="wdta_email_grace_enabled" value="1" 
+                                   <?php checked(get_option('wdta_email_grace_enabled', '1'), '1'); ?>>
+                            Enable this email
+                        </label>
+                    </p>
+                    <p>
+                        <label for="wdta_email_grace_recipient">Recipient Email:</label><br>
+                        <input type="email" id="wdta_email_grace_recipient" name="wdta_email_grace_recipient" 
+                               value="<?php echo esc_attr(get_option('wdta_email_grace_recipient', get_option('admin_email'))); ?>" 
+                               class="regular-text" placeholder="admin@example.com">
+                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                    </p>
+                    <input type="text" id="wdta_email_grace_subject" name="wdta_email_grace_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_grace_subject', 'WDTA Membership - Grace Period')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_grace_body', 
+'Dear {user_name},
+
+Your WDTA membership for {year} is now in the grace period.
+
+You have until {deadline} to renew your membership. After this date, your access to member-only content will be suspended.
+
+Amount due: ${amount} AUD
+
+Renew now at: {renewal_url}
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_grace_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                </td>
+            </tr>
+            
+            <!-- Expiry Email -->
+            <tr>
+                <th scope="row"><label for="wdta_email_expiry">Membership Expired</label></th>
+                <td>
+                    <p>
+                        <label>
+                            <input type="checkbox" id="wdta_email_expiry_enabled" name="wdta_email_expiry_enabled" value="1" 
+                                   <?php checked(get_option('wdta_email_expiry_enabled', '1'), '1'); ?>>
+                            Enable this email
+                        </label>
+                    </p>
+                    <p>
+                        <label for="wdta_email_expiry_recipient">Recipient Email:</label><br>
+                        <input type="email" id="wdta_email_expiry_recipient" name="wdta_email_expiry_recipient" 
+                               value="<?php echo esc_attr(get_option('wdta_email_expiry_recipient', get_option('admin_email'))); ?>" 
+                               class="regular-text" placeholder="admin@example.com">
+                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                    </p>
+                    <input type="text" id="wdta_email_expiry_subject" name="wdta_email_expiry_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_expiry_subject', 'WDTA Membership Expired')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_expiry_body', 
+'Dear {user_name},
+
+Your WDTA membership for {year} has expired.
+
+Your access to member-only content has been suspended. To restore your membership, please make a payment of ${amount} AUD.
+
+Renew now at: {renewal_url}
+
+If you have any questions or believe this is an error, please contact us.
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_expiry_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                </td>
+            </tr>
+        </table>
+        
         <?php submit_button('Save Email Templates', 'primary', 'wdta_emails_submit'); ?>
     </form>
 </div>

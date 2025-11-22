@@ -120,22 +120,7 @@ class WDTA_Payment_Bank {
         // Update user role
         do_action('wdta_membership_activated', $user_id, $year);
         
-        // Send confirmation email
-        self::send_approval_confirmation($user_id, $year);
-    }
-    
-    /**
-     * Send approval confirmation email
-     */
-    private static function send_approval_confirmation($user_id, $year) {
-        $user = get_userdata($user_id);
-        $to = $user->user_email;
-        $subject = 'WDTA Membership Activated - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Your bank transfer payment of \$950.00 AUD for {$year} has been verified.\n\n";
-        $message .= "Your WDTA membership is now active and will remain valid until " . wdta_format_date("December 31, {$year}") . ".\n\n";
-        $message .= "Best regards,\nWDTA Team";
-        
-        wp_mail($to, $subject, $message);
+        // Send confirmation email using the new unified method
+        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, 950.00, 'Bank Transfer', current_time('mysql'));
     }
 }

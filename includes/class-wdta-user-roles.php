@@ -95,11 +95,19 @@ class WDTA_User_Roles {
             return;
         }
         
+        // Store previous role before updating
+        $previous_role = !empty($user->roles) ? $user->roles[0] : null;
+        
         // Get membership status
         $role = $this->determine_membership_role($user_id, $year);
         
         // Update user role
         $user->set_role($role);
+        
+        // Send grace period email if transitioning from active to grace period
+        if ($previous_role === 'active_member' && $role === 'grace_period_member') {
+            WDTA_Email_Notifications::send_grace_period_notification($user_id, $year);
+        }
     }
     
     /**

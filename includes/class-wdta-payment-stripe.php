@@ -208,8 +208,8 @@ class WDTA_Payment_Stripe {
         // Update user role
         do_action('wdta_membership_activated', $user_id, $year);
         
-        // Send confirmation email
-        $this->send_payment_confirmation($user_id, $year);
+        // Send confirmation email using the new unified method
+        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, 970.90, 'Credit Card (Stripe)', current_time('mysql'));
     }
     
     /**
@@ -217,25 +217,6 @@ class WDTA_Payment_Stripe {
      */
     private function handle_payment_intent_succeeded($payment_intent) {
         // Additional handling if needed
-    }
-    
-    /**
-     * Send payment confirmation email
-     */
-    private function send_payment_confirmation($user_id, $year) {
-        $user = get_userdata($user_id);
-        $to = $user->user_email;
-        $subject = 'WDTA Membership Payment Confirmed - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Thank you for your WDTA membership payment for {$year}.\n\n";
-        $message .= "Payment Details:\n";
-        $message .= "Membership fee: \$950.00 AUD\n";
-        $message .= "Card processing fee (2.2%): \$20.90 AUD\n";
-        $message .= "Total paid: \$970.90 AUD\n\n";
-        $message .= "Your membership is now active and will remain valid until December 31, {$year}.\n\n";
-        $message .= "Best regards,\nWDTA Team";
-        
-        wp_mail($to, $subject, $message);
     }
     
     /**

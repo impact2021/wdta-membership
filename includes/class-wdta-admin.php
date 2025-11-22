@@ -295,6 +295,38 @@ class WDTA_Admin {
             }
         }
         
+        // Transactional email templates
+        $transactional_templates = array(
+            'signup',
+            'payment',
+            'grace',
+            'expiry'
+        );
+        
+        foreach ($transactional_templates as $template) {
+            // Save enabled/disabled status
+            if (isset($_POST['wdta_email_' . $template . '_enabled'])) {
+                update_option('wdta_email_' . $template . '_enabled', '1');
+            } else {
+                update_option('wdta_email_' . $template . '_enabled', '0');
+            }
+            
+            // Save recipient
+            if (isset($_POST['wdta_email_' . $template . '_recipient'])) {
+                update_option('wdta_email_' . $template . '_recipient', sanitize_email($_POST['wdta_email_' . $template . '_recipient']));
+            }
+            
+            // Save subject
+            if (isset($_POST['wdta_email_' . $template . '_subject'])) {
+                update_option('wdta_email_' . $template . '_subject', sanitize_text_field($_POST['wdta_email_' . $template . '_subject']));
+            }
+            
+            // Save body
+            if (isset($_POST['wdta_email_' . $template . '_body'])) {
+                update_option('wdta_email_' . $template . '_body', wp_kses_post($_POST['wdta_email_' . $template . '_body']));
+            }
+        }
+        
         add_settings_error('wdta_emails', 'emails_updated', 'Email templates saved successfully.', 'updated');
     }
 }

@@ -36,6 +36,7 @@ class WDTA_Email_Notifications {
      */
     public function init() {
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('user_register', array($this, 'handle_user_registration'), 10, 1);
     }
     
     /**
@@ -63,6 +64,36 @@ class WDTA_Email_Notifications {
         register_setting('wdta_membership_settings', 'wdta_email_overdue_end_jan');
         register_setting('wdta_membership_settings', 'wdta_email_overdue_end_feb');
         register_setting('wdta_membership_settings', 'wdta_email_overdue_end_mar');
+        
+        // Transactional email settings
+        register_setting('wdta_membership_settings', 'wdta_email_signup_enabled');
+        register_setting('wdta_membership_settings', 'wdta_email_signup_recipient');
+        register_setting('wdta_membership_settings', 'wdta_email_signup_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_signup_body');
+        
+        register_setting('wdta_membership_settings', 'wdta_email_payment_enabled');
+        register_setting('wdta_membership_settings', 'wdta_email_payment_recipient');
+        register_setting('wdta_membership_settings', 'wdta_email_payment_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_payment_body');
+        
+        register_setting('wdta_membership_settings', 'wdta_email_grace_enabled');
+        register_setting('wdta_membership_settings', 'wdta_email_grace_recipient');
+        register_setting('wdta_membership_settings', 'wdta_email_grace_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_grace_body');
+        
+        register_setting('wdta_membership_settings', 'wdta_email_expiry_enabled');
+        register_setting('wdta_membership_settings', 'wdta_email_expiry_recipient');
+        register_setting('wdta_membership_settings', 'wdta_email_expiry_subject');
+        register_setting('wdta_membership_settings', 'wdta_email_expiry_body');
+    }
+    
+    /**
+     * Handle user registration - send signup confirmation email
+     */
+    public function handle_user_registration($user_id) {
+        // Send signup confirmation email
+        $current_year = date('Y');
+        self::send_signup_confirmation($user_id, $current_year);
     }
     
     /**
@@ -212,9 +243,130 @@ class WDTA_Email_Notifications {
             
             'overdue_end_feb' => "Dear {user_name},\n\nThis is an urgent reminder that your WDTA membership payment for {year} is overdue.\n\nYou have until {deadline} to pay the {amount} membership fee. After this date, you will lose access to all member-only content.\n\nRenew now: {renewal_url}\n\nBest regards,\n{site_name}",
             
-            'overdue_end_mar' => "Dear {user_name},\n\nFINAL NOTICE: This is your last day to renew your WDTA membership for {year}.\n\nIf payment of {amount} is not received by midnight tonight ({deadline}), your membership will expire and you will lose access to all member-only content.\n\nRenew immediately: {renewal_url}\n\nBest regards,\n{site_name}"
+            'overdue_end_mar' => "Dear {user_name},\n\nFINAL NOTICE: This is your last day to renew your WDTA membership for {year}.\n\nIf payment of {amount} is not received by midnight tonight ({deadline}), your membership will expire and you will lose access to all member-only content.\n\nRenew immediately: {renewal_url}\n\nBest regards,\n{site_name}",
+            
+            'signup' => "Dear {user_name},\n\nThank you for signing up for WDTA membership!\n\nWe have received your registration. To complete your membership, please make your payment of ${amount} AUD by {deadline}.\n\nYou can make a payment at: {renewal_url}\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nWDTA Team",
+            
+            'payment' => "Dear {user_name},\n\nThank you for your payment!\n\nYour WDTA membership for {year} is now active. Your membership is valid until December 31, {year}.\n\nPayment Details:\n- Amount: ${amount} AUD\n- Payment Method: {payment_method}\n- Payment Date: {payment_date}\n\nYou now have access to all member-only content on our website.\n\nBest regards,\nWDTA Team",
+            
+            'grace' => "Dear {user_name},\n\nYour WDTA membership for {year} is now in the grace period.\n\nYou have until {deadline} to renew your membership. After this date, your access to member-only content will be suspended.\n\nAmount due: ${amount} AUD\n\nRenew now at: {renewal_url}\n\nBest regards,\nWDTA Team",
+            
+            'expiry' => "Dear {user_name},\n\nYour WDTA membership for {year} has expired.\n\nYour access to member-only content has been suspended. To restore your membership, please make a payment of ${amount} AUD.\n\nRenew now at: {renewal_url}\n\nIf you have any questions or believe this is an error, please contact us.\n\nBest regards,\nWDTA Team"
         );
         
         return isset($templates[$type]) ? $templates[$type] : '';
+    }
+    
+    /**
+     * Send signup confirmation email
+     */
+    public static function send_signup_confirmation($user_id, $year) {
+        // Check if email is enabled
+        if (get_option('wdta_email_signup_enabled', '1') !== '1') {
+            return;
+        }
+        
+        $user = get_userdata($user_id);
+        $subject = get_option('wdta_email_signup_subject', 'Welcome to WDTA Membership');
+        $template = get_option('wdta_email_signup_body', self::get_default_template('signup'));
+        
+        $message = self::parse_template($template, $user, $year);
+        
+        // Send to user
+        self::send_email($user->user_email, $subject, $message);
+        
+        // Send to admin if recipient is set
+        $recipient = get_option('wdta_email_signup_recipient', '');
+        if (!empty($recipient)) {
+            self::send_email($recipient, '[Admin] ' . $subject, $message);
+        }
+    }
+    
+    /**
+     * Send payment confirmation email
+     */
+    public static function send_payment_confirmation($user_id, $year, $payment_amount = 950.00, $payment_method = 'Stripe', $payment_date = null) {
+        // Check if email is enabled
+        if (get_option('wdta_email_payment_enabled', '1') !== '1') {
+            return;
+        }
+        
+        $user = get_userdata($user_id);
+        $subject = get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed');
+        $template = get_option('wdta_email_payment_body', self::get_default_template('payment'));
+        
+        // Extended replacements for payment confirmation
+        $replacements = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{amount}' => number_format($payment_amount, 2),
+            '{deadline}' => wdta_format_date('March 31, ' . $year),
+            '{renewal_url}' => home_url('/membership'),
+            '{site_name}' => get_bloginfo('name'),
+            '{payment_method}' => $payment_method,
+            '{payment_date}' => $payment_date ? wdta_format_date($payment_date) : wdta_format_date(current_time('mysql'))
+        );
+        
+        $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+        
+        // Send to user
+        self::send_email($user->user_email, $subject, $message);
+        
+        // Send to admin if recipient is set
+        $recipient = get_option('wdta_email_payment_recipient', '');
+        if (!empty($recipient)) {
+            self::send_email($recipient, '[Admin] ' . $subject, $message);
+        }
+    }
+    
+    /**
+     * Send grace period notification email
+     */
+    public static function send_grace_period_notification($user_id, $year) {
+        // Check if email is enabled
+        if (get_option('wdta_email_grace_enabled', '1') !== '1') {
+            return;
+        }
+        
+        $user = get_userdata($user_id);
+        $subject = get_option('wdta_email_grace_subject', 'WDTA Membership - Grace Period');
+        $template = get_option('wdta_email_grace_body', self::get_default_template('grace'));
+        
+        $message = self::parse_template($template, $user, $year);
+        
+        // Send to user
+        self::send_email($user->user_email, $subject, $message);
+        
+        // Send to admin if recipient is set
+        $recipient = get_option('wdta_email_grace_recipient', '');
+        if (!empty($recipient)) {
+            self::send_email($recipient, '[Admin] ' . $subject, $message);
+        }
+    }
+    
+    /**
+     * Send membership expiry notification email
+     */
+    public static function send_expiry_notification($user_id, $year) {
+        // Check if email is enabled
+        if (get_option('wdta_email_expiry_enabled', '1') !== '1') {
+            return;
+        }
+        
+        $user = get_userdata($user_id);
+        $subject = get_option('wdta_email_expiry_subject', 'WDTA Membership Expired');
+        $template = get_option('wdta_email_expiry_body', self::get_default_template('expiry'));
+        
+        $message = self::parse_template($template, $user, $year);
+        
+        // Send to user
+        self::send_email($user->user_email, $subject, $message);
+        
+        // Send to admin if recipient is set
+        $recipient = get_option('wdta_email_expiry_recipient', '');
+        if (!empty($recipient)) {
+            self::send_email($recipient, '[Admin] ' . $subject, $message);
+        }
     }
 }
