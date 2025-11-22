@@ -217,7 +217,30 @@ class WDTA_Payment_Stripe {
      * Handle payment intent succeeded
      */
     private function handle_payment_intent_succeeded($payment_intent) {
-        // Additional handling if needed
+        // Extract user_id and year from payment intent metadata
+        $metadata = isset($payment_intent['metadata']) ? $payment_intent['metadata'] : array();
+        $user_id = isset($metadata['user_id']) ? intval($metadata['user_id']) : 0;
+        $year = isset($metadata['year']) ? intval($metadata['year']) : date('Y');
+        
+        if (!$user_id) {
+            return;
+        }
+        
+        // Update membership record
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_status' => 'completed',
+            'payment_date' => current_time('mysql'),
+            'stripe_payment_id' => $payment_intent['id'],
+            'status' => 'active'
+        ));
+        
+        // Update user role
+        do_action('wdta_membership_activated', $user_id, $year);
+        
+        // Send confirmation email
+        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, wdta_get_stripe_price(), 'Credit Card (Stripe)', current_time('mysql'));
     }
     
     /**
