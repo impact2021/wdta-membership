@@ -76,6 +76,11 @@ The plugin sends automated reminder emails on the following schedule:
 - `[wdta_membership_form]` - Display payment form and membership options
 - `[wdta_membership_status]` - Show current membership status
 - `[wdta_login_form]` - Display login form anywhere on your site
+- `[wdta_logout_link]` - Display logout link in menus or content (only visible when logged in)
+  - Optional attributes:
+    - `text="Sign Out"` - Custom link text
+    - `redirect="/login"` - Custom redirect URL after logout
+    - `class="menu-item"` - Custom CSS class for styling
 
 **Custom Login Page:**
 The plugin creates a custom branded login page at `/member-login/` that replaces the default WordPress login. Features include:

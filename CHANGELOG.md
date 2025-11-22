@@ -2,6 +2,22 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [1.1.8] - 2024-11-22
+
+### Added
+- New `[wdta_logout_link]` shortcode for adding logout links in menus and content
+- Shortcode supports optional attributes:
+  - `text`: Custom link text (default: "Log Out")
+  - `redirect`: URL to redirect to after logout (default: home page)
+  - `class`: Custom CSS class for styling
+- Link only displays when user is logged in (hidden for non-logged-in users)
+
+### Usage Examples
+- Basic: `[wdta_logout_link]`
+- Custom text: `[wdta_logout_link text="Sign Out"]`
+- Custom redirect: `[wdta_logout_link redirect="/login"]`
+- With CSS class: `[wdta_logout_link class="menu-item"]`
+
 ## [1.1.4] - 2024-11-21
 
 ### Documentation

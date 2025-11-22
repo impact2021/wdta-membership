@@ -82,6 +82,7 @@ class WDTA_Membership {
         add_shortcode('wdta_membership_form', array($this, 'membership_form_shortcode'));
         add_shortcode('wdta_membership_status', array($this, 'membership_status_shortcode'));
         add_shortcode('wdta_login_form', array($this, 'login_form_shortcode'));
+        add_shortcode('wdta_logout_link', array($this, 'logout_link_shortcode'));
         
         // Enqueue frontend styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_styles'));
@@ -134,5 +135,40 @@ class WDTA_Membership {
         ob_start();
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'templates/login-form-shortcode.php';
         return ob_get_clean();
+    }
+    
+    /**
+     * Logout link shortcode
+     * Displays a logout link that can be used in menus
+     * Usage: [wdta_logout_link]
+     * Optional attributes:
+     * - text: Custom link text (default: "Log Out")
+     * - redirect: URL to redirect to after logout (default: home page)
+     */
+    public function logout_link_shortcode($atts) {
+        // Parse shortcode attributes
+        $atts = shortcode_atts(array(
+            'text' => 'Log Out',
+            'redirect' => home_url(),
+            'class' => ''
+        ), $atts, 'wdta_logout_link');
+        
+        // Only show logout link if user is logged in
+        if (!is_user_logged_in()) {
+            return '';
+        }
+        
+        // Generate logout URL with redirect
+        $logout_url = wp_logout_url($atts['redirect']);
+        
+        // Build the link with optional custom class
+        $class_attr = !empty($atts['class']) ? ' class="' . esc_attr($atts['class']) . '"' : '';
+        
+        return sprintf(
+            '<a href="%s"%s>%s</a>',
+            esc_url($logout_url),
+            $class_attr,
+            esc_html($atts['text'])
+        );
     }
 }
