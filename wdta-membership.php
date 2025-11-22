@@ -3,7 +3,7 @@
  * Plugin Name: WDTA Membership
  * Plugin URI: https://github.com/impact2021/wdta-membership
  * Description: Annual membership plugin with Stripe/bank transfer payments and automatic page access control. Membership fee is $950 AUD annually, due by March 31st.
- * Version: 1.1.7
+ * Version: 1.1.9
  * Author: WDTA
  * Author URI: https://wdta.org
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('WDTA_MEMBERSHIP_VERSION', '1.1.7');
+define('WDTA_MEMBERSHIP_VERSION', '1.1.9');
 define('WDTA_MEMBERSHIP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WDTA_MEMBERSHIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WDTA_MEMBERSHIP_PLUGIN_FILE', __FILE__);

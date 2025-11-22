@@ -75,6 +75,15 @@ class WDTA_Admin {
         
         add_submenu_page(
             'wdta-memberships',
+            'Emails',
+            'Emails',
+            'manage_options',
+            'wdta-emails',
+            array($this, 'emails_page')
+        );
+        
+        add_submenu_page(
+            'wdta-memberships',
             'Documentation',
             'Docs',
             'manage_options',
@@ -134,6 +143,18 @@ class WDTA_Admin {
         }
         
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/settings.php';
+    }
+    
+    /**
+     * Emails page
+     */
+    public function emails_page() {
+        if (isset($_POST['wdta_emails_submit'])) {
+            check_admin_referer('wdta_emails_action', 'wdta_emails_nonce');
+            $this->save_email_templates();
+        }
+        
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/emails.php';
     }
     
     /**
@@ -247,5 +268,33 @@ class WDTA_Admin {
         ));
         
         wp_send_json_success(array('message' => 'Membership rejected'));
+    }
+    
+    /**
+     * Save email templates
+     */
+    private function save_email_templates() {
+        // Reminder email templates
+        $email_templates = array(
+            'reminder_1month',
+            'reminder_1week',
+            'reminder_1day',
+            'reminder_1day_overdue',
+            'reminder_1week_overdue',
+            'reminder_month1',
+            'reminder_month2',
+            'reminder_final'
+        );
+        
+        foreach ($email_templates as $template) {
+            if (isset($_POST['wdta_email_' . $template . '_subject'])) {
+                update_option('wdta_email_' . $template . '_subject', sanitize_text_field($_POST['wdta_email_' . $template . '_subject']));
+            }
+            if (isset($_POST['wdta_email_' . $template . '_body'])) {
+                update_option('wdta_email_' . $template . '_body', wp_kses_post($_POST['wdta_email_' . $template . '_body']));
+            }
+        }
+        
+        add_settings_error('wdta_emails', 'emails_updated', 'Email templates saved successfully.', 'updated');
     }
 }
