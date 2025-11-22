@@ -275,27 +275,51 @@ class WDTA_Payment_Stripe {
             'status' => 'pending'
         ));
         
-        // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
-        // $stripe_amount_cents = intval($stripe_price * 100); // Convert to cents
-        // \Stripe\Stripe::setApiKey($secret_key);
-        // $paymentIntent = \Stripe\PaymentIntent::create([
-        //     'amount' => $stripe_amount_cents, // Amount in cents (includes 2.2% surcharge)
-        //     'currency' => 'aud',
-        //     'description' => 'WDTA Membership ' . $year,
-        //     'metadata' => [
-        //         'user_id' => $user_id,
-        //         'year' => $year,
-        //         'user_email' => $user->user_email,
-        //         'user_name' => $user->display_name,
-        //     ],
-        // ]);
+        // Create a real Stripe PaymentIntent using WordPress HTTP API
+        $stripe_amount_cents = intval($stripe_price * 100); // Convert to cents
         
-        // For now, return mock payment intent data
-        // Generate a realistic-looking client secret that matches Stripe's format
-        $client_secret = 'pi_test_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
+        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'amount' => $stripe_amount_cents,
+                'currency' => 'aud',
+                'description' => 'WDTA Membership ' . $year,
+                'metadata[user_id]' => $user_id,
+                'metadata[year]' => $year,
+                'metadata[user_email]' => $user->user_email,
+                'metadata[user_name]' => $user->display_name,
+            ),
+            'timeout' => 30,
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error(array(
+                'message' => 'Unable to connect to payment processor: ' . $response->get_error_message()
+            ));
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($body['error'])) {
+            wp_send_json_error(array(
+                'message' => 'Payment initialization failed: ' . $body['error']['message']
+            ));
+            return;
+        }
+        
+        if (!isset($body['client_secret'])) {
+            wp_send_json_error(array(
+                'message' => 'Invalid response from payment processor'
+            ));
+            return;
+        }
         
         wp_send_json_success(array(
-            'clientSecret' => $client_secret,
+            'clientSecret' => $body['client_secret'],
             'amount' => wdta_get_membership_price(),
             'currency' => 'AUD'
         ));
