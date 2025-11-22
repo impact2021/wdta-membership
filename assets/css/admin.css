@@ -1,0 +1,103 @@
+/**
+ * Admin styles for WDTA Membership plugin
+ */
+
+.wdta-filters {
+    background: #fff;
+    padding: 15px;
+    margin: 20px 0;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.wdta-filters form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.wdta-filters label {
+    font-weight: 600;
+}
+
+.wdta-filters select {
+    min-width: 150px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-pending,
+.status-badge.status-pending_verification {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-expired,
+.status-badge.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.wdta-approve-membership,
+.wdta-reject-membership {
+    margin: 2px;
+}
+
+.wdta-payment-option {
+    background: #f9f9f9;
+    padding: 15px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wdta-payment-option h4 {
+    margin-top: 0;
+}
+
+/* User role badges */
+.user-role {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-role-active_member {
+    background: #d4edda;
+    color: #155724;
+}
+
+.user-role-grace_period_member {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.user-role-inactive_member {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.user-role-subscriber,
+.user-role-administrator {
+    background: #e7f3ff;
+    color: #004085;
+}
