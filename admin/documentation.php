@@ -154,6 +154,30 @@ ln -s /path/to/wdta-membership /path/to/wordpress/wp-content/plugins/wdta-member
         </ul>
         <p><strong>Example:</strong> Use this shortcode to add a login form to your homepage, sidebar, or any page where you want visitors to log in without going to a separate login page.</p>
         
+        <h3>[wdta_logout_link]</h3>
+        <p>Displays a logout link for logged-in users. Perfect for menus, sidebars, or content areas.</p>
+        <p><strong>Usage:</strong> Add to any page, widget, or menu where you want a logout link</p>
+        <pre>[wdta_logout_link]</pre>
+        <p><strong>Optional Attributes:</strong></p>
+        <ul>
+            <li><strong>text:</strong> Custom link text (default: "Log Out")</li>
+            <li><strong>redirect:</strong> URL to redirect to after logout (default: home page)</li>
+            <li><strong>class:</strong> Custom CSS class for styling</li>
+        </ul>
+        <p><strong>Features:</strong></p>
+        <ul>
+            <li>Only visible when user is logged in (automatically hidden for guests)</li>
+            <li>Uses WordPress secure logout functionality</li>
+            <li>Customizable text, redirect URL, and CSS class</li>
+            <li>Perfect for navigation menus</li>
+        </ul>
+        <p><strong>Examples:</strong></p>
+        <pre>[wdta_logout_link]
+[wdta_logout_link text="Sign Out"]
+[wdta_logout_link redirect="/login"]
+[wdta_logout_link class="menu-item"]
+[wdta_logout_link text="Exit" redirect="/goodbye" class="btn-logout"]</pre>
+        
         <h3>Custom Login Page (URL-based)</h3>
         <p>In addition to the login form shortcode, the plugin also provides a dedicated login page at a custom URL:</p>
         <ul>

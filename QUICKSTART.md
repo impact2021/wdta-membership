@@ -60,6 +60,8 @@ Your membership system is ready. Test with Stripe test card: `4242 4242 4242 424
 ### Shortcodes
 - `[wdta_membership_form]` - Payment form
 - `[wdta_membership_status]` - Member status
+- `[wdta_login_form]` - Login form
+- `[wdta_logout_link]` - Logout link (for menus)
 
 ### Admin Pages
 - **WDTA Membership → All Memberships** - Manage members
@@ -223,6 +225,6 @@ add_filter('wdta_access_denied_message', function($msg, $reason) {
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** 2024-11-21  
+**Version:** 1.1.8  
+**Last Updated:** 2024-11-22  
 **License:** GPL v2 or later
