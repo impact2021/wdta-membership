@@ -26,6 +26,17 @@ The plugin sends automated reminder emails on the following schedule:
 - **February 28th/29th**: End of second month
 - **March 31st**: Final deadline (access revoked after this date)
 
+**Transactional Emails** (new):
+- **Signup Confirmation**: Sent when new members register
+- **Payment Confirmation**: Sent when payment is completed
+- **Grace Period Notification**: Sent when membership enters grace period (Jan 1)
+- **Expiry Notification**: Sent when membership expires (April 1)
+
+Each email can be:
+- Enabled or disabled via checkbox
+- Sent to a configurable recipient (admin notification)
+- Customized with subject line and WYSIWYG editor
+
 ### 🎛️ Admin Dashboard
 - View all memberships by year and status
 - Approve/reject bank transfer payments
@@ -123,7 +134,7 @@ Members can log in at: `https://yoursite.com/member-login/`
 The plugin uses WordPress Cron to send reminder emails automatically. Emails are sent at midnight (server time) on the scheduled dates.
 
 **Customization:**
-Email templates can be customized in the Settings page. Available placeholders:
+Email templates can be customized in the **Membership → Emails** admin page. Available placeholders:
 - `{user_name}` - Member's display name
 - `{user_email}` - Member's email address
 - `{year}` - Membership year
@@ -131,6 +142,19 @@ Email templates can be customized in the Settings page. Available placeholders:
 - `{deadline}` - Payment deadline (March 31st)
 - `{renewal_url}` - Link to membership form
 - `{site_name}` - Website name
+- `{payment_method}` - Payment method used (for payment confirmation emails)
+- `{payment_date}` - Date payment was made (for payment confirmation emails)
+
+**Email Types:**
+1. **Payment Reminder Emails** (8 templates) - Scheduled reminders from Dec 1 to Mar 31
+2. **Transactional Emails** (4 templates) - Event-based emails with enable/disable toggles:
+   - Signup Confirmation (when user registers)
+   - Payment Confirmation (when payment completes)
+   - Grace Period Notification (when entering grace period)
+   - Expiry Notification (when membership expires)
+
+**Admin Notifications:**
+Each transactional email can be configured to send a copy to an admin recipient email address.
 
 ## Database
 
