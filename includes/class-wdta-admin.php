@@ -66,6 +66,15 @@ class WDTA_Admin {
         
         add_submenu_page(
             'wdta-memberships',
+            'Emails',
+            'Emails',
+            'manage_options',
+            'wdta-emails',
+            array($this, 'emails_page')
+        );
+        
+        add_submenu_page(
+            'wdta-memberships',
             'Settings',
             'Settings',
             'manage_options',
@@ -137,6 +146,18 @@ class WDTA_Admin {
     }
     
     /**
+     * Emails page
+     */
+    public function emails_page() {
+        if (isset($_POST['wdta_emails_submit'])) {
+            check_admin_referer('wdta_emails_action', 'wdta_emails_nonce');
+            $this->save_emails();
+        }
+        
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/emails.php';
+    }
+    
+    /**
      * Documentation page
      */
     public function documentation_page() {
@@ -172,14 +193,6 @@ class WDTA_Admin {
             update_option('wdta_bank_account_number', sanitize_text_field($_POST['wdta_bank_account_number']));
         }
         
-        // Email settings
-        if (isset($_POST['wdta_email_from_name'])) {
-            update_option('wdta_email_from_name', sanitize_text_field($_POST['wdta_email_from_name']));
-        }
-        if (isset($_POST['wdta_email_from_address'])) {
-            update_option('wdta_email_from_address', sanitize_email($_POST['wdta_email_from_address']));
-        }
-        
         // Restricted pages
         if (isset($_POST['wdta_restricted_pages'])) {
             $restricted_pages = array_map('intval', (array) $_POST['wdta_restricted_pages']);
@@ -194,6 +207,63 @@ class WDTA_Admin {
         }
         
         add_settings_error('wdta_settings', 'settings_updated', 'Settings saved successfully.', 'updated');
+    }
+    
+    /**
+     * Save email settings
+     */
+    private function save_emails() {
+        // Email from settings
+        if (isset($_POST['wdta_email_from_name'])) {
+            update_option('wdta_email_from_name', sanitize_text_field($_POST['wdta_email_from_name']));
+        }
+        if (isset($_POST['wdta_email_from_address'])) {
+            update_option('wdta_email_from_address', sanitize_email($_POST['wdta_email_from_address']));
+        }
+        
+        // Email recipients
+        if (isset($_POST['wdta_email_admin_recipient'])) {
+            update_option('wdta_email_admin_recipient', sanitize_email($_POST['wdta_email_admin_recipient']));
+        }
+        
+        // Email notification settings
+        update_option('wdta_email_signup_to_admin', isset($_POST['wdta_email_signup_to_admin']) ? 1 : 0);
+        update_option('wdta_email_signup_to_customer', isset($_POST['wdta_email_signup_to_customer']) ? 1 : 0);
+        update_option('wdta_email_payment_to_admin', isset($_POST['wdta_email_payment_to_admin']) ? 1 : 0);
+        update_option('wdta_email_payment_to_customer', isset($_POST['wdta_email_payment_to_customer']) ? 1 : 0);
+        
+        // New signup email
+        if (isset($_POST['wdta_email_signup_subject'])) {
+            update_option('wdta_email_signup_subject', sanitize_text_field($_POST['wdta_email_signup_subject']));
+        }
+        if (isset($_POST['wdta_email_signup'])) {
+            update_option('wdta_email_signup', wp_kses_post($_POST['wdta_email_signup']));
+        }
+        
+        // Payment confirmation email
+        if (isset($_POST['wdta_email_payment_subject'])) {
+            update_option('wdta_email_payment_subject', sanitize_text_field($_POST['wdta_email_payment_subject']));
+        }
+        if (isset($_POST['wdta_email_payment'])) {
+            update_option('wdta_email_payment', wp_kses_post($_POST['wdta_email_payment']));
+        }
+        
+        // Reminder emails (8 templates)
+        $email_types = array(
+            'reminder_1month', 'reminder_1week', 'reminder_1day',
+            'overdue_1day', 'overdue_1week', 'overdue_end_jan', 'overdue_end_feb', 'overdue_end_mar'
+        );
+        
+        foreach ($email_types as $type) {
+            if (isset($_POST["wdta_email_{$type}_subject"])) {
+                update_option("wdta_email_{$type}_subject", sanitize_text_field($_POST["wdta_email_{$type}_subject"]));
+            }
+            if (isset($_POST["wdta_email_{$type}"])) {
+                update_option("wdta_email_{$type}", wp_kses_post($_POST["wdta_email_{$type}"]));
+            }
+        }
+        
+        add_settings_error('wdta_emails', 'emails_updated', 'Email settings saved successfully.', 'updated');
     }
     
     /**

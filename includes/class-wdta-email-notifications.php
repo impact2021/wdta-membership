@@ -42,27 +42,42 @@ class WDTA_Email_Notifications {
      * Register settings
      */
     public function register_settings() {
-        // Email templates - subjects
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1month_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1week_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1day_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_1day_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_1week_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_jan_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_feb_subject');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_mar_subject');
+        // Email from settings
+        register_setting('wdta_membership_emails', 'wdta_email_from_name');
+        register_setting('wdta_membership_emails', 'wdta_email_from_address');
+        register_setting('wdta_membership_emails', 'wdta_email_admin_recipient');
         
-        // Email templates - content
-        register_setting('wdta_membership_settings', 'wdta_email_from_name');
-        register_setting('wdta_membership_settings', 'wdta_email_from_address');
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1month');
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1week');
-        register_setting('wdta_membership_settings', 'wdta_email_reminder_1day');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_1day');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_1week');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_jan');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_feb');
-        register_setting('wdta_membership_settings', 'wdta_email_overdue_end_mar');
+        // Email recipient settings
+        register_setting('wdta_membership_emails', 'wdta_email_signup_to_admin');
+        register_setting('wdta_membership_emails', 'wdta_email_signup_to_customer');
+        register_setting('wdta_membership_emails', 'wdta_email_payment_to_admin');
+        register_setting('wdta_membership_emails', 'wdta_email_payment_to_customer');
+        
+        // New email templates
+        register_setting('wdta_membership_emails', 'wdta_email_signup_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_signup');
+        register_setting('wdta_membership_emails', 'wdta_email_payment_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_payment');
+        
+        // Reminder email templates - subjects
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1month_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1week_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1day_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_1day_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_1week_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_jan_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_feb_subject');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_mar_subject');
+        
+        // Reminder email templates - content
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1month');
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1week');
+        register_setting('wdta_membership_emails', 'wdta_email_reminder_1day');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_1day');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_1week');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_jan');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_feb');
+        register_setting('wdta_membership_emails', 'wdta_email_overdue_end_mar');
     }
     
     /**
@@ -164,7 +179,7 @@ class WDTA_Email_Notifications {
     /**
      * Parse email template
      */
-    private static function parse_template($template, $user, $year) {
+    public static function parse_template($template, $user, $year) {
         $replacements = array(
             '{user_name}' => $user->display_name,
             '{user_email}' => $user->user_email,

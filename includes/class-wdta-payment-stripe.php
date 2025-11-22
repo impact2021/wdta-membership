@@ -224,18 +224,39 @@ class WDTA_Payment_Stripe {
      */
     private function send_payment_confirmation($user_id, $year) {
         $user = get_userdata($user_id);
-        $to = $user->user_email;
-        $subject = 'WDTA Membership Payment Confirmed - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Thank you for your WDTA membership payment for {$year}.\n\n";
-        $message .= "Payment Details:\n";
-        $message .= "Membership fee: \$950.00 AUD\n";
-        $message .= "Card processing fee (2.2%): \$20.90 AUD\n";
-        $message .= "Total paid: \$970.90 AUD\n\n";
-        $message .= "Your membership is now active and will remain valid until December 31, {$year}.\n\n";
-        $message .= "Best regards,\nWDTA Team";
         
-        wp_mail($to, $subject, $message);
+        // Get template and subject from settings
+        $subject = get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed - {year}');
+        $template = get_option('wdta_email_payment', 
+'Dear {user_name},
+
+Thank you for your WDTA membership payment for {year}.
+
+Payment Details:
+Membership fee: $950.00 AUD
+Card processing fee (2.2%): $20.90 AUD
+Total paid: $970.90 AUD
+
+Your membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team');
+        
+        // Parse template
+        $message = WDTA_Email_Notifications::parse_template($template, $user, $year);
+        $subject = str_replace('{year}', $year, $subject);
+        
+        // Send to customer if enabled
+        if (get_option('wdta_email_payment_to_customer', 1)) {
+            wp_mail($user->user_email, $subject, $message);
+        }
+        
+        // Send to admin if enabled
+        if (get_option('wdta_email_payment_to_admin', 1)) {
+            $admin_email = get_option('wdta_email_admin_recipient', get_option('admin_email'));
+            $admin_subject = '[Admin] ' . $subject . ' - ' . $user->display_name;
+            wp_mail($admin_email, $admin_subject, $message);
+        }
     }
     
     /**
