@@ -261,21 +261,18 @@ class WDTA_Email_Notifications {
      * Send signup confirmation email
      */
     public static function send_signup_confirmation($user_id, $year) {
-        // Check if email is enabled
-        if (get_option('wdta_email_signup_enabled', '1') !== '1') {
-            return;
-        }
-        
         $user = get_userdata($user_id);
         $subject = get_option('wdta_email_signup_subject', 'Welcome to WDTA Membership');
         $template = get_option('wdta_email_signup_body', self::get_default_template('signup'));
         
         $message = self::parse_template($template, $user, $year);
         
-        // Send to user
-        self::send_email($user->user_email, $subject, $message);
+        // Send to customer if enabled
+        if (get_option('wdta_email_signup_enabled', '1') === '1') {
+            self::send_email($user->user_email, $subject, $message);
+        }
         
-        // Send to admin if recipient is set
+        // Send to additional recipient if set
         $recipient = get_option('wdta_email_signup_recipient', '');
         if (!empty($recipient)) {
             self::send_email($recipient, '[Admin] ' . $subject, $message);
@@ -286,11 +283,6 @@ class WDTA_Email_Notifications {
      * Send payment confirmation email
      */
     public static function send_payment_confirmation($user_id, $year, $payment_amount = 950.00, $payment_method = 'Stripe', $payment_date = null) {
-        // Check if email is enabled
-        if (get_option('wdta_email_payment_enabled', '1') !== '1') {
-            return;
-        }
-        
         $user = get_userdata($user_id);
         $subject = get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed');
         $template = get_option('wdta_email_payment_body', self::get_default_template('payment'));
@@ -310,10 +302,12 @@ class WDTA_Email_Notifications {
         
         $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
-        // Send to user
-        self::send_email($user->user_email, $subject, $message);
+        // Send to customer if enabled
+        if (get_option('wdta_email_payment_enabled', '1') === '1') {
+            self::send_email($user->user_email, $subject, $message);
+        }
         
-        // Send to admin if recipient is set
+        // Send to additional recipient if set
         $recipient = get_option('wdta_email_payment_recipient', '');
         if (!empty($recipient)) {
             self::send_email($recipient, '[Admin] ' . $subject, $message);
@@ -324,21 +318,18 @@ class WDTA_Email_Notifications {
      * Send grace period notification email
      */
     public static function send_grace_period_notification($user_id, $year) {
-        // Check if email is enabled
-        if (get_option('wdta_email_grace_enabled', '1') !== '1') {
-            return;
-        }
-        
         $user = get_userdata($user_id);
         $subject = get_option('wdta_email_grace_subject', 'WDTA Membership - Grace Period');
         $template = get_option('wdta_email_grace_body', self::get_default_template('grace'));
         
         $message = self::parse_template($template, $user, $year);
         
-        // Send to user
-        self::send_email($user->user_email, $subject, $message);
+        // Send to customer if enabled
+        if (get_option('wdta_email_grace_enabled', '1') === '1') {
+            self::send_email($user->user_email, $subject, $message);
+        }
         
-        // Send to admin if recipient is set
+        // Send to additional recipient if set
         $recipient = get_option('wdta_email_grace_recipient', '');
         if (!empty($recipient)) {
             self::send_email($recipient, '[Admin] ' . $subject, $message);
@@ -349,21 +340,18 @@ class WDTA_Email_Notifications {
      * Send membership expiry notification email
      */
     public static function send_expiry_notification($user_id, $year) {
-        // Check if email is enabled
-        if (get_option('wdta_email_expiry_enabled', '1') !== '1') {
-            return;
-        }
-        
         $user = get_userdata($user_id);
         $subject = get_option('wdta_email_expiry_subject', 'WDTA Membership Expired');
         $template = get_option('wdta_email_expiry_body', self::get_default_template('expiry'));
         
         $message = self::parse_template($template, $user, $year);
         
-        // Send to user
-        self::send_email($user->user_email, $subject, $message);
+        // Send to customer if enabled
+        if (get_option('wdta_email_expiry_enabled', '1') === '1') {
+            self::send_email($user->user_email, $subject, $message);
+        }
         
-        // Send to admin if recipient is set
+        // Send to additional recipient if set
         $recipient = get_option('wdta_email_expiry_recipient', '');
         if (!empty($recipient)) {
             self::send_email($recipient, '[Admin] ' . $subject, $message);

@@ -321,15 +321,15 @@ WDTA Team'),
                         <label>
                             <input type="checkbox" id="wdta_email_signup_enabled" name="wdta_email_signup_enabled" value="1" 
                                    <?php checked(get_option('wdta_email_signup_enabled', '1'), '1'); ?>>
-                            Enable this email
+                            Send this email to customer
                         </label>
                     </p>
                     <p>
-                        <label for="wdta_email_signup_recipient">Recipient Email:</label><br>
+                        <label for="wdta_email_signup_recipient">Additional Recipient(s):</label><br>
                         <input type="email" id="wdta_email_signup_recipient" name="wdta_email_signup_recipient" 
-                               value="<?php echo esc_attr(get_option('wdta_email_signup_recipient', get_option('admin_email'))); ?>" 
+                               value="<?php echo esc_attr(get_option('wdta_email_signup_recipient', '')); ?>" 
                                class="regular-text" placeholder="admin@example.com">
-                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                        <p class="description">Send a copy to this email address (optional)</p>
                     </p>
                     <input type="text" id="wdta_email_signup_subject" name="wdta_email_signup_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_signup_subject', 'Welcome to WDTA Membership')); ?>" 
@@ -372,15 +372,15 @@ WDTA Team'),
                         <label>
                             <input type="checkbox" id="wdta_email_payment_enabled" name="wdta_email_payment_enabled" value="1" 
                                    <?php checked(get_option('wdta_email_payment_enabled', '1'), '1'); ?>>
-                            Enable this email
+                            Send this email to customer
                         </label>
                     </p>
                     <p>
-                        <label for="wdta_email_payment_recipient">Recipient Email:</label><br>
+                        <label for="wdta_email_payment_recipient">Additional Recipient(s):</label><br>
                         <input type="email" id="wdta_email_payment_recipient" name="wdta_email_payment_recipient" 
-                               value="<?php echo esc_attr(get_option('wdta_email_payment_recipient', get_option('admin_email'))); ?>" 
+                               value="<?php echo esc_attr(get_option('wdta_email_payment_recipient', '')); ?>" 
                                class="regular-text" placeholder="admin@example.com">
-                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                        <p class="description">Send a copy to this email address (optional)</p>
                     </p>
                     <input type="text" id="wdta_email_payment_subject" name="wdta_email_payment_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed')); ?>" 
@@ -426,15 +426,15 @@ WDTA Team'),
                         <label>
                             <input type="checkbox" id="wdta_email_grace_enabled" name="wdta_email_grace_enabled" value="1" 
                                    <?php checked(get_option('wdta_email_grace_enabled', '1'), '1'); ?>>
-                            Enable this email
+                            Send this email to customer
                         </label>
                     </p>
                     <p>
-                        <label for="wdta_email_grace_recipient">Recipient Email:</label><br>
+                        <label for="wdta_email_grace_recipient">Additional Recipient(s):</label><br>
                         <input type="email" id="wdta_email_grace_recipient" name="wdta_email_grace_recipient" 
-                               value="<?php echo esc_attr(get_option('wdta_email_grace_recipient', get_option('admin_email'))); ?>" 
+                               value="<?php echo esc_attr(get_option('wdta_email_grace_recipient', '')); ?>" 
                                class="regular-text" placeholder="admin@example.com">
-                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                        <p class="description">Send a copy to this email address (optional)</p>
                     </p>
                     <input type="text" id="wdta_email_grace_subject" name="wdta_email_grace_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_grace_subject', 'WDTA Membership - Grace Period')); ?>" 
@@ -477,15 +477,15 @@ WDTA Team'),
                         <label>
                             <input type="checkbox" id="wdta_email_expiry_enabled" name="wdta_email_expiry_enabled" value="1" 
                                    <?php checked(get_option('wdta_email_expiry_enabled', '1'), '1'); ?>>
-                            Enable this email
+                            Send this email to customer
                         </label>
                     </p>
                     <p>
-                        <label for="wdta_email_expiry_recipient">Recipient Email:</label><br>
+                        <label for="wdta_email_expiry_recipient">Additional Recipient(s):</label><br>
                         <input type="email" id="wdta_email_expiry_recipient" name="wdta_email_expiry_recipient" 
-                               value="<?php echo esc_attr(get_option('wdta_email_expiry_recipient', get_option('admin_email'))); ?>" 
+                               value="<?php echo esc_attr(get_option('wdta_email_expiry_recipient', '')); ?>" 
                                class="regular-text" placeholder="admin@example.com">
-                        <p class="description">Who should receive this email? (Leave blank to send to user only)</p>
+                        <p class="description">Send a copy to this email address (optional)</p>
                     </p>
                     <input type="text" id="wdta_email_expiry_subject" name="wdta_email_expiry_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_expiry_subject', 'WDTA Membership Expired')); ?>" 
