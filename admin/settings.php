@@ -19,6 +19,19 @@ $restricted_pages = get_option('wdta_restricted_pages', array());
     <form method="post" action="">
         <?php wp_nonce_field('wdta_settings_action', 'wdta_settings_nonce'); ?>
         
+        <h2>Membership Settings</h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="wdta_membership_price">Annual Membership Price (AUD)</label></th>
+                <td>
+                    <input type="number" id="wdta_membership_price" name="wdta_membership_price" 
+                           value="<?php echo esc_attr(get_option('wdta_membership_price', '950.00')); ?>" 
+                           class="regular-text" step="0.01" min="0">
+                    <p class="description">Annual membership fee in Australian Dollars (default: $950.00 AUD)</p>
+                </td>
+            </tr>
+        </table>
+        
         <h2>Stripe Payment Settings</h2>
         <table class="form-table">
             <tr>

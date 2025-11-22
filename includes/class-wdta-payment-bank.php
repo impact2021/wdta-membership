@@ -70,7 +70,7 @@ class WDTA_Payment_Bank {
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 950.00,
+            'payment_amount' => wdta_get_membership_price(),
             'payment_method' => 'bank_transfer',
             'payment_status' => 'pending_verification',
             'payment_reference' => $reference,
@@ -98,7 +98,7 @@ class WDTA_Payment_Bank {
         $message .= "User: {$user->display_name} ({$user->user_email})\n";
         $message .= "Year: {$year}\n";
         $message .= "Reference: {$reference}\n";
-        $message .= "Amount: \$950 AUD\n\n";
+        $message .= "Amount: " . wdta_get_membership_price(true) . "\n\n";
         $message .= "Please verify the payment and update the membership status in the admin panel.\n";
         $message .= admin_url('admin.php?page=wdta-memberships');
         
@@ -121,6 +121,6 @@ class WDTA_Payment_Bank {
         do_action('wdta_membership_activated', $user_id, $year);
         
         // Send confirmation email using the new unified method
-        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, 950.00, 'Bank Transfer', current_time('mysql'));
+        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, wdta_get_membership_price(), 'Bank Transfer', current_time('mysql'));
     }
 }

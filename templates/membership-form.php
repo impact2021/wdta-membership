@@ -78,7 +78,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <?php else: ?>
             <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
             <div class="wdta-pricing-info">
-                <p><strong>Annual membership fee: $950 AUD</strong></p>
+                <p><strong>Annual membership fee: <?php echo wdta_get_membership_price(true); ?></strong></p>
                 <p>Payment must be received by <strong><?php echo wdta_format_date('March 31, ' . $payment_year); ?></strong></p>
             </div>
         
@@ -90,17 +90,22 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                 <p class="wdta-payment-description">Secure payment via Stripe</p>
                 
                 <div class="wdta-stripe-pricing">
+                    <?php 
+                    $membership_price = wdta_get_membership_price();
+                    $stripe_price = wdta_get_stripe_price();
+                    $surcharge = $stripe_price - $membership_price;
+                    ?>
                     <div class="wdta-price-line">
                         <span>Membership fee:</span>
-                        <span>$950.00 AUD</span>
+                        <span>$<?php echo number_format($membership_price, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-surcharge">
                         <span>Card processing fee (2.2%):</span>
-                        <span>$20.90 AUD</span>
+                        <span>$<?php echo number_format($surcharge, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-total">
                         <span><strong>Total amount:</strong></span>
-                        <span><strong>$970.90 AUD</strong></span>
+                        <span><strong>$<?php echo number_format($stripe_price, 2); ?> AUD</strong></span>
                     </div>
                 </div>
                 
@@ -112,7 +117,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                     <div id="wdta-card-errors" class="wdta-error-message" role="alert"></div>
                     
                     <button id="wdta-stripe-submit" class="button button-primary" type="submit">
-                        <span id="wdta-button-text">Pay $970.90 AUD</span>
+                        <span id="wdta-button-text">Pay $<?php echo number_format(wdta_get_stripe_price(), 2); ?> AUD</span>
                         <span id="wdta-spinner" class="wdta-spinner" style="display:none;"></span>
                     </button>
                 </form>
@@ -131,7 +136,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                         <li><strong>Account Name:</strong> <?php echo esc_html(get_option('wdta_bank_account_name', 'To be configured')); ?></li>
                         <li><strong>BSB:</strong> <?php echo esc_html(get_option('wdta_bank_bsb', 'To be configured')); ?></li>
                         <li><strong>Account Number:</strong> <?php echo esc_html(get_option('wdta_bank_account_number', 'To be configured')); ?></li>
-                        <li><strong>Amount:</strong> $950 AUD</li>
+                        <li><strong>Amount:</strong> <?php echo wdta_get_membership_price(true); ?></li>
                         <li><strong>Reference:</strong> Your name and "WDTA <?php echo $payment_year; ?>"</li>
                     </ul>
                 </div>

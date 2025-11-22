@@ -113,7 +113,7 @@ class WDTA_Database {
         $existing = self::get_user_membership($data['user_id'], $data['membership_year']);
         
         $defaults = array(
-            'payment_amount' => 950.00,
+            'payment_amount' => wdta_get_membership_price(),
             'payment_status' => 'pending',
             'status' => 'pending',
         );

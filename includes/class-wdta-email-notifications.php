@@ -200,7 +200,7 @@ class WDTA_Email_Notifications {
             '{user_name}' => $user->display_name,
             '{user_email}' => $user->user_email,
             '{year}' => $year,
-            '{amount}' => '950.00',
+            '{amount}' => number_format(wdta_get_membership_price(), 2),
             '{deadline}' => wdta_format_date('March 31, ' . $year),
             '{renewal_url}' => home_url('/membership'),
             '{site_name}' => get_bloginfo('name')
@@ -282,7 +282,11 @@ class WDTA_Email_Notifications {
     /**
      * Send payment confirmation email
      */
-    public static function send_payment_confirmation($user_id, $year, $payment_amount = 950.00, $payment_method = 'Stripe', $payment_date = null) {
+    public static function send_payment_confirmation($user_id, $year, $payment_amount = null, $payment_method = 'Stripe', $payment_date = null) {
+        // Use default membership price if no amount specified
+        if ($payment_amount === null) {
+            $payment_amount = wdta_get_membership_price();
+        }
         $user = get_userdata($user_id);
         $subject = get_option('wdta_email_payment_subject', 'WDTA Membership Payment Confirmed');
         $template = get_option('wdta_email_payment_body', self::get_default_template('payment'));

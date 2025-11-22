@@ -33,6 +33,35 @@ function wdta_format_date($date_string) {
     return date('d/m/Y', strtotime($date_string));
 }
 
+/**
+ * Get membership price
+ * 
+ * @param bool $formatted Whether to return formatted string with currency
+ * @return float|string The membership price
+ */
+function wdta_get_membership_price($formatted = false) {
+    $price = floatval(get_option('wdta_membership_price', '950.00'));
+    if ($formatted) {
+        return '$' . number_format($price, 2) . ' AUD';
+    }
+    return $price;
+}
+
+/**
+ * Get Stripe price with surcharge (2.2%)
+ * 
+ * @param bool $formatted Whether to return formatted string with currency
+ * @return float|string The Stripe price with surcharge
+ */
+function wdta_get_stripe_price($formatted = false) {
+    $base_price = wdta_get_membership_price();
+    $stripe_price = $base_price * 1.022; // 2.2% surcharge
+    if ($formatted) {
+        return '$' . number_format($stripe_price, 2) . ' AUD';
+    }
+    return $stripe_price;
+}
+
 // Include required files
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-membership.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-database.php';

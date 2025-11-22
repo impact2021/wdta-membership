@@ -95,7 +95,7 @@ class WDTA_Payment_Stripe {
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90, // $950 + 2.2% surcharge
+            'payment_amount' => wdta_get_stripe_price(), // Base price + 2.2% surcharge
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -209,7 +209,7 @@ class WDTA_Payment_Stripe {
         do_action('wdta_membership_activated', $user_id, $year);
         
         // Send confirmation email using the new unified method
-        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, 970.90, 'Credit Card (Stripe)', current_time('mysql'));
+        WDTA_Email_Notifications::send_payment_confirmation($user_id, $year, wdta_get_stripe_price(), 'Credit Card (Stripe)', current_time('mysql'));
     }
     
     /**
@@ -263,10 +263,11 @@ class WDTA_Payment_Stripe {
         
         // Create pending membership record
         $expiry_date = $year . '-03-31';
+        $stripe_price = wdta_get_stripe_price();
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90, // $950 + 2.2% surcharge
+            'payment_amount' => $stripe_price, // Base price + 2.2% surcharge
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -274,9 +275,10 @@ class WDTA_Payment_Stripe {
         ));
         
         // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
+        // $stripe_amount_cents = intval($stripe_price * 100); // Convert to cents
         // \Stripe\Stripe::setApiKey($secret_key);
         // $paymentIntent = \Stripe\PaymentIntent::create([
-        //     'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
+        //     'amount' => $stripe_amount_cents, // Amount in cents (includes 2.2% surcharge)
         //     'currency' => 'aud',
         //     'description' => 'WDTA Membership ' . $year,
         //     'metadata' => [
@@ -292,7 +294,7 @@ class WDTA_Payment_Stripe {
         
         wp_send_json_success(array(
             'clientSecret' => $client_secret,
-            'amount' => 950.00,
+            'amount' => wdta_get_membership_price(),
             'currency' => 'AUD'
         ));
     }

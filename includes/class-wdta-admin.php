@@ -168,6 +168,14 @@ class WDTA_Admin {
      * Save settings
      */
     private function save_settings() {
+        // Membership settings
+        if (isset($_POST['wdta_membership_price'])) {
+            $price = floatval($_POST['wdta_membership_price']);
+            if ($price >= 0) {
+                update_option('wdta_membership_price', number_format($price, 2, '.', ''));
+            }
+        }
+        
         // Stripe settings
         if (isset($_POST['wdta_stripe_public_key'])) {
             update_option('wdta_stripe_public_key', sanitize_text_field($_POST['wdta_stripe_public_key']));
