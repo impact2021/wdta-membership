@@ -85,6 +85,12 @@ class WDTA_Membership {
         
         // Enqueue frontend styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_styles'));
+        
+        // Hide admin bar for non-admin users
+        add_action('after_setup_theme', array($this, 'hide_admin_bar_for_non_admins'));
+        
+        // Redirect to my-account after login
+        add_filter('login_redirect', array($this, 'redirect_after_login'), 10, 3);
     }
     
     /**
@@ -134,5 +140,28 @@ class WDTA_Membership {
         ob_start();
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'templates/login-form-shortcode.php';
         return ob_get_clean();
+    }
+    
+    /**
+     * Hide admin bar for non-admin users
+     */
+    public function hide_admin_bar_for_non_admins() {
+        if (!current_user_can('administrator') && !is_admin()) {
+            show_admin_bar(false);
+        }
+    }
+    
+    /**
+     * Redirect to my-account page after login
+     */
+    public function redirect_after_login($redirect_to, $request, $user) {
+        // Only redirect if it's a successful login (user object exists)
+        if (isset($user->roles) && is_array($user->roles)) {
+            // Redirect non-admin users to my-account page
+            if (!in_array('administrator', $user->roles)) {
+                return home_url('/my-account/');
+            }
+        }
+        return $redirect_to;
     }
 }

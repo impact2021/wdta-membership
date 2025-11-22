@@ -257,9 +257,9 @@ jQuery(document).ready(function($) {
             } else {
                 // Payment succeeded
                 if (result.paymentIntent.status === 'succeeded') {
-                    $('#wdta-message').html('<div class="wdta-success-message"><p>✓ Payment successful! Your membership is now active.</p></div>');
+                    $('#wdta-message').html('<div class="wdta-success-message"><p>✓ Payment successful! Redirecting to your account...</p></div>');
                     setTimeout(function() {
-                        location.reload();
+                        window.location.href = '<?php echo esc_url(home_url('/my-account/')); ?>';
                     }, 2000);
                 }
             }
