@@ -46,8 +46,8 @@ class WDTA_Admin {
      */
     public function add_admin_menu() {
         add_menu_page(
-            'WDTA Membership',
-            'WDTA Membership',
+            'Membership',
+            'Membership',
             'manage_options',
             'wdta-memberships',
             array($this, 'memberships_page'),
@@ -76,7 +76,7 @@ class WDTA_Admin {
         add_submenu_page(
             'wdta-memberships',
             'Documentation',
-            'Documentation',
+            'Docs',
             'manage_options',
             'wdta-documentation',
             array($this, 'documentation_page')
