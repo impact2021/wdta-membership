@@ -76,12 +76,22 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                 <div class="wdta-form-row">
                     <div class="wdta-form-field">
                         <label for="wdta_password">Password *</label>
-                        <input type="password" id="wdta_password" name="password" required minlength="8">
+                        <div class="wdta-password-wrapper">
+                            <input type="password" id="wdta_password" name="password" required minlength="8">
+                            <button type="button" class="wdta-password-toggle" aria-label="Show password">
+                                <span class="wdta-eye-icon">👁</span>
+                            </button>
+                        </div>
                         <small>Minimum 8 characters</small>
                     </div>
                     <div class="wdta-form-field">
                         <label for="wdta_password_confirm">Confirm Password *</label>
-                        <input type="password" id="wdta_password_confirm" name="password_confirm" required minlength="8">
+                        <div class="wdta-password-wrapper">
+                            <input type="password" id="wdta_password_confirm" name="password_confirm" required minlength="8">
+                            <button type="button" class="wdta-password-toggle" aria-label="Show password">
+                                <span class="wdta-eye-icon">👁</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div id="wdta-registration-errors" class="wdta-error-message" style="display:none;"></div>
@@ -427,6 +437,22 @@ jQuery(document).ready(function($) {
 <?php if (!is_user_logged_in()): ?>
 <script>
 jQuery(document).ready(function($) {
+    // Password toggle functionality for registration form
+    $('.wdta-password-toggle').on('click', function() {
+        var $input = $(this).siblings('input');
+        var $icon = $(this).find('.wdta-eye-icon');
+        
+        if ($input.attr('type') === 'password') {
+            $input.attr('type', 'text');
+            $icon.text('🙈');
+            $(this).attr('aria-label', 'Hide password');
+        } else {
+            $input.attr('type', 'password');
+            $icon.text('👁');
+            $(this).attr('aria-label', 'Show password');
+        }
+    });
+    
     // Initialize Stripe Elements for new users
     var stripe = null;
     var elements = null;

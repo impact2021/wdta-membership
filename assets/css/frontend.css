@@ -533,6 +533,49 @@
     font-size: 12px;
 }
 
+/* Password toggle wrapper */
+.wdta-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wdta-password-wrapper input {
+    flex: 1;
+    padding-right: 45px;
+}
+
+.wdta-password-toggle {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.wdta-password-toggle:hover {
+    color: #333;
+}
+
+.wdta-password-toggle:focus {
+    outline: 2px solid #635bff;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.wdta-eye-icon {
+    display: block;
+    user-select: none;
+}
+
 #wdta-registration-errors {
     background: #f8d7da;
     color: #721c24;
