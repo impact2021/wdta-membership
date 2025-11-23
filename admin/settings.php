@@ -27,10 +27,10 @@ foreach ($all_roles as $role_key => $role_data) {
     <?php settings_errors('wdta_settings'); ?>
     
     <nav class="nav-tab-wrapper">
-        <a href="#access-control" class="nav-tab nav-tab-active" onclick="showTab('access-control'); return false;">Access Control</a>
-        <a href="#payment-settings" class="nav-tab" onclick="showTab('payment-settings'); return false;">Payment Settings</a>
-        <a href="#login-redirects" class="nav-tab" onclick="showTab('login-redirects'); return false;">Login Redirects</a>
-        <a href="#shortcodes" class="nav-tab" onclick="showTab('shortcodes'); return false;">Shortcodes</a>
+        <a href="#access-control" class="nav-tab nav-tab-active" onclick="showTab('access-control', this); return false;">Access Control</a>
+        <a href="#payment-settings" class="nav-tab" onclick="showTab('payment-settings', this); return false;">Payment Settings</a>
+        <a href="#login-redirects" class="nav-tab" onclick="showTab('login-redirects', this); return false;">Login Redirects</a>
+        <a href="#shortcodes" class="nav-tab" onclick="showTab('shortcodes', this); return false;">Shortcodes</a>
     </nav>
     
     <form method="post" action="">
@@ -314,7 +314,7 @@ foreach ($all_roles as $role_key => $role_data) {
 </style>
 
 <script>
-function showTab(tabId) {
+function showTab(tabId, element) {
     // Hide all tabs
     var tabs = document.querySelectorAll('.tab-content');
     for (var i = 0; i < tabs.length; i++) {
@@ -331,6 +331,8 @@ function showTab(tabId) {
     document.getElementById(tabId).style.display = 'block';
     
     // Add active class to clicked nav tab
-    event.target.classList.add('nav-tab-active');
+    if (element) {
+        element.classList.add('nav-tab-active');
+    }
 }
 </script>
