@@ -342,6 +342,12 @@ class WDTA_Payment_Stripe {
             return;
         }
         
+        // Validate password strength
+        if (strlen($password) < 8) {
+            wp_send_json_error(array('message' => 'Password must be at least 8 characters'));
+            return;
+        }
+        
         // Check if email already exists
         if (email_exists($email)) {
             wp_send_json_error(array('message' => 'This email is already registered. Please log in instead.'));
@@ -374,6 +380,7 @@ class WDTA_Payment_Stripe {
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
+            'payment_amount' => 970.90,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,

@@ -167,6 +167,12 @@ class WDTA_Payment_Bank {
             return;
         }
         
+        // Validate password strength
+        if (strlen($password) < 8) {
+            wp_send_json_error(array('message' => 'Password must be at least 8 characters'));
+            return;
+        }
+        
         // Check if email already exists
         if (email_exists($email)) {
             wp_send_json_error(array('message' => 'This email is already registered. Please log in instead.'));
