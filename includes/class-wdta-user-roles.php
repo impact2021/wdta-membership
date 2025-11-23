@@ -66,15 +66,6 @@ class WDTA_User_Roles {
                 'read' => true,
             )
         );
-        
-        // Add Grace Period Member role
-        add_role(
-            'grace_period_member',
-            'Grace Period Member',
-            array(
-                'read' => true,
-            )
-        );
     }
     
     /**
@@ -120,26 +111,12 @@ class WDTA_User_Roles {
         }
         
         // Has membership record - determine status
+        // Active only if payment completed and status is active
         if ($membership->payment_status === 'completed' && $membership->status === 'active') {
-            $today = strtotime(date('Y-m-d'));
-            $expiry = strtotime($membership->expiry_date);
-            $dec_31 = strtotime($year . '-12-31');
-            
-            // Active if before Dec 31
-            if ($today <= $dec_31) {
-                return 'active_member';
-            }
-            
-            // Grace period if between Jan 1 and March 31
-            if ($today > $dec_31 && $today <= $expiry) {
-                return 'grace_period_member';
-            }
-            
-            // Expired after March 31
-            return 'inactive_member';
+            return 'active_member';
         }
         
-        // Pending, rejected, or other status
+        // Any other status (pending, expired, etc.) is inactive
         return 'inactive_member';
     }
     
@@ -184,7 +161,6 @@ class WDTA_User_Roles {
         $roles = array(
             'active_member' => 'Active Member',
             'inactive_member' => 'Inactive',
-            'grace_period_member' => 'Grace Period',
             'subscriber' => 'Subscriber',
             'administrator' => 'Administrator',
         );

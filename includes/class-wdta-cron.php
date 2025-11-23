@@ -49,7 +49,6 @@ class WDTA_Cron {
         $current_date = date('Y-m-d');
         $current_month_day = date('m-d');
         // For December reminders, we're reminding about next year's membership (due Jan 1st of next year)
-        // For Jan-Mar reminders, we're reminding about current year's membership (deadline Mar 31st)
         $next_year = date('Y') + 1;
         $current_year = date('Y');
         
@@ -65,6 +64,10 @@ class WDTA_Cron {
                 
             case '12-31': // December 31st - 1 day before Jan 1st (next year's membership)
                 self::send_reminder_emails($next_year, '1_day');
+                break;
+                
+            case '01-01': // January 1st - send inactive users report
+                self::send_inactive_users_report();
                 break;
                 
             case '01-02': // January 2nd - 1 day overdue
@@ -84,7 +87,7 @@ class WDTA_Cron {
                 self::send_overdue_emails($current_year, 'overdue_end_feb');
                 break;
                 
-            case '03-31': // March 31st - final deadline
+            case '03-31': // March 31st - final deadline (kept for legacy users)
                 self::send_overdue_emails($current_year, 'overdue_end_mar');
                 break;
         }
@@ -146,36 +149,81 @@ class WDTA_Cron {
     }
     
     /**
+     * Send inactive users report to administrators
+     */
+    private static function send_inactive_users_report() {
+        $current_year = date('Y');
+        $inactive_users = WDTA_Database::get_users_without_membership($current_year);
+        
+        if (empty($inactive_users)) {
+            return; // No inactive users to report
+        }
+        
+        // Get admin email(s)
+        $admin_emails = get_option('wdta_inactive_report_emails', get_option('admin_email'));
+        
+        // Build email content
+        $subject = 'WDTA Inactive Members Report - ' . date('F j, Y');
+        
+        $message = '<html><body>';
+        $message .= '<h2>Inactive WDTA Members as of ' . date('F j, Y') . '</h2>';
+        $message .= '<p>The following members do not have an active membership for ' . $current_year . ':</p>';
+        $message .= '<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse;">';
+        $message .= '<thead><tr>';
+        $message .= '<th>User ID</th>';
+        $message .= '<th>Name</th>';
+        $message .= '<th>Email</th>';
+        $message .= '<th>Role</th>';
+        $message .= '</tr></thead>';
+        $message .= '<tbody>';
+        
+        foreach ($inactive_users as $user) {
+            $user_obj = get_userdata($user->ID);
+            $message .= '<tr>';
+            $message .= '<td>' . esc_html($user->ID) . '</td>';
+            $message .= '<td>' . esc_html($user->display_name) . '</td>';
+            $message .= '<td>' . esc_html($user->user_email) . '</td>';
+            $message .= '<td>' . esc_html(implode(', ', $user_obj->roles)) . '</td>';
+            $message .= '</tr>';
+        }
+        
+        $message .= '</tbody></table>';
+        $message .= '<p><strong>Total inactive members: ' . count($inactive_users) . '</strong></p>';
+        $message .= '</body></html>';
+        
+        // Send email
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        wp_mail($admin_emails, $subject, $message, $headers);
+    }
+    
+    /**
      * Process membership expiry
      */
     public static function process_membership_expiry() {
         $current_date = date('Y-m-d');
-        $current_year = date('Y');
         
-        // Check if it's April 1st - deactivate expired memberships
-        if (date('m-d') === '04-01') {
-            self::deactivate_expired_memberships($current_year);
+        // Check if it's January 1st - deactivate expired memberships from previous year
+        if (date('m-d') === '01-01') {
+            $previous_year = date('Y') - 1;
+            self::deactivate_expired_memberships($previous_year);
         }
     }
     
     /**
-     * Deactivate expired memberships after March 31st
+     * Deactivate expired memberships after December 31st
      */
     private static function deactivate_expired_memberships($year) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
-        // Update all memberships that expired on March 31st:
-        // 1. Those with unpaid status (payment never completed)
-        // 2. Those that were active but now past expiry date
+        // Update all memberships for the year that haven't been paid
+        // Set status to 'inactive' for all non-completed payments
         $wpdb->query($wpdb->prepare(
             "UPDATE $table_name 
-            SET status = 'expired' 
+            SET status = 'inactive' 
             WHERE membership_year = %d 
-            AND expiry_date = %s 
-            AND (payment_status != 'completed' OR status = 'active')",
-            $year,
-            $year . '-03-31'
+            AND (payment_status != 'completed' OR status != 'active')",
+            $year
         ));
     }
 }
