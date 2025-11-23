@@ -39,6 +39,7 @@ class WDTA_Admin {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_ajax_wdta_approve_membership', array($this, 'approve_membership'));
         add_action('wp_ajax_wdta_reject_membership', array($this, 'reject_membership'));
+        add_action('wp_ajax_wdta_update_membership', array($this, 'update_membership'));
     }
     
     /**
@@ -288,6 +289,54 @@ class WDTA_Admin {
         ));
         
         wp_send_json_success(array('message' => 'Membership rejected'));
+    }
+    
+    /**
+     * Update membership
+     */
+    public function update_membership() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $payment_status = isset($_POST['payment_status']) ? sanitize_text_field($_POST['payment_status']) : '';
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+        $payment_amount = isset($_POST['payment_amount']) ? floatval($_POST['payment_amount']) : 0;
+        $expiry_date = isset($_POST['expiry_date']) ? sanitize_text_field($_POST['expiry_date']) : '';
+        
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'Invalid user ID'));
+            return;
+        }
+        
+        // Update membership record
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_status' => $payment_status,
+            'status' => $status,
+            'payment_amount' => $payment_amount,
+            'expiry_date' => $expiry_date
+        ));
+        
+        // Update user role based on status
+        $user = get_userdata($user_id);
+        if ($user) {
+            if ($status === 'active') {
+                $user->remove_role('wdta_inactive_member');
+                $user->add_role('wdta_active_member');
+            } else {
+                $user->remove_role('wdta_active_member');
+                $user->add_role('wdta_inactive_member');
+            }
+        }
+        
+        wp_send_json_success(array('message' => 'Membership updated successfully'));
     }
     
     /**
