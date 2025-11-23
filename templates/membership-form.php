@@ -45,12 +45,11 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <h2>WDTA Membership - <?php echo $current_year; ?></h2>
         <div class="wdta-pricing-info">
             <p><strong>Annual membership fee: $950 AUD</strong></p>
-            <p>Payment must be received by <strong><?php echo wdta_format_date('December 31, ' . $current_year); ?></strong></p>
         </div>
         
         <div class="wdta-info-message">
             <p><strong>New members:</strong> Complete the form below to register and pay for your membership.</p>
-            <p>Already have an account? <a href="<?php echo wp_login_url(get_permalink()); ?>">Log in here</a></p>
+            <p>Already have an account? <a href="https://www.wdta.org.au/member-login/">Log in here</a></p>
         </div>
         
         <!-- Registration Form for New Users -->
@@ -165,7 +164,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                             <input type="date" id="wdta_payment_date_new" name="payment_date" required>
                         </p>
                         <p>
-                            <button type="submit" class="button button-primary">Register & Submit Bank Transfer Details</button>
+                            <button type="submit" id="wdta-bank-submit-new-user" class="button button-primary">Register & Submit Bank Transfer Details</button>
                         </p>
                     </form>
                 </div>

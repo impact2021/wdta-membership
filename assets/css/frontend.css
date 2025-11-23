@@ -616,6 +616,35 @@
     cursor: not-allowed;
 }
 
+/* Bank transfer submit button styling to match Stripe button */
+#wdta-bank-submit-new-user {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-bank-submit-new-user:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-bank-submit-new-user:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+#wdta-bank-submit-new-user:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.3);
+}
+
 #wdta-card-errors-new-user {
     color: #fa755a;
     font-size: 14px;
