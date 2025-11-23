@@ -66,7 +66,7 @@ class WDTA_Payment_Bank {
         $payment_date = isset($_POST['payment_date']) ? sanitize_text_field($_POST['payment_date']) : current_time('mysql');
         
         // Create pending membership record
-        $expiry_date = $year . '-03-31';
+        $expiry_date = $year . '-12-31';
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,

@@ -28,8 +28,8 @@ if (!defined('ABSPATH')) {
         <ul>
             <li><strong>Payment Processing:</strong> Accept payments via Stripe ($970.90 AUD with 2.2% surcharge) or bank transfer ($950 AUD)</li>
             <li><strong>Access Control:</strong> Restrict specific pages to active members only</li>
-            <li><strong>Automated Emails:</strong> 8 scheduled reminders from December 1st to March 31st deadline</li>
-            <li><strong>User Role Management:</strong> Automatic role assignment based on membership status</li>
+            <li><strong>Automated Emails:</strong> 8 scheduled reminders (3 before Dec 31, 5 after) - each can be enabled/disabled</li>
+            <li><strong>User Role Management:</strong> Automatic role assignment based on membership status (active/inactive)</li>
             <li><strong>Admin Dashboard:</strong> Comprehensive membership management interface</li>
             <li><strong>Custom Login Page:</strong> Branded login experience at <code>/member-login/</code></li>
         </ul>
@@ -38,9 +38,9 @@ if (!defined('ABSPATH')) {
         <ul>
             <li><strong>January 1st:</strong> Membership year begins</li>
             <li><strong>January 1 - December 31:</strong> Active membership period</li>
-            <li><strong>January 1 - March 31:</strong> Grace period for payment</li>
-            <li><strong>March 31st:</strong> Final payment deadline</li>
+            <li><strong>December 31st:</strong> Payment deadline - memberships become inactive on January 1st if unpaid</li>
             <li><strong>November 1st onwards:</strong> Members can pay for next year in advance</li>
+            <li><strong>Binary Status:</strong> Memberships are either active or inactive (no grace period)</li>
         </ul>
     </div>
     
@@ -74,7 +74,7 @@ ln -s /path/to/wdta-membership /path/to/wordpress/wp-content/plugins/wdta-member
 # Then flush permalinks in Settings → Permalinks
         </pre>
         
-        <p><strong>Note:</strong> After activation, user roles (Active Member, Inactive, Grace Period) are automatically created.</p>
+        <p><strong>Note:</strong> After activation, user roles (Active Member, Inactive) are automatically created.</p>
     </div>
     
     <div id="configuration" class="tab-content" style="display:none;">
@@ -183,15 +183,6 @@ ln -s /path/to/wdta-membership /path/to/wordpress/wp-content/plugins/wdta-member
             <li><strong>Triggers:</strong> Payment completed before Dec 31st</li>
         </ul>
         
-        <h4>Grace Period Member</h4>
-        <ul>
-            <li><strong>Status:</strong> Past Dec 31st but before March 31st deadline</li>
-            <li><strong>Period:</strong> January 1 - March 31</li>
-            <li><strong>Access:</strong> Full access to restricted pages (internal tracking only)</li>
-            <li><strong>Triggers:</strong> Active membership with valid until date after Dec 31st</li>
-            <li><strong>Note:</strong> Members don't see "grace period" label - they see "Valid Until December 31"</li>
-        </ul>
-        
         <h4>Inactive Member</h4>
         <ul>
             <li><strong>Status:</strong> No current membership or expired</li>
@@ -199,10 +190,11 @@ ln -s /path/to/wdta-membership /path/to/wordpress/wp-content/plugins/wdta-member
             <li><strong>Triggers:</strong>
                 <ul>
                     <li>Payment pending or not made</li>
-                    <li>Expired after March 31st</li>
+                    <li>Membership expired (after December 31st)</li>
                     <li>Payment rejected</li>
                 </ul>
             </li>
+            <li><strong>Note:</strong> Status changes to inactive automatically on January 1st if not paid by December 31st</li>
         </ul>
         
         <h3>Role Management</h3>

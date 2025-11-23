@@ -91,7 +91,7 @@ class WDTA_Payment_Stripe {
         }
         
         // Create pending membership record
-        $expiry_date = $year . '-03-31';
+        $expiry_date = $year . '-12-31';
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
@@ -281,7 +281,7 @@ class WDTA_Payment_Stripe {
         }
         
         // Create pending membership record
-        $expiry_date = $year . '-03-31';
+        $expiry_date = $year . '-12-31';
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,

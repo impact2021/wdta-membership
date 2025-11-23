@@ -156,7 +156,7 @@ class WDTA_Access_Control {
             return '<div class="wdta-access-denied">
                 <h3>Membership Required</h3>
                 <p>This content is only available to active WDTA members.</p>
-                <p>Annual membership is $950 AUD and must be paid by March 31st each year.</p>
+                <p>Annual membership is $950 AUD and must be paid by December 31st each year.</p>
                 <p><a href="' . esc_url(home_url('/membership')) . '">Renew or purchase membership</a></p>
             </div>';
         }

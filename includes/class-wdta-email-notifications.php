@@ -170,7 +170,7 @@ class WDTA_Email_Notifications {
             '{user_email}' => $user->user_email,
             '{year}' => $year,
             '{amount}' => '950.00',
-            '{deadline}' => wdta_format_date('March 31, ' . $year),
+            '{deadline}' => wdta_format_date('December 31, ' . $year),
             '{renewal_url}' => home_url('/membership'),
             '{site_name}' => get_bloginfo('name')
         );
