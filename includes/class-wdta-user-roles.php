@@ -66,15 +66,6 @@ class WDTA_User_Roles {
                 'read' => true,
             )
         );
-        
-        // Add Grace Period Member role
-        add_role(
-            'grace_period_member',
-            'Grace Period Member',
-            array(
-                'read' => true,
-            )
-        );
     }
     
     /**
@@ -95,19 +86,11 @@ class WDTA_User_Roles {
             return;
         }
         
-        // Store previous role before updating
-        $previous_role = !empty($user->roles) ? $user->roles[0] : null;
-        
         // Get membership status
         $role = $this->determine_membership_role($user_id, $year);
         
         // Update user role
         $user->set_role($role);
-        
-        // Send grace period email if transitioning from active to grace period
-        if ($previous_role === 'active_member' && $role === 'grace_period_member') {
-            WDTA_Email_Notifications::send_grace_period_notification($user_id, $year);
-        }
     }
     
     /**
@@ -130,20 +113,14 @@ class WDTA_User_Roles {
         // Has membership record - determine status
         if ($membership->payment_status === 'completed' && $membership->status === 'active') {
             $today = strtotime(date('Y-m-d'));
-            $expiry = strtotime($membership->expiry_date);
             $dec_31 = strtotime($year . '-12-31');
             
-            // Active if before Dec 31
+            // Active if paid and before/on Dec 31 of membership year
             if ($today <= $dec_31) {
                 return 'active_member';
             }
             
-            // Grace period if between Jan 1 and March 31
-            if ($today > $dec_31 && $today <= $expiry) {
-                return 'grace_period_member';
-            }
-            
-            // Expired after March 31
+            // Inactive after Dec 31
             return 'inactive_member';
         }
         
@@ -192,7 +169,6 @@ class WDTA_User_Roles {
         $roles = array(
             'active_member' => 'Active Member',
             'inactive_member' => 'Inactive',
-            'grace_period_member' => 'Grace Period',
             'subscriber' => 'Subscriber',
             'administrator' => 'Administrator',
         );

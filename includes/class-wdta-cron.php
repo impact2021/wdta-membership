@@ -152,30 +152,30 @@ class WDTA_Cron {
         $current_date = date('Y-m-d');
         $current_year = date('Y');
         
-        // Check if it's April 1st - deactivate expired memberships
-        if (date('m-d') === '04-01') {
-            self::deactivate_expired_memberships($current_year);
+        // Check if it's January 1st - deactivate expired memberships
+        if (date('m-d') === '01-01') {
+            self::deactivate_expired_memberships($current_year - 1); // Expire previous year's memberships
         }
     }
     
     /**
-     * Deactivate expired memberships after March 31st
+     * Deactivate expired memberships after December 31st
      */
     private static function deactivate_expired_memberships($year) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
-        // Get all memberships that will expire
+        // Get all memberships that expired on Dec 31st
         $expired_memberships = $wpdb->get_results($wpdb->prepare(
             "SELECT user_id FROM $table_name 
             WHERE membership_year = %d 
             AND expiry_date = %s 
             AND (payment_status != 'completed' OR status = 'active')",
             $year,
-            $year . '-03-31'
+            $year . '-12-31'
         ));
         
-        // Update all memberships that expired on March 31st:
+        // Update all memberships that expired on December 31st:
         // 1. Those with unpaid status (payment never completed)
         // 2. Those that were active but now past expiry date
         $wpdb->query($wpdb->prepare(
@@ -185,7 +185,7 @@ class WDTA_Cron {
             AND expiry_date = %s 
             AND (payment_status != 'completed' OR status = 'active')",
             $year,
-            $year . '-03-31'
+            $year . '-12-31'
         ));
         
         // Send expiry notification emails
