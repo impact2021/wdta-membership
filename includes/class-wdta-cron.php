@@ -97,6 +97,12 @@ class WDTA_Cron {
      * Send reminder emails to users without membership for upcoming year
      */
     private static function send_reminder_emails($year, $type) {
+        // Check if this reminder is enabled
+        $enabled_option = 'wdta_email_reminder_' . str_replace('_', '', $type) . '_enabled';
+        if (get_option($enabled_option, '1') !== '1') {
+            return; // Email is disabled
+        }
+        
         $users = WDTA_Database::get_users_without_membership($year);
         
         foreach ($users as $user) {
@@ -118,6 +124,12 @@ class WDTA_Cron {
      * Send overdue emails to users without active membership
      */
     private static function send_overdue_emails($year, $type) {
+        // Check if this reminder is enabled
+        $enabled_option = 'wdta_email_' . $type . '_enabled';
+        if (get_option($enabled_option, '1') !== '1') {
+            return; // Email is disabled
+        }
+        
         // Get all users who should have membership but don't
         $users = WDTA_Database::get_users_without_membership($year);
         
@@ -152,6 +164,11 @@ class WDTA_Cron {
      * Send inactive users report to administrators
      */
     private static function send_inactive_users_report() {
+        // Check if report is enabled
+        if (get_option('wdta_email_inactive_report_enabled', '1') !== '1') {
+            return; // Report is disabled
+        }
+        
         $current_year = date('Y');
         $inactive_users = WDTA_Database::get_users_without_membership($current_year);
         

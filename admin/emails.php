@@ -19,12 +19,37 @@ settings_errors('wdta_emails');
     <form method="post" action="">
         <?php wp_nonce_field('wdta_emails_action', 'wdta_emails_nonce'); ?>
         
+        <h2>Email Configuration</h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label>Inactive Users Report</label></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="wdta_email_inactive_report_enabled" value="1" 
+                               <?php checked(get_option('wdta_email_inactive_report_enabled', '1'), '1'); ?>>
+                        Send inactive users report on January 1st
+                    </label>
+                    <p class="description">Email will be sent to site admin listing all inactive members</p>
+                    <br>
+                    <label for="wdta_inactive_report_emails">Report Recipients (comma-separated emails):</label>
+                    <input type="text" id="wdta_inactive_report_emails" name="wdta_inactive_report_emails" 
+                           value="<?php echo esc_attr(get_option('wdta_inactive_report_emails', get_option('admin_email'))); ?>" 
+                           class="large-text">
+                </td>
+            </tr>
+        </table>
+        
         <h2>Payment Reminder Emails</h2>
         
         <table class="form-table">
             <tr>
                 <th scope="row"><label for="wdta_email_reminder_1month">1 Month Before (Dec 1st)</label></th>
                 <td>
+                    <label style="margin-bottom: 10px; display: block;">
+                        <input type="checkbox" name="wdta_email_reminder_1month_enabled" value="1" 
+                               <?php checked(get_option('wdta_email_reminder_1month_enabled', '1'), '1'); ?>>
+                        Enable this reminder email
+                    </label>
                     <input type="text" id="wdta_email_reminder_1month_subject" name="wdta_email_reminder_1month_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st')); ?>" 
                            class="large-text" placeholder="Email Subject">
@@ -59,6 +84,11 @@ WDTA Team'),
             <tr>
                 <th scope="row"><label for="wdta_email_reminder_1week">1 Week Before (Dec 25th)</label></th>
                 <td>
+                    <label style="margin-bottom: 10px; display: block;">
+                        <input type="checkbox" name="wdta_email_reminder_1week_enabled" value="1" 
+                               <?php checked(get_option('wdta_email_reminder_1week_enabled', '1'), '1'); ?>>
+                        Enable this reminder email
+                    </label>
                     <input type="text" id="wdta_email_reminder_1week_subject" name="wdta_email_reminder_1week_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1week_subject', 'WDTA Membership - Due in 1 Week')); ?>" 
                            class="large-text" placeholder="Email Subject">
@@ -93,6 +123,11 @@ WDTA Team'),
             <tr>
                 <th scope="row"><label for="wdta_email_reminder_1day">1 Day Before (Dec 31st)</label></th>
                 <td>
+                    <label style="margin-bottom: 10px; display: block;">
+                        <input type="checkbox" name="wdta_email_reminder_1day_enabled" value="1" 
+                               <?php checked(get_option('wdta_email_reminder_1day_enabled', '1'), '1'); ?>>
+                        Enable this reminder email
+                    </label>
                     <input type="text" id="wdta_email_reminder_1day_subject" name="wdta_email_reminder_1day_subject" 
                            value="<?php echo esc_attr(get_option('wdta_email_reminder_1day_subject', 'WDTA Membership - Due Tomorrow')); ?>" 
                            class="large-text" placeholder="Email Subject">

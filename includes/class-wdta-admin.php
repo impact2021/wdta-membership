@@ -274,19 +274,29 @@ class WDTA_Admin {
      * Save email templates
      */
     private function save_email_templates() {
+        // Inactive users report settings
+        update_option('wdta_email_inactive_report_enabled', isset($_POST['wdta_email_inactive_report_enabled']) ? '1' : '0');
+        if (isset($_POST['wdta_inactive_report_emails'])) {
+            update_option('wdta_inactive_report_emails', sanitize_text_field($_POST['wdta_inactive_report_emails']));
+        }
+        
         // Reminder email templates
         $email_templates = array(
             'reminder_1month',
             'reminder_1week',
             'reminder_1day',
-            'reminder_1day_overdue',
-            'reminder_1week_overdue',
-            'reminder_month1',
-            'reminder_month2',
-            'reminder_final'
+            'overdue_1day',
+            'overdue_1week',
+            'overdue_end_jan',
+            'overdue_end_feb',
+            'overdue_end_mar'
         );
         
         foreach ($email_templates as $template) {
+            // Save enabled/disabled status
+            update_option('wdta_email_' . $template . '_enabled', isset($_POST['wdta_email_' . $template . '_enabled']) ? '1' : '0');
+            
+            // Save subject and body
             if (isset($_POST['wdta_email_' . $template . '_subject'])) {
                 update_option('wdta_email_' . $template . '_subject', sanitize_text_field($_POST['wdta_email_' . $template . '_subject']));
             }
