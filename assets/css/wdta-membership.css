@@ -1,0 +1,160 @@
+/* WDTA Membership Plugin Styles */
+
+.wdta-membership-form-container,
+.wdta-membership-renewal-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wdta-membership-form-container h3,
+.wdta-membership-renewal-container h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #0073aa;
+    padding-bottom: 10px;
+}
+
+.wdta-form-row {
+    margin-bottom: 20px;
+}
+
+.wdta-form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+}
+
+.wdta-form-row input[type="text"],
+.wdta-form-row input[type="email"],
+.wdta-form-row input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.wdta-form-row input[type="text"]:focus,
+.wdta-form-row input[type="email"]:focus,
+.wdta-form-row input[type="password"]:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.wdta-membership-details {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 3px;
+    margin: 20px 0;
+}
+
+.wdta-membership-details h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.wdta-membership-details p {
+    margin: 5px 0;
+}
+
+.wdta-payment-section {
+    margin: 20px 0;
+}
+
+.wdta-payment-section h4 {
+    color: #333;
+}
+
+.wdta-payment-note {
+    background: #fff3cd;
+    padding: 10px;
+    border-left: 3px solid #ffc107;
+    margin: 10px 0;
+}
+
+.wdta-submit-button {
+    background: #0073aa;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 3px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+
+.wdta-submit-button:hover {
+    background: #005a87;
+}
+
+.wdta-submit-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.wdta-form-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.wdta-form-message.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.wdta-form-message.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.wdta-membership-notice {
+    padding: 15px;
+    background: #f0f8ff;
+    border: 1px solid #b8daff;
+    border-radius: 3px;
+    margin: 20px 0;
+    color: #004085;
+}
+
+.wdta-membership-notice.wdta-success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.wdta-status-active {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.wdta-status-inactive {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Loading animation */
+.wdta-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
