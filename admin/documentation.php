@@ -34,10 +34,37 @@ if (!defined('ABSPATH')) {
             <strong>Emails:</strong> All emails are editable, and you can define who gets a copy of each email.
         </li>
         <li>
-            <strong>Member-only Pages:</strong> Any pages you want to be available <em>only</em> to members can be selected in the settings: <a href="https://www.wdta.org.au/wp-admin/admin.php?page=wdta-settings">WDTA Settings</a>.
+            <strong>Member-only Pages:</strong> Any pages you want to be available <em>only</em> to members can be selected in the settings: <a href="https://www.wdta.org.au/wp-admin/admin.php?page=wdta-settings&tab=access">Access Control Settings</a>.
         </li>
         <li>
             <strong>Customisation:</strong> All of this workflow can be changed through the GitHub repository if you want to adjust how it works.
         </li>
     </ol>
+
+    <h2>Settings Overview (Version 2.0)</h2>
+    
+    <h3>Payment Settings Tab</h3>
+    <p>Configure your membership pricing, Stripe integration, and bank transfer details:</p>
+    <ul>
+        <li><strong>Membership Price:</strong> Set the annual membership fee (default: $950 AUD)</li>
+        <li><strong>Stripe Settings:</strong> Enter your Stripe API keys and webhook secret</li>
+        <li><strong>Bank Transfer:</strong> Configure bank account details for manual payments</li>
+        <li><strong>Email Settings:</strong> Set the from name and email address for system emails</li>
+    </ul>
+    
+    <h3>Access Control Tab</h3>
+    <p>Control which pages require active membership:</p>
+    <ul>
+        <li><strong>Restricted Pages:</strong> Select pages that only active members can view</li>
+        <li><strong>Access Denied Page:</strong> Choose a custom page for users without access</li>
+    </ul>
+    
+    <h3>Login Redirects Tab</h3>
+    <p>Configure where users go after logging in based on their role:</p>
+    <ul>
+        <li><strong>Role-Based Redirects:</strong> Set a specific page for each user role to redirect to after login</li>
+        <li><strong>Default Behavior:</strong> If no page is selected, users go to /my-account/</li>
+        <li><strong>Administrators:</strong> Always redirect to the WordPress dashboard (not configurable)</li>
+    </ul>
+    <p class="description">Example: You can send Active Members to a members dashboard, while Grace Period members go to a renewal reminder page.</p>
 </div>

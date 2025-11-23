@@ -222,6 +222,16 @@ class WDTA_Admin {
             update_option('wdta_access_denied_page', intval($_POST['wdta_access_denied_page']));
         }
         
+        // Login redirect settings for each role (except administrator)
+        $roles = wp_roles()->roles;
+        foreach ($roles as $role_key => $role_data) {
+            if ($role_key === 'administrator') continue; // Skip administrators
+            $field_name = 'wdta_login_redirect_' . $role_key;
+            if (isset($_POST[$field_name])) {
+                update_option($field_name, intval($_POST[$field_name]));
+            }
+        }
+        
         add_settings_error('wdta_settings', 'settings_updated', 'Settings saved successfully.', 'updated');
     }
     

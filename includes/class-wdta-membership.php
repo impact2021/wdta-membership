@@ -156,15 +156,29 @@ class WDTA_Membership {
     }
     
     /**
-     * Redirect to my-account page after login
+     * Redirect to configured page after login based on user role
      */
     public function redirect_after_login($redirect_to, $request, $user) {
         // Only redirect if it's a successful login (user object exists)
         if (isset($user->roles) && is_array($user->roles)) {
-            // Redirect non-admin users to my-account page
-            if (!in_array('administrator', $user->roles)) {
-                return home_url('/my-account/');
+            // Administrators always use default WordPress redirect
+            if (in_array('administrator', $user->roles)) {
+                return $redirect_to;
             }
+            
+            // Check for role-specific redirect page
+            foreach ($user->roles as $role) {
+                $redirect_page_id = get_option('wdta_login_redirect_' . $role, '');
+                if (!empty($redirect_page_id)) {
+                    $redirect_url = get_permalink($redirect_page_id);
+                    if ($redirect_url) {
+                        return $redirect_url;
+                    }
+                }
+            }
+            
+            // Default fallback to /my-account/ for non-admin users
+            return home_url('/my-account/');
         }
         return $redirect_to;
     }
@@ -203,12 +217,23 @@ class WDTA_Membership {
         }
         
         // Login successful
-        // Determine redirect URL
-        $redirect_url = home_url('/my-account/');
+        // Determine redirect URL based on user role
+        $redirect_url = home_url('/my-account/'); // Default
         
-        // If user is admin, use admin dashboard
+        // Administrators always go to admin dashboard
         if (in_array('administrator', $user->roles)) {
             $redirect_url = admin_url();
+        } else {
+            // Check for role-specific redirect page
+            foreach ($user->roles as $role) {
+                $redirect_page_id = get_option('wdta_login_redirect_' . $role, '');
+                if (!empty($redirect_page_id)) {
+                    $redirect_url = get_permalink($redirect_page_id);
+                    if ($redirect_url) {
+                        break; // Use first matching role redirect
+                    }
+                }
+            }
         }
         
         wp_send_json_success(array(
