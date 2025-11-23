@@ -41,7 +41,63 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
 
 <div class="wdta-membership-form">
     <?php if (!is_user_logged_in()): ?>
-        <p>Please <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> to purchase or renew your membership.</p>
+        <!-- Allow non-logged in users to see the purchase form -->
+        <h2>WDTA Membership - <?php echo $current_year; ?></h2>
+        <div class="wdta-pricing-info">
+            <p><strong>Annual membership fee: $950 AUD</strong></p>
+            <p>Payment must be received by <strong><?php echo wdta_format_date('December 31, ' . $current_year); ?></strong></p>
+        </div>
+        
+        <div class="wdta-info-message">
+            <p><strong>Note:</strong> You must <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> or <a href="<?php echo wp_registration_url(); ?>">register</a> before completing payment.</p>
+        </div>
+        
+        <div class="wdta-payment-methods">
+            <h3>Available Payment Methods:</h3>
+            
+            <div class="wdta-payment-option">
+                <h4>Pay with Credit Card</h4>
+                <p class="wdta-payment-description">Secure payment via Stripe</p>
+                
+                <div class="wdta-stripe-pricing">
+                    <div class="wdta-price-line">
+                        <span>Membership fee:</span>
+                        <span>$950.00 AUD</span>
+                    </div>
+                    <div class="wdta-price-line wdta-surcharge">
+                        <span>Card processing fee (2.2%):</span>
+                        <span>$20.90 AUD</span>
+                    </div>
+                    <div class="wdta-price-line wdta-total">
+                        <span><strong>Total amount:</strong></span>
+                        <span><strong>$970.90 AUD</strong></span>
+                    </div>
+                </div>
+                
+                <p><a href="<?php echo wp_login_url(get_permalink()); ?>" class="button button-primary">Log in to Pay with Card</a></p>
+            </div>
+            
+            <div class="wdta-payment-divider">
+                <span>OR</span>
+            </div>
+            
+            <div class="wdta-payment-option">
+                <h4>Pay via Bank Transfer</h4>
+                <div class="wdta-bank-details">
+                    <p><strong>Bank Details:</strong></p>
+                    <ul>
+                        <li><strong>Bank:</strong> <?php echo esc_html(get_option('wdta_bank_name', 'To be configured')); ?></li>
+                        <li><strong>Account Name:</strong> <?php echo esc_html(get_option('wdta_bank_account_name', 'To be configured')); ?></li>
+                        <li><strong>BSB:</strong> <?php echo esc_html(get_option('wdta_bank_bsb', 'To be configured')); ?></li>
+                        <li><strong>Account Number:</strong> <?php echo esc_html(get_option('wdta_bank_account_number', 'To be configured')); ?></li>
+                        <li><strong>Amount:</strong> $950 AUD</li>
+                        <li><strong>Reference:</strong> Your name and "WDTA <?php echo $current_year; ?>"</li>
+                    </ul>
+                </div>
+                
+                <p><strong>After making your transfer:</strong> Please <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> to submit your payment details for verification.</p>
+            </div>
+        </div>
     <?php else: ?>
         
         <?php if ($show_year_selector): ?>

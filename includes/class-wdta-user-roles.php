@@ -43,6 +43,9 @@ class WDTA_User_Roles {
         
         // Hook into existing activation events
         add_action('wdta_membership_activated', array($this, 'update_user_role'), 10, 2);
+        
+        // Add login redirect based on role
+        add_filter('login_redirect', array($this, 'custom_login_redirect'), 10, 3);
     }
     
     /**
@@ -166,5 +169,47 @@ class WDTA_User_Roles {
         );
         
         return isset($roles[$role]) ? $roles[$role] : ucfirst($role);
+    }
+    
+    /**
+     * Custom login redirect based on user role
+     */
+    public function custom_login_redirect($redirect_to, $request, $user) {
+        // Check if user is valid
+        if (!isset($user->roles) || !is_array($user->roles)) {
+            return $redirect_to;
+        }
+        
+        // Don't redirect administrators
+        if (in_array('administrator', $user->roles)) {
+            return $redirect_to;
+        }
+        
+        // Get the first role of the user
+        $user_role = $user->roles[0];
+        
+        // Get redirect setting for this role
+        $redirect_setting = get_option('wdta_login_redirect_' . $user_role, '');
+        
+        // If no redirect is set, use default
+        if (empty($redirect_setting)) {
+            return $redirect_to;
+        }
+        
+        // Handle special 'home' redirect
+        if ($redirect_setting === 'home') {
+            return home_url('/');
+        }
+        
+        // Handle page ID redirect
+        if (is_numeric($redirect_setting)) {
+            $page_url = get_permalink(intval($redirect_setting));
+            if ($page_url) {
+                return $page_url;
+            }
+        }
+        
+        // Default fallback
+        return $redirect_to;
     }
 }
