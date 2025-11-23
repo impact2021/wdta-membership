@@ -328,7 +328,10 @@ function showTab(tabId, element) {
     }
     
     // Show selected tab
-    document.getElementById(tabId).style.display = 'block';
+    var selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+    }
     
     // Add active class to clicked nav tab
     if (element) {
