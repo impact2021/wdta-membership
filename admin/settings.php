@@ -165,6 +165,37 @@ foreach ($all_roles as $role_key => $role_data) {
                     </td>
                 </tr>
             </table>
+            
+            <h3>Membership Year Settings</h3>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="wdta_year_cutoff_month">Payment Year Cutoff Date</label></th>
+                    <td>
+                        <select name="wdta_year_cutoff_month" id="wdta_year_cutoff_month">
+                            <?php
+                            $months = array(
+                                1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                                5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                                9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                            );
+                            $current_month = get_option('wdta_year_cutoff_month', 11);
+                            foreach ($months as $num => $name) {
+                                echo '<option value="' . $num . '" ' . selected($current_month, $num, false) . '>' . $name . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <select name="wdta_year_cutoff_day" id="wdta_year_cutoff_day">
+                            <?php
+                            $current_day = get_option('wdta_year_cutoff_day', 1);
+                            for ($i = 1; $i <= 31; $i++) {
+                                echo '<option value="' . $i . '" ' . selected($current_day, $i, false) . '>' . $i . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <p class="description">After this date, membership payments will be for the NEXT year instead of the current year. Default: November 1st</p>
+                    </td>
+                </tr>
+            </table>
         </div>
         
         <!-- Tab 3: Login Redirects -->

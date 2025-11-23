@@ -201,6 +201,14 @@ class WDTA_Admin {
             update_option('wdta_email_from_address', sanitize_email($_POST['wdta_email_from_address']));
         }
         
+        // Year cutoff settings
+        if (isset($_POST['wdta_year_cutoff_month'])) {
+            update_option('wdta_year_cutoff_month', intval($_POST['wdta_year_cutoff_month']));
+        }
+        if (isset($_POST['wdta_year_cutoff_day'])) {
+            update_option('wdta_year_cutoff_day', intval($_POST['wdta_year_cutoff_day']));
+        }
+        
         // Restricted pages
         if (isset($_POST['wdta_restricted_pages'])) {
             $restricted_pages = array_map('intval', (array) $_POST['wdta_restricted_pages']);

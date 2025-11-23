@@ -9,31 +9,39 @@ if (!defined('ABSPATH')) {
 
 $current_year = date('Y');
 $current_month = date('n'); // 1-12
+$current_day = date('j'); // 1-31
 $next_year = $current_year + 1;
 $user_id = get_current_user_id();
 $membership = $user_id ? WDTA_Database::get_user_membership($user_id, $current_year) : null;
 $has_active = $user_id ? WDTA_Database::has_active_membership($user_id, $current_year) : false;
 
-// Check if user can pay for next year (from November 1st onwards)
-$can_pay_next_year = ($current_month >= 11);
-$next_year_membership = $user_id && $can_pay_next_year ? WDTA_Database::get_user_membership($user_id, $next_year) : null;
-$has_next_year_active = $user_id && $can_pay_next_year ? WDTA_Database::has_active_membership($user_id, $next_year) : false;
+// Get cutoff date from settings (default: November 1st)
+$cutoff_month = get_option('wdta_year_cutoff_month', 11);
+$cutoff_day = get_option('wdta_year_cutoff_day', 1);
 
-// Check if user should see year selector
-// Show year selector only if:
-// 1. It's November or later AND
-// 2. Either they haven't paid for current year OR they've paid but can also pay for next year
-$show_year_selector = $can_pay_next_year && (!$has_active || !$has_next_year_active);
+// Check if current date is past the cutoff date
+$current_date = mktime(0, 0, 0, $current_month, $current_day, $current_year);
+$cutoff_date = mktime(0, 0, 0, $cutoff_month, $cutoff_day, $current_year);
+$is_past_cutoff = ($current_date >= $cutoff_date);
 
-// Determine which year to show payment form for
-// If current year is already paid, default to next year (from November onwards)
-$default_year = ($has_active && $can_pay_next_year) ? $next_year : $current_year;
-$payment_year = isset($_GET['year']) ? intval($_GET['year']) : $default_year;
+// Determine the applicable year for payment based on cutoff date
+// Before cutoff: payments are for current year
+// After cutoff: payments are for next year
+$applicable_year = $is_past_cutoff ? $next_year : $current_year;
 
-// Only allow current year or next year (if from November onwards)
-if ($payment_year != $current_year && (!$can_pay_next_year || $payment_year != $next_year)) {
-    $payment_year = $default_year;
-}
+// Check if user has paid for the applicable year
+$applicable_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $applicable_year) : null;
+$has_paid_applicable_year = $user_id ? WDTA_Database::has_active_membership($user_id, $applicable_year) : false;
+
+// Next year membership check (always check next year for display purposes)
+$next_year_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $next_year) : null;
+$has_next_year_active = $user_id ? WDTA_Database::has_active_membership($user_id, $next_year) : false;
+
+// Show year selector if past cutoff and user hasn't paid for next year yet
+$show_year_selector = false; // Simplified: no year selector, just show applicable year
+
+// The payment year is determined by the cutoff date
+$payment_year = $applicable_year;
 
 $payment_year_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $payment_year) : null;
 $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id, $payment_year) : false;
@@ -42,9 +50,12 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
 <div class="wdta-membership-form">
     <?php if (!is_user_logged_in()): ?>
         <!-- Allow non-logged in users to register and purchase on the same page -->
-        <h2>WDTA Membership - <?php echo $current_year; ?></h2>
+        <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
         <div class="wdta-pricing-info">
             <p><strong>Annual membership fee: $950 AUD</strong></p>
+            <?php if ($is_past_cutoff): ?>
+                <p class="wdta-info-text">You are registering for <?php echo $payment_year; ?> membership.</p>
+            <?php endif; ?>
         </div>
         
         <div class="wdta-info-message">
@@ -174,31 +185,14 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <div id="wdta-message-new-user"></div>
     <?php else: ?>
         
-        <?php if ($show_year_selector): ?>
-            <div class="wdta-year-selector">
-                <h3>Select Membership Year:</h3>
-                <div class="wdta-year-buttons">
-                    <?php if (!$has_active): ?>
-                        <a href="?year=<?php echo $current_year; ?>" class="button <?php echo $payment_year == $current_year ? 'button-primary' : ''; ?>">
-                            <?php echo $current_year; ?> Membership
-                        </a>
-                    <?php endif; ?>
-                    <?php if (!$has_next_year_active): ?>
-                        <a href="?year=<?php echo $next_year; ?>" class="button <?php echo $payment_year == $next_year ? 'button-primary' : ''; ?>">
-                            <?php echo $next_year; ?> Membership
-                        </a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($payment_year_active): ?>
+        <?php 
+        // Check if user has paid for the applicable year
+        if ($payment_year_active): 
+        ?>
             <div class="wdta-success-message">
-                <h3>✓ Your membership is active</h3>
+                <h3>✓ Your account is paid up for this year</h3>
                 <p>Your WDTA membership for <?php echo $payment_year; ?> is active until December 31, <?php echo $payment_year; ?>.</p>
-                <?php if ($can_pay_next_year && $payment_year == $current_year && !$has_next_year_active): ?>
-                    <p><a href="?year=<?php echo $next_year; ?>" class="button">Pay for <?php echo $next_year; ?> Now</a></p>
-                <?php endif; ?>
+                <p>No further action is needed.</p>
             </div>
         <?php elseif ($payment_year_membership && $payment_year_membership->payment_status === 'pending_verification'): ?>
             <div class="wdta-info-message">
@@ -209,7 +203,9 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
             <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
             <div class="wdta-pricing-info">
                 <p><strong>Annual membership fee: $950 AUD</strong></p>
-                <p>Payment must be received by <strong><?php echo wdta_format_date('December 31, ' . $payment_year); ?></strong></p>
+                <?php if ($is_past_cutoff): ?>
+                    <p class="wdta-info-text">You are paying for <?php echo $payment_year; ?> membership.</p>
+                <?php endif; ?>
             </div>
         
         <div class="wdta-payment-methods">
