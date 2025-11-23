@@ -2,6 +2,25 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [1.2.0] - 2024-11-23
+
+### Changed - BREAKING CHANGES
+- **Removed grace period**: Membership status is now binary (active/inactive only)
+- **Changed expiry date**: Memberships now expire on December 31st instead of March 31st
+- **Automatic deactivation**: Unpaid memberships become inactive on January 1st (previously April 1st)
+- Removed `grace_period_member` user role
+
+### Added
+- **Inactive users report**: New email sent on January 1st listing all inactive members
+- **Email configuration**: Enable/disable checkboxes for all 8 reminder emails
+- Recipients configuration for inactive users report (comma-separated emails)
+- Admin controls to disable specific reminder emails
+
+### Notes
+- All 8 email reminders (3 before Dec 31, 5 after) can now be individually enabled/disabled
+- Payment information, Stripe/Bank settings, and access control preserved from v1.1.x
+- User roles and restricted pages functionality maintained
+
 ## [1.1.4] - 2024-11-21
 
 ### Documentation

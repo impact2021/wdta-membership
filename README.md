@@ -11,20 +11,24 @@ A comprehensive WordPress membership plugin for WDTA (Workplace Drug Testing Aus
 
 ### 🔒 Access Control
 - Restrict specific pages to active members only
-- Automatic access revocation after expiry (March 31st deadline)
+- Automatic access revocation after expiry (December 31st deadline)
 - Custom access denied pages
 - Admin bypass for testing
+- Binary membership status (active/inactive only - no grace period)
 
 ### 📧 Automated Email Notifications
-The plugin sends automated reminder emails on the following schedule:
+The plugin sends automated reminder emails on the following schedule (each can be enabled/disabled):
 - **December 1st**: 1 month before due date
 - **December 25th**: 1 week before due date
 - **December 31st**: 1 day before due date
+- **January 1st**: Inactive users report (sent to admins)
 - **January 2nd**: 1 day overdue
 - **January 8th**: 1 week overdue
 - **January 31st**: End of first month
-- **February 28th/29th**: End of second month
-- **March 31st**: Final deadline (access revoked after this date)
+- **February 28th/29th**: End of second month  
+- **March 31st**: Final deadline (legacy support)
+
+All email reminders can be individually enabled/disabled in the admin settings.
 
 ### 🎛️ Admin Dashboard
 - View all memberships by year and status
