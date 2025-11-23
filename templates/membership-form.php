@@ -41,7 +41,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
 
 <div class="wdta-membership-form">
     <?php if (!is_user_logged_in()): ?>
-        <!-- Allow non-logged in users to see the purchase form -->
+        <!-- Allow non-logged in users to register and purchase on the same page -->
         <h2>WDTA Membership - <?php echo $current_year; ?></h2>
         <div class="wdta-pricing-info">
             <p><strong>Annual membership fee: $950 AUD</strong></p>
@@ -49,13 +49,49 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         </div>
         
         <div class="wdta-info-message">
-            <p><strong>Note:</strong> You must <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> or <a href="<?php echo wp_registration_url(); ?>">register</a> before completing payment.</p>
+            <p><strong>New members:</strong> Complete the form below to register and pay for your membership.</p>
+            <p>Already have an account? <a href="<?php echo wp_login_url(get_permalink()); ?>">Log in here</a></p>
+        </div>
+        
+        <!-- Registration Form for New Users -->
+        <div class="wdta-registration-section">
+            <h3>Your Information</h3>
+            <form id="wdta-registration-form">
+                <div class="wdta-form-row">
+                    <div class="wdta-form-field">
+                        <label for="wdta_first_name">First Name *</label>
+                        <input type="text" id="wdta_first_name" name="first_name" required>
+                    </div>
+                    <div class="wdta-form-field">
+                        <label for="wdta_last_name">Last Name *</label>
+                        <input type="text" id="wdta_last_name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="wdta-form-row">
+                    <div class="wdta-form-field">
+                        <label for="wdta_email">Email Address (will be your username) *</label>
+                        <input type="email" id="wdta_email" name="email" required>
+                    </div>
+                </div>
+                <div class="wdta-form-row">
+                    <div class="wdta-form-field">
+                        <label for="wdta_password">Password *</label>
+                        <input type="password" id="wdta_password" name="password" required minlength="8">
+                        <small>Minimum 8 characters</small>
+                    </div>
+                    <div class="wdta-form-field">
+                        <label for="wdta_password_confirm">Confirm Password *</label>
+                        <input type="password" id="wdta_password_confirm" name="password_confirm" required minlength="8">
+                    </div>
+                </div>
+                <div id="wdta-registration-errors" class="wdta-error-message" style="display:none;"></div>
+            </form>
         </div>
         
         <div class="wdta-payment-methods">
-            <h3>Available Payment Methods:</h3>
+            <h3>Choose Payment Method:</h3>
             
-            <div class="wdta-payment-option">
+            <div class="wdta-payment-option wdta-stripe-payment">
                 <h4>Pay with Credit Card</h4>
                 <p class="wdta-payment-description">Secure payment via Stripe</p>
                 
@@ -74,7 +110,18 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                     </div>
                 </div>
                 
-                <p><a href="<?php echo wp_login_url(get_permalink()); ?>" class="button button-primary">Log in to Pay with Card</a></p>
+                <form id="wdta-stripe-payment-form-new-user">
+                    <div id="wdta-card-element-new-user" class="wdta-card-element">
+                        <!-- Stripe Card Element will be inserted here -->
+                    </div>
+                    
+                    <div id="wdta-card-errors-new-user" class="wdta-error-message" role="alert"></div>
+                    
+                    <button id="wdta-stripe-submit-new-user" class="button button-primary" type="submit">
+                        <span id="wdta-button-text-new-user">Register & Pay $970.90 AUD</span>
+                        <span id="wdta-spinner-new-user" class="wdta-spinner" style="display:none;"></span>
+                    </button>
+                </form>
             </div>
             
             <div class="wdta-payment-divider">
@@ -95,9 +142,27 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                     </ul>
                 </div>
                 
-                <p><strong>After making your transfer:</strong> Please <a href="<?php echo wp_login_url(get_permalink()); ?>">log in</a> to submit your payment details for verification.</p>
+                <div class="wdta-bank-form">
+                    <h5>After making your transfer, submit your details:</h5>
+                    <form id="wdta-bank-transfer-form-new-user">
+                        <p>
+                            <label for="wdta_reference_new">Payment Reference:</label>
+                            <input type="text" id="wdta_reference_new" name="reference" required 
+                                   placeholder="e.g., John Smith WDTA <?php echo $current_year; ?>">
+                        </p>
+                        <p>
+                            <label for="wdta_payment_date_new">Payment Date:</label>
+                            <input type="date" id="wdta_payment_date_new" name="payment_date" required>
+                        </p>
+                        <p>
+                            <button type="submit" class="button button-primary">Register & Submit Bank Transfer Details</button>
+                        </p>
+                    </form>
+                </div>
             </div>
         </div>
+        
+        <div id="wdta-message-new-user"></div>
     <?php else: ?>
         
         <?php if ($show_year_selector): ?>
@@ -351,6 +416,204 @@ jQuery(document).ready(function($) {
                     }, 2000);
                 } else {
                     $('#wdta-message').html('<p class="error">' + response.data.message + '</p>');
+                }
+            }
+        });
+    });
+});
+</script>
+<?php endif; ?>
+
+<?php if (!is_user_logged_in()): ?>
+<script>
+jQuery(document).ready(function($) {
+    // Initialize Stripe Elements for new users
+    var stripe = null;
+    var elements = null;
+    var cardElement = null;
+    var clientSecret = null;
+    
+    // Check if Stripe is available and public key is set
+    if (typeof wdtaStripe !== 'undefined' && wdtaStripe.publicKey) {
+        stripe = Stripe(wdtaStripe.publicKey);
+        elements = stripe.elements();
+        
+        // Create card element
+        var style = {
+            base: {
+                color: '#32325d',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: '#aab7c4'
+                }
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+            }
+        };
+        
+        cardElement = elements.create('card', {style: style});
+        cardElement.mount('#wdta-card-element-new-user');
+        
+        // Handle real-time validation errors
+        cardElement.on('change', function(event) {
+            var displayError = document.getElementById('wdta-card-errors-new-user');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+    }
+    
+    // Validate registration form
+    function validateRegistrationForm() {
+        var errors = [];
+        var email = $('#wdta_email').val();
+        var password = $('#wdta_password').val();
+        var passwordConfirm = $('#wdta_password_confirm').val();
+        var firstName = $('#wdta_first_name').val();
+        var lastName = $('#wdta_last_name').val();
+        
+        if (!firstName.trim()) {
+            errors.push('First name is required');
+        }
+        if (!lastName.trim()) {
+            errors.push('Last name is required');
+        }
+        if (!email.trim() || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            errors.push('Valid email address is required');
+        }
+        if (password.length < 8) {
+            errors.push('Password must be at least 8 characters');
+        }
+        if (password !== passwordConfirm) {
+            errors.push('Passwords do not match');
+        }
+        
+        return errors;
+    }
+    
+    // Handle Stripe form submission for new users
+    $('#wdta-stripe-payment-form-new-user').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate registration form first
+        var errors = validateRegistrationForm();
+        if (errors.length > 0) {
+            $('#wdta-registration-errors').html(errors.join('<br>')).show();
+            return;
+        }
+        $('#wdta-registration-errors').hide();
+        
+        if (!stripe || !cardElement) {
+            $('#wdta-card-errors-new-user').text('Payment system not properly initialized. Please refresh and try again.');
+            return;
+        }
+        
+        setLoadingNewUser(true);
+        
+        // First, register the user
+        $.ajax({
+            url: wdtaStripe.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_register_and_create_payment_intent',
+                nonce: '<?php echo wp_create_nonce('wdta_membership_nonce'); ?>',
+                year: <?php echo $current_year; ?>,
+                first_name: $('#wdta_first_name').val(),
+                last_name: $('#wdta_last_name').val(),
+                email: $('#wdta_email').val(),
+                password: $('#wdta_password').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    clientSecret = response.data.clientSecret;
+                    
+                    // Now confirm the payment with Stripe
+                    stripe.confirmCardPayment(clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                email: $('#wdta_email').val(),
+                                name: $('#wdta_first_name').val() + ' ' + $('#wdta_last_name').val()
+                            }
+                        }
+                    }).then(function(result) {
+                        if (result.error) {
+                            $('#wdta-card-errors-new-user').text(result.error.message);
+                            setLoadingNewUser(false);
+                        } else {
+                            if (result.paymentIntent.status === 'succeeded') {
+                                $('#wdta-message-new-user').html('<div class="wdta-success-message"><p>✓ Registration and payment successful! Your membership is now active. Redirecting...</p></div>');
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            }
+                        }
+                    });
+                } else {
+                    $('#wdta-card-errors-new-user').text(response.data.message);
+                    setLoadingNewUser(false);
+                }
+            },
+            error: function() {
+                $('#wdta-card-errors-new-user').text('An error occurred. Please try again.');
+                setLoadingNewUser(false);
+            }
+        });
+    });
+    
+    function setLoadingNewUser(isLoading) {
+        if (isLoading) {
+            $('#wdta-stripe-submit-new-user').prop('disabled', true);
+            $('#wdta-button-text-new-user').hide();
+            $('#wdta-spinner-new-user').show();
+        } else {
+            $('#wdta-stripe-submit-new-user').prop('disabled', false);
+            $('#wdta-button-text-new-user').show();
+            $('#wdta-spinner-new-user').hide();
+        }
+    }
+    
+    // Bank transfer form for new users
+    $('#wdta-bank-transfer-form-new-user').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate registration form first
+        var errors = validateRegistrationForm();
+        if (errors.length > 0) {
+            $('#wdta-registration-errors').html(errors.join('<br>')).show();
+            return;
+        }
+        $('#wdta-registration-errors').hide();
+        
+        var formData = $(this).serialize();
+        formData += '&action=wdta_register_and_submit_bank_transfer';
+        formData += '&nonce=<?php echo wp_create_nonce('wdta_membership_nonce'); ?>';
+        formData += '&year=<?php echo $current_year; ?>';
+        formData += '&first_name=' + encodeURIComponent($('#wdta_first_name').val());
+        formData += '&last_name=' + encodeURIComponent($('#wdta_last_name').val());
+        formData += '&email=' + encodeURIComponent($('#wdta_email').val());
+        formData += '&password=' + encodeURIComponent($('#wdta_password').val());
+        
+        $.ajax({
+            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#wdta-message-new-user').html('<p class="success">' + response.data.message + '</p>');
+                    $('#wdta-bank-transfer-form-new-user')[0].reset();
+                    $('#wdta-registration-form')[0].reset();
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    $('#wdta-message-new-user').html('<p class="error">' + response.data.message + '</p>');
                 }
             }
         });

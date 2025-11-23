@@ -36,6 +36,7 @@ class WDTA_Payment_Bank {
      */
     public function init() {
         add_action('wp_ajax_wdta_submit_bank_transfer', array($this, 'submit_bank_transfer'));
+        add_action('wp_ajax_nopriv_wdta_register_and_submit_bank_transfer', array($this, 'register_and_submit_bank_transfer'));
         add_action('admin_init', array($this, 'register_settings'));
     }
     
@@ -137,5 +138,80 @@ class WDTA_Payment_Bank {
         $message .= "Best regards,\nWDTA Team";
         
         wp_mail($to, $subject, $message);
+    }
+    
+    /**
+     * Register new user and submit bank transfer
+     */
+    public function register_and_submit_bank_transfer() {
+        check_ajax_referer('wdta_membership_nonce', 'nonce');
+        
+        // Get and validate registration data
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
+        $first_name = isset($_POST['first_name']) ? sanitize_text_field($_POST['first_name']) : '';
+        $last_name = isset($_POST['last_name']) ? sanitize_text_field($_POST['last_name']) : '';
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $reference = isset($_POST['reference']) ? sanitize_text_field($_POST['reference']) : '';
+        $payment_date = isset($_POST['payment_date']) ? sanitize_text_field($_POST['payment_date']) : current_time('mysql');
+        
+        // Validate required fields
+        if (empty($email) || empty($password) || empty($first_name) || empty($last_name)) {
+            wp_send_json_error(array('message' => 'All registration fields are required'));
+            return;
+        }
+        
+        // Validate email format
+        if (!is_email($email)) {
+            wp_send_json_error(array('message' => 'Invalid email address'));
+            return;
+        }
+        
+        // Check if email already exists
+        if (email_exists($email)) {
+            wp_send_json_error(array('message' => 'This email is already registered. Please log in instead.'));
+            return;
+        }
+        
+        // Create the user account
+        $username = $email; // Use email as username
+        $user_id = wp_create_user($username, $password, $email);
+        
+        if (is_wp_error($user_id)) {
+            wp_send_json_error(array('message' => 'Could not create account: ' . $user_id->get_error_message()));
+            return;
+        }
+        
+        // Update user meta with first and last name
+        wp_update_user(array(
+            'ID' => $user_id,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'display_name' => $first_name . ' ' . $last_name
+        ));
+        
+        // Log the user in
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
+        
+        // Create pending membership record
+        $expiry_date = $year . '-12-31';
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_amount' => 950.00,
+            'payment_method' => 'bank_transfer',
+            'payment_status' => 'pending_verification',
+            'payment_reference' => $reference,
+            'expiry_date' => $expiry_date,
+            'status' => 'pending'
+        ));
+        
+        // Notify admin
+        $this->notify_admin_of_bank_transfer($user_id, $year, $reference);
+        
+        wp_send_json_success(array(
+            'message' => 'Registration successful! Bank transfer details submitted. Your membership will be activated once payment is verified.'
+        ));
     }
 }
