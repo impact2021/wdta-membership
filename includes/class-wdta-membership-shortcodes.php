@@ -181,7 +181,7 @@ class WDTA_Membership_Shortcodes {
         // Validate input
         $username = sanitize_user($_POST['username']);
         $email = sanitize_email($_POST['email']);
-        $password = $_POST['password'];
+        $password = $_POST['password']; // Don't sanitize passwords, but validate
         $first_name = sanitize_text_field($_POST['first_name']);
         $last_name = sanitize_text_field($_POST['last_name']);
         $year = intval($_POST['membership_year']);
@@ -190,6 +190,11 @@ class WDTA_Membership_Shortcodes {
         // Validate required fields
         if (empty($username) || empty($email) || empty($password) || empty($first_name) || empty($last_name)) {
             wp_send_json_error(array('message' => 'All fields are required'));
+        }
+        
+        // Validate password strength (minimum 8 characters)
+        if (strlen($password) < 8) {
+            wp_send_json_error(array('message' => 'Password must be at least 8 characters long'));
         }
         
         // Create user

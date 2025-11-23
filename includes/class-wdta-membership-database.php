@@ -78,6 +78,16 @@ class WDTA_Membership_Database {
             unset($data['user_id']);
             unset($data['membership_year']);
             
+            // Build format array dynamically based on data
+            $formats = array();
+            foreach ($data as $key => $value) {
+                if (in_array($key, array('payment_amount'))) {
+                    $formats[] = '%f';
+                } else {
+                    $formats[] = '%s';
+                }
+            }
+            
             return $wpdb->update(
                 $table_name,
                 $data,
@@ -85,14 +95,26 @@ class WDTA_Membership_Database {
                     'user_id' => $user_id,
                     'membership_year' => $year
                 ),
-                array('%s', '%s', '%s', '%f', '%s'),
+                $formats,
                 array('%d', '%d')
             );
         } else {
+            // Build format array dynamically based on data
+            $formats = array();
+            foreach ($data as $key => $value) {
+                if ($key === 'user_id' || $key === 'membership_year') {
+                    $formats[] = '%d';
+                } elseif ($key === 'payment_amount') {
+                    $formats[] = '%f';
+                } else {
+                    $formats[] = '%s';
+                }
+            }
+            
             return $wpdb->insert(
                 $table_name,
                 $data,
-                array('%d', '%d', '%s', '%s', '%f', '%s', '%s')
+                $formats
             );
         }
     }

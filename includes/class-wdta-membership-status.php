@@ -57,12 +57,12 @@ class WDTA_Membership_Status {
      */
     public static function check_current_status() {
         // On January 1st, deactivate all memberships for the previous year that weren't paid
-        $current_date = current_time('Y-m-d');
-        $current_year = (int) date('Y');
+        $current_time = current_time('timestamp');
+        $current_year = (int) date('Y', $current_time);
         $previous_year = $current_year - 1;
         
-        // Check if it's January 1st
-        if (date('m-d') === '01-01') {
+        // Check if it's January 1st (using WordPress time)
+        if (date('m-d', $current_time) === '01-01') {
             // Set all unpaid previous year memberships to inactive
             WDTA_Membership_Database::set_unpaid_to_inactive($previous_year);
         }
