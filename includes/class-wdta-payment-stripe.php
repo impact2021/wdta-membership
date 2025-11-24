@@ -341,7 +341,8 @@ WDTA Team');
         // ]);
         
         // For now, return mock payment intent data
-        $client_secret = 'pi_test_' . uniqid() . '_secret_' . uniqid();
+        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
+        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
         
         wp_send_json_success(array(
             'clientSecret' => $client_secret,
@@ -430,7 +431,8 @@ WDTA Team');
         // Create Payment Intent with Stripe API
         // In production, use actual Stripe API
         // For now, return mock payment intent data
-        $client_secret = 'pi_test_' . uniqid() . '_secret_' . uniqid();
+        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
+        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
         
         wp_send_json_success(array(
             'clientSecret' => $client_secret,
