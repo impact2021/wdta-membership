@@ -208,26 +208,13 @@ class WDTA_Payment_Stripe {
         // Extract user_id and year from session metadata
         $user_id = isset($session['metadata']['user_id']) ? intval($session['metadata']['user_id']) : 0;
         $year = isset($session['metadata']['year']) ? intval($session['metadata']['year']) : date('Y');
+        $payment_id = isset($session['payment_intent']) ? $session['payment_intent'] : null;
         
         if (!$user_id) {
             return;
         }
         
-        // Update membership record
-        WDTA_Database::save_membership(array(
-            'user_id' => $user_id,
-            'membership_year' => $year,
-            'payment_status' => 'completed',
-            'payment_date' => current_time('mysql'),
-            'stripe_payment_id' => $session['payment_intent'],
-            'status' => 'active'
-        ));
-        
-        // Update user role
-        do_action('wdta_membership_activated', $user_id, $year);
-        
-        // Send confirmation email
-        $this->send_payment_confirmation($user_id, $year);
+        $this->activate_membership($user_id, $year, $payment_id);
     }
     
     /**
@@ -237,21 +224,38 @@ class WDTA_Payment_Stripe {
         // Extract user_id and year from payment intent metadata
         $user_id = isset($payment_intent['metadata']['user_id']) ? intval($payment_intent['metadata']['user_id']) : 0;
         $year = isset($payment_intent['metadata']['year']) ? intval($payment_intent['metadata']['year']) : date('Y');
+        $payment_id = isset($payment_intent['id']) ? $payment_intent['id'] : null;
         
         if (!$user_id) {
             error_log('WDTA Payment: No user_id in payment intent metadata');
             return;
         }
         
+        $this->activate_membership($user_id, $year, $payment_id);
+    }
+    
+    /**
+     * Activate membership after successful payment
+     * 
+     * @param int $user_id WordPress user ID
+     * @param int $year Membership year
+     * @param string|null $payment_id Stripe payment intent ID
+     */
+    private function activate_membership($user_id, $year, $payment_id = null) {
         // Update membership record
-        WDTA_Database::save_membership(array(
+        $membership_data = array(
             'user_id' => $user_id,
             'membership_year' => $year,
             'payment_status' => 'completed',
             'payment_date' => current_time('mysql'),
-            'stripe_payment_id' => $payment_intent['id'],
             'status' => 'active'
-        ));
+        );
+        
+        if ($payment_id) {
+            $membership_data['stripe_payment_id'] = $payment_id;
+        }
+        
+        WDTA_Database::save_membership($membership_data);
         
         // Update user role
         do_action('wdta_membership_activated', $user_id, $year);
@@ -327,9 +331,9 @@ WDTA Team');
             return new WP_Error('invalid_user', 'Invalid user ID');
         }
         
-        // Validate Stripe secret key format
-        if (empty($secret_key) || !preg_match('/^(sk_test_|sk_live_|rk_test_|rk_live_)/', $secret_key)) {
-            return new WP_Error('invalid_api_key', 'Invalid Stripe API key format');
+        // Validate Stripe secret key format (only secret keys, not restricted keys)
+        if (empty($secret_key) || !preg_match('/^(sk_test_|sk_live_)/', $secret_key)) {
+            return new WP_Error('invalid_api_key', 'Invalid Stripe secret key format. Must start with sk_test_ or sk_live_');
         }
         
         // Create PaymentIntent using Stripe API
