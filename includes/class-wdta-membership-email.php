@@ -54,7 +54,7 @@ class WDTA_Membership_Email {
         $message .= self::get_email_footer();
         
         // Send email
-        $headers = self::get_email_headers();
+        $headers = self::get_email_headers('none');
         return wp_mail($recipients, $subject, $message, $headers);
     }
     
@@ -131,7 +131,7 @@ class WDTA_Membership_Email {
         }
         
         $subject = 'WDTA Membership Payment Confirmation';
-        $headers = self::get_email_headers();
+        $headers = self::get_email_headers('signup');
         
         $message = self::get_email_header();
         $message .= '<h2>Payment Confirmation</h2>';
@@ -151,8 +151,10 @@ class WDTA_Membership_Email {
     
     /**
      * Get email headers
+     * 
+     * @param string $type Type of email: 'reminder', 'signup', or 'none' (no CC)
      */
-    private static function get_email_headers() {
+    private static function get_email_headers($type = 'reminder') {
         $from_email = get_option('wdta_membership_from_email', get_option('admin_email'));
         $from_name = get_option('wdta_membership_from_name', get_bloginfo('name'));
         
@@ -160,8 +162,15 @@ class WDTA_Membership_Email {
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
         $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
         
-        // Add CC recipients for reminder emails
-        $cc_recipients = get_option('wdta_reminder_email_cc', 'marketing@wdta.org.au');
+        // Add CC recipients based on email type
+        $cc_recipients = '';
+        if ($type === 'signup') {
+            $cc_recipients = get_option('wdta_signup_email_cc', 'marketing@wdta.org.au, treasurer@wdta.org.au');
+        } elseif ($type === 'reminder') {
+            $cc_recipients = get_option('wdta_reminder_email_cc', 'marketing@wdta.org.au');
+        }
+        // For 'none' type, $cc_recipients stays empty
+        
         if (!empty($cc_recipients)) {
             $cc_emails = array_map('trim', explode(',', $cc_recipients));
             foreach ($cc_emails as $cc_email) {
