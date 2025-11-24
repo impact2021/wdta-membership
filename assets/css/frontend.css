@@ -617,7 +617,8 @@
 }
 
 /* Bank transfer submit button styling to match Stripe button */
-#wdta-bank-submit-new-user {
+#wdta-bank-submit-new-user,
+.wdta-bank-form button[type="submit"] {
     background: #635bff;
     color: white;
     border: none;
@@ -631,16 +632,19 @@
     position: relative;
 }
 
-#wdta-bank-submit-new-user:hover:not(:disabled) {
+#wdta-bank-submit-new-user:hover:not(:disabled),
+.wdta-bank-form button[type="submit"]:hover:not(:disabled) {
     background: #4f46e5;
 }
 
-#wdta-bank-submit-new-user:disabled {
+#wdta-bank-submit-new-user:disabled,
+.wdta-bank-form button[type="submit"]:disabled {
     background: #aab7c4;
     cursor: not-allowed;
 }
 
-#wdta-bank-submit-new-user:focus {
+#wdta-bank-submit-new-user:focus,
+.wdta-bank-form button[type="submit"]:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.3);
 }

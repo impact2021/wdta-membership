@@ -17,18 +17,21 @@ A comprehensive WordPress membership plugin for WDTA (Workplace Drug Testing Aus
 - Binary membership status (active/inactive only - no grace period)
 
 ### 📧 Automated Email Notifications
-The plugin sends automated reminder emails on the following schedule (each can be enabled/disabled):
-- **December 1st**: 1 month before due date
-- **December 25th**: 1 week before due date
-- **December 31st**: 1 day before due date
-- **January 1st**: Inactive users report (sent to admins)
-- **January 2nd**: 1 day overdue
-- **January 8th**: 1 week overdue
-- **January 31st**: End of first month
-- **February 28th/29th**: End of second month  
-- **March 31st**: Final deadline (legacy support)
+The plugin features a **dynamic email reminder system** that allows you to:
+- **Add unlimited reminders**: Click "Add Another Reminder" to create as many reminders as needed
+- **Flexible timing**: Configure each reminder to be sent X days or weeks BEFORE or AFTER membership expiry (Dec 31)
+- **Enable/disable**: Each reminder has its own checkbox to turn it on or off
+- **Customize content**: Full control over subject line and email body for each reminder
+- **Default setup**: New installations start with 1 reminder (30 days before expiry)
 
-All email reminders can be individually enabled/disabled in the admin settings.
+**Example configurations:**
+- 30 days BEFORE expiry (Dec 1st)
+- 1 week BEFORE expiry (Dec 24th)
+- 1 day AFTER expiry (Jan 1st)
+- 2 weeks AFTER expiry (Jan 14th)
+
+**Special emails:**
+- **January 1st**: Inactive users report (sent to admins) - can be enabled/disabled separately
 
 ### 🎛️ Admin Dashboard
 - View all memberships by year and status
@@ -122,19 +125,47 @@ Members can log in at: `https://yoursite.com/member-login/`
 6. Membership activated
 7. Confirmation email sent
 
-## Email Schedule
+## Email Schedule & Configuration
 
-The plugin uses WordPress Cron to send reminder emails automatically. Emails are sent at midnight (server time) on the scheduled dates.
+### Dynamic Reminder System
 
-**Customization:**
-Email templates can be customized in the Settings page. Available placeholders:
+The plugin uses WordPress Cron to send reminder emails automatically based on your configuration. Emails are sent at midnight (server time) on the calculated dates.
+
+**Configuring Reminders:**
+1. Go to **WDTA Membership > Emails**
+2. Scroll to "Payment Reminder Emails" section
+3. Each reminder can be configured with:
+   - **Enable/Disable**: Checkbox to turn the reminder on or off
+   - **Timing**: Number (e.g., 1, 7, 30)
+   - **Unit**: Days or Weeks
+   - **Period**: BEFORE or AFTER membership expires (Dec 31)
+   - **Subject**: Email subject line
+   - **Body**: Email content with placeholders
+
+**Adding New Reminders:**
+1. Click the "+ Add Another Reminder" button
+2. Configure the timing, subject, and body
+3. Click "Save Email Templates"
+
+**Removing Reminders:**
+1. Click "Remove Reminder" button on any reminder
+2. Confirm the deletion
+3. Click "Save Email Templates"
+
+**Available Placeholders:**
 - `{user_name}` - Member's display name
 - `{user_email}` - Member's email address
 - `{year}` - Membership year
 - `{amount}` - Membership amount ($950 AUD)
-- `{deadline}` - Payment deadline (March 31st)
+- `{deadline}` - Payment deadline (December 31st)
 - `{renewal_url}` - Link to membership form
 - `{site_name}` - Website name
+
+**Example Configurations:**
+- **30 days before expiry**: Sends on December 1st (for next year's membership)
+- **1 week before expiry**: Sends on December 24th
+- **1 day after expiry**: Sends on January 1st (for current year's overdue members)
+- **2 weeks after expiry**: Sends on January 14th
 
 ## Database
 

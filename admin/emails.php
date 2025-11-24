@@ -160,23 +160,22 @@ WDTA Team'),
         
         <h2>Payment Reminder Emails</h2>
         
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_1month">1 Month Before (Dec 1st)</label></th>
-                <td>
-                    <label style="margin-bottom: 10px; display: block;">
-                        <input type="checkbox" name="wdta_email_reminder_1month_enabled" value="1" 
-                               <?php checked(get_option('wdta_email_reminder_1month_enabled', '1'), '1'); ?>>
-                        Enable this reminder email
-                    </label>
-                    <input type="text" id="wdta_email_reminder_1month_subject" name="wdta_email_reminder_1month_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_1month_body', 
-'Dear {user_name},
+        <div id="wdta-reminders-container">
+            <?php
+            // Get existing reminders or set default
+            $reminders = get_option('wdta_email_reminders', array());
+            
+            // If no reminders exist, create one default reminder
+            if (empty($reminders)) {
+                $reminders = array(
+                    array(
+                        'id' => 1,
+                        'enabled' => true,
+                        'timing' => 30,
+                        'unit' => 'days',
+                        'period' => 'before',
+                        'subject' => 'WDTA Membership Renewal - Due January 1st',
+                        'body' => 'Dear {user_name},
 
 This is a reminder that your WDTA membership for {year} will be due on January 1st, {year}.
 
@@ -185,283 +184,167 @@ The annual membership fee is ${amount} AUD and must be paid by {deadline}.
 You can renew your membership at: {renewal_url}
 
 Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_1month_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
+WDTA Team'
+                    )
+                );
+            }
             
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_1week">1 Week Before (Dec 25th)</label></th>
-                <td>
-                    <label style="margin-bottom: 10px; display: block;">
-                        <input type="checkbox" name="wdta_email_reminder_1week_enabled" value="1" 
-                               <?php checked(get_option('wdta_email_reminder_1week_enabled', '1'), '1'); ?>>
-                        Enable this reminder email
-                    </label>
-                    <input type="text" id="wdta_email_reminder_1week_subject" name="wdta_email_reminder_1week_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_1week_subject', 'WDTA Membership - Due in 1 Week')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_1week_body', 
-'Dear {user_name},
-
-Your WDTA membership renewal is due in one week (January 1st, {year}).
-
-Please ensure your payment of ${amount} AUD is made by {deadline}.
-
-Renew now at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_1week_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
+            foreach ($reminders as $index => $reminder) {
+                $reminder_id = isset($reminder['id']) ? $reminder['id'] : ($index + 1);
+                $enabled = isset($reminder['enabled']) ? $reminder['enabled'] : true;
+                $timing = isset($reminder['timing']) ? $reminder['timing'] : 30;
+                $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
+                $period = isset($reminder['period']) ? $reminder['period'] : 'before';
+                $subject = isset($reminder['subject']) ? $reminder['subject'] : '';
+                $body = isset($reminder['body']) ? $reminder['body'] : '';
+                ?>
+                <div class="wdta-reminder-item" data-reminder-id="<?php echo esc_attr($reminder_id); ?>">
+                    <div class="wdta-reminder-header" style="background: #f5f5f5; padding: 15px; margin: 15px 0; border-left: 4px solid #2271b1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <label style="margin-bottom: 10px; display: block;">
+                                    <input type="checkbox" 
+                                           name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][enabled]" 
+                                           value="1" 
+                                           <?php checked($enabled, true); ?>>
+                                    <strong>Enable this reminder</strong>
+                                </label>
+                                <div style="margin-top: 10px;">
+                                    <label>Send 
+                                        <input type="number" 
+                                               name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][timing]" 
+                                               value="<?php echo esc_attr($timing); ?>" 
+                                               min="1" 
+                                               style="width: 60px;">
+                                        <select name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][unit]">
+                                            <option value="days" <?php selected($unit, 'days'); ?>>day(s)</option>
+                                            <option value="weeks" <?php selected($unit, 'weeks'); ?>>week(s)</option>
+                                        </select>
+                                        <select name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][period]">
+                                            <option value="before" <?php selected($period, 'before'); ?>>BEFORE</option>
+                                            <option value="after" <?php selected($period, 'after'); ?>>AFTER</option>
+                                        </select>
+                                        membership expires (Dec 31)
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" class="button wdta-remove-reminder" style="margin-left: 20px;">Remove Reminder</button>
+                        </div>
+                    </div>
+                    <div class="wdta-reminder-content" style="padding: 15px; border: 1px solid #ddd; border-top: none;">
+                        <input type="hidden" 
+                               name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][id]" 
+                               value="<?php echo esc_attr($reminder_id); ?>">
+                        
+                        <label><strong>Email Subject:</strong></label>
+                        <input type="text" 
+                               name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][subject]" 
+                               value="<?php echo esc_attr($subject); ?>" 
+                               class="large-text" 
+                               placeholder="Email Subject">
+                        <br><br>
+                        
+                        <label><strong>Email Body:</strong></label>
+                        <?php 
+                        wp_editor(
+                            $body,
+                            'wdta_reminder_body_' . $reminder_id,
+                            array(
+                                'textarea_name' => 'wdta_reminders[' . $reminder_id . '][body]',
+                                'textarea_rows' => 10,
+                                'media_buttons' => false,
+                                'teeny' => false,
+                                'tinymce' => array(
+                                    'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                                ),
+                            )
+                        );
+                        ?>
+                    </div>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        
+        <p>
+            <button type="button" id="wdta-add-reminder" class="button button-secondary">+ Add Another Reminder</button>
+        </p>
+        
+        <?php
+        // Get default template for JavaScript
+        $default_template_js = esc_js(wdta_get_default_reminder_template());
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var reminderCounter = <?php echo count($reminders); ?>;
             
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_1day">1 Day Before (Dec 31st)</label></th>
-                <td>
-                    <label style="margin-bottom: 10px; display: block;">
-                        <input type="checkbox" name="wdta_email_reminder_1day_enabled" value="1" 
-                               <?php checked(get_option('wdta_email_reminder_1day_enabled', '1'), '1'); ?>>
-                        Enable this reminder email
-                    </label>
-                    <input type="text" id="wdta_email_reminder_1day_subject" name="wdta_email_reminder_1day_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_1day_subject', 'WDTA Membership - Due Tomorrow')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_1day_body', 
-'Dear {user_name},
-
-Final reminder: Your WDTA membership for {year} is due tomorrow!
-
-Payment deadline: {deadline}
-Amount: ${amount} AUD
-
-Renew immediately at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_1day_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
+            // Find the highest existing ID to ensure uniqueness
+            var maxId = <?php 
+                if (!empty($reminders)) {
+                    $ids = array_map(function($r) { return isset($r['id']) ? intval($r['id']) : 0; }, $reminders);
+                    echo max($ids);
+                } else {
+                    echo 0;
+                }
+            ?>;
             
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_1day_overdue">1 Day Overdue (Jan 2nd)</label></th>
-                <td>
-                    <input type="text" id="wdta_email_reminder_1day_overdue_subject" name="wdta_email_reminder_1day_overdue_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_1day_overdue_subject', 'WDTA Membership - Payment Overdue')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_1day_overdue_body', 
-'Dear {user_name},
-
-Your WDTA membership payment for {year} is now overdue.
-
-To maintain access to member resources, please complete your payment of ${amount} AUD as soon as possible.
-
-Final deadline: {deadline}
-
-Pay now at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_1day_overdue_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
+            // Default template from PHP
+            var defaultTemplate = '<?php echo $default_template_js; ?>';
             
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_1week_overdue">1 Week Overdue (Jan 8th)</label></th>
-                <td>
-                    <input type="text" id="wdta_email_reminder_1week_overdue_subject" name="wdta_email_reminder_1week_overdue_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_1week_overdue_subject', 'WDTA Membership - Urgent: Payment Required')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_1week_overdue_body', 
-'Dear {user_name},
-
-URGENT: Your WDTA membership payment for {year} is now one week overdue.
-
-Amount due: ${amount} AUD
-Deadline: {deadline}
-
-Your membership access will be suspended if payment is not received.
-
-Renew now at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_1week_overdue_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
+            // Add new reminder
+            $('#wdta-add-reminder').on('click', function() {
+                reminderCounter++;
+                maxId++;
+                var newReminderId = maxId; // Use incremental counter for unique ID
+                
+                var reminderHtml = '<div class="wdta-reminder-item" data-reminder-id="' + newReminderId + '">' +
+                    '<div class="wdta-reminder-header" style="background: #f5f5f5; padding: 15px; margin: 15px 0; border-left: 4px solid #2271b1;">' +
+                        '<div style="display: flex; align-items: center; justify-content: space-between;">' +
+                            '<div style="flex: 1;">' +
+                                '<label style="margin-bottom: 10px; display: block;">' +
+                                    '<input type="checkbox" name="wdta_reminders[' + newReminderId + '][enabled]" value="1" checked>' +
+                                    '<strong>Enable this reminder</strong>' +
+                                '</label>' +
+                                '<div style="margin-top: 10px;">' +
+                                    '<label>Send ' +
+                                        '<input type="number" name="wdta_reminders[' + newReminderId + '][timing]" value="7" min="1" style="width: 60px;">' +
+                                        '<select name="wdta_reminders[' + newReminderId + '][unit]">' +
+                                            '<option value="days" selected>day(s)</option>' +
+                                            '<option value="weeks">week(s)</option>' +
+                                        '</select>' +
+                                        '<select name="wdta_reminders[' + newReminderId + '][period]">' +
+                                            '<option value="before" selected>BEFORE</option>' +
+                                            '<option value="after">AFTER</option>' +
+                                        '</select>' +
+                                        ' membership expires (Dec 31)' +
+                                    '</label>' +
+                                '</div>' +
+                            '</div>' +
+                            '<button type="button" class="button wdta-remove-reminder" style="margin-left: 20px;">Remove Reminder</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="wdta-reminder-content" style="padding: 15px; border: 1px solid #ddd; border-top: none;">' +
+                        '<input type="hidden" name="wdta_reminders[' + newReminderId + '][id]" value="' + newReminderId + '">' +
+                        '<label><strong>Email Subject:</strong></label>' +
+                        '<input type="text" name="wdta_reminders[' + newReminderId + '][subject]" value="" class="large-text" placeholder="Email Subject">' +
+                        '<br><br>' +
+                        '<label><strong>Email Body:</strong></label>' +
+                        '<textarea name="wdta_reminders[' + newReminderId + '][body]" rows="10" class="large-text">' + defaultTemplate + '</textarea>' +
+                    '</div>' +
+                '</div>';
+                
+                $('#wdta-reminders-container').append(reminderHtml);
+            });
             
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_month1">End of Month 1 (Jan 31st)</label></th>
-                <td>
-                    <input type="text" id="wdta_email_reminder_month1_subject" name="wdta_email_reminder_month1_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_month1_subject', 'WDTA Membership - Final Notice Month 1')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_month1_body', 
-'Dear {user_name},
-
-This is a final notice that your WDTA membership payment for {year} remains unpaid.
-
-Amount outstanding: ${amount} AUD
-Final deadline: {deadline}
-
-Please complete your payment immediately to avoid suspension of membership benefits.
-
-Renew now at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_month1_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
-            
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_month2">End of Month 2 (Feb 28/29)</label></th>
-                <td>
-                    <input type="text" id="wdta_email_reminder_month2_subject" name="wdta_email_reminder_month2_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_month2_subject', 'WDTA Membership - Final Notice Month 2')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_month2_body', 
-'Dear {user_name},
-
-Your WDTA membership payment for {year} is still outstanding.
-
-Outstanding amount: ${amount} AUD
-Absolute deadline: {deadline}
-
-This is your final reminder. Membership access will be terminated if payment is not received by the deadline.
-
-Renew immediately at: {renewal_url}
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_month2_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
-            
-            <tr>
-                <th scope="row"><label for="wdta_email_reminder_final">Final Deadline (Mar 31st)</label></th>
-                <td>
-                    <input type="text" id="wdta_email_reminder_final_subject" name="wdta_email_reminder_final_subject" 
-                           value="<?php echo esc_attr(get_option('wdta_email_reminder_final_subject', 'WDTA Membership - Access Suspended')); ?>" 
-                           class="large-text" placeholder="Email Subject">
-                    <br><br>
-                    <?php 
-                    wp_editor(
-                        get_option('wdta_email_reminder_final_body', 
-'Dear {user_name},
-
-Your WDTA membership for {year} has not been renewed and your access has been suspended.
-
-Outstanding payment: ${amount} AUD
-
-To restore your membership, please complete payment at: {renewal_url}
-
-If you believe this is in error, please contact us immediately.
-
-Best regards,
-WDTA Team'),
-                        'wdta_email_reminder_final_body',
-                        array(
-                            'textarea_rows' => 10,
-                            'media_buttons' => false,
-                            'teeny' => false,
-                            'tinymce' => array(
-                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
-                            ),
-                        )
-                    );
-                    ?>
-                </td>
-            </tr>
-        </table>
+            // Remove reminder
+            $(document).on('click', '.wdta-remove-reminder', function() {
+                if (confirm('Are you sure you want to remove this reminder?')) {
+                    $(this).closest('.wdta-reminder-item').remove();
+                }
+            });
+        });
+        </script>
         
         <?php submit_button('Save Email Templates', 'primary', 'wdta_emails_submit'); ?>
     </form>

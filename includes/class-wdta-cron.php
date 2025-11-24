@@ -47,115 +47,83 @@ class WDTA_Cron {
      */
     public static function process_email_notifications() {
         $current_date = date('Y-m-d');
-        $current_month_day = date('m-d');
         // For December reminders, we're reminding about next year's membership (due Jan 1st of next year)
         $next_year = date('Y') + 1;
         $current_year = date('Y');
         
-        // Determine which emails to send based on date
-        switch ($current_month_day) {
-            case '12-01': // December 1st - 1 month before Jan 1st (next year's membership)
-                self::send_reminder_emails($next_year, '1_month');
-                break;
-                
-            case '12-25': // December 25th - 1 week before Jan 1st (next year's membership)
-                self::send_reminder_emails($next_year, '1_week');
-                break;
-                
-            case '12-31': // December 31st - 1 day before Jan 1st (next year's membership)
-                self::send_reminder_emails($next_year, '1_day');
-                break;
-                
-            case '01-01': // January 1st - send inactive users report
-                self::send_inactive_users_report();
-                break;
-                
-            case '01-02': // January 2nd - 1 day overdue
-                self::send_overdue_emails($current_year, 'overdue_1_day');
-                break;
-                
-            case '01-08': // January 8th - 1 week overdue
-                self::send_overdue_emails($current_year, 'overdue_1_week');
-                break;
-                
-            case '01-31': // January 31st - end of month 1
-                self::send_overdue_emails($current_year, 'overdue_end_jan');
-                break;
-                
-            case '02-28': // February 28th - end of month 2 (non-leap year)
-            case '02-29': // February 29th - end of month 2 (leap year)
-                self::send_overdue_emails($current_year, 'overdue_end_feb');
-                break;
-                
-            case '03-31': // March 31st - final deadline (kept for legacy users)
-                self::send_overdue_emails($current_year, 'overdue_end_mar');
-                break;
+        // January 1st - send inactive users report
+        if (date('m-d') === '01-01') {
+            self::send_inactive_users_report();
         }
+        
+        // Process dynamic reminders
+        self::process_dynamic_reminders($current_year, $next_year);
     }
     
     /**
-     * Send reminder emails to users without membership for upcoming year
+     * Process dynamic reminders based on configuration
      */
-    private static function send_reminder_emails($year, $type) {
-        // Check if this reminder is enabled
-        $enabled_option = 'wdta_email_reminder_' . str_replace('_', '', $type) . '_enabled';
-        if (get_option($enabled_option, '1') !== '1') {
-            return; // Email is disabled
+    private static function process_dynamic_reminders($current_year, $next_year) {
+        $reminders = get_option('wdta_email_reminders', array());
+        
+        if (empty($reminders)) {
+            return;
         }
         
-        $users = WDTA_Database::get_users_without_membership($year);
+        $today = new DateTime();
         
-        foreach ($users as $user) {
-            switch ($type) {
-                case '1_month':
-                    WDTA_Email_Notifications::send_reminder_1_month($user->ID, $year);
-                    break;
-                case '1_week':
-                    WDTA_Email_Notifications::send_reminder_1_week($user->ID, $year);
-                    break;
-                case '1_day':
-                    WDTA_Email_Notifications::send_reminder_1_day($user->ID, $year);
-                    break;
+        // Membership expiry date is always December 31st of current year
+        $expiry_date = new DateTime($current_year . '-12-31');
+        
+        foreach ($reminders as $reminder) {
+            // Skip if reminder is disabled
+            if (empty($reminder['enabled'])) {
+                continue;
+            }
+            
+            // Calculate the send date for this reminder
+            $send_date = clone $expiry_date;
+            $timing = intval($reminder['timing']);
+            $unit = $reminder['unit'];
+            $period = $reminder['period'];
+            
+            // Convert timing to days
+            $days = ($unit === 'weeks') ? $timing * 7 : $timing;
+            
+            // Adjust send date based on period (before or after)
+            if ($period === 'before') {
+                $send_date->modify("-{$days} days");
+            } else {
+                $send_date->modify("+{$days} days");
+            }
+            
+            // Check if today matches the send date
+            if ($today->format('Y-m-d') === $send_date->format('Y-m-d')) {
+                // Determine which year's membership to check
+                // Before expiry: remind about next year's membership (due Jan 1 of next year)
+                // After expiry: remind about current year's overdue membership
+                $target_year = ($period === 'before') ? $next_year : $current_year;
+                
+                // Send reminders
+                self::send_dynamic_reminder($reminder, $target_year);
             }
         }
     }
     
     /**
-     * Send overdue emails to users without active membership
+     * Send a dynamic reminder email
      */
-    private static function send_overdue_emails($year, $type) {
-        // Check if this reminder is enabled
-        $enabled_option = 'wdta_email_' . $type . '_enabled';
-        if (get_option($enabled_option, '1') !== '1') {
-            return; // Email is disabled
-        }
-        
+    private static function send_dynamic_reminder($reminder, $year) {
         // Get all users who should have membership but don't
         $users = WDTA_Database::get_users_without_membership($year);
         
         foreach ($users as $user) {
-            // Check if user has pending payment
+            // Check if user has pending payment (for after expiry reminders)
             $membership = WDTA_Database::get_user_membership($user->ID, $year);
             
             // Only send if no membership or payment not completed
             if (!$membership || $membership->payment_status !== 'completed') {
-                switch ($type) {
-                    case 'overdue_1_day':
-                        WDTA_Email_Notifications::send_overdue_1_day($user->ID, $year);
-                        break;
-                    case 'overdue_1_week':
-                        WDTA_Email_Notifications::send_overdue_1_week($user->ID, $year);
-                        break;
-                    case 'overdue_end_jan':
-                        WDTA_Email_Notifications::send_overdue_end_jan($user->ID, $year);
-                        break;
-                    case 'overdue_end_feb':
-                        WDTA_Email_Notifications::send_overdue_end_feb($user->ID, $year);
-                        break;
-                    case 'overdue_end_mar':
-                        WDTA_Email_Notifications::send_overdue_end_mar($user->ID, $year);
-                        break;
-                }
+                WDTA_Email_Notifications::send_dynamic_reminder($user->ID, $year, $reminder);
             }
         }
     }
