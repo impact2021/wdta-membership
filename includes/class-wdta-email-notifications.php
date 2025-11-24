@@ -96,7 +96,10 @@ class WDTA_Email_Notifications {
             '{site_name}' => get_bloginfo('name')
         );
         
-        return str_replace(array_keys($replacements), array_values($replacements), $template);
+        $parsed = str_replace(array_keys($replacements), array_values($replacements), $template);
+        
+        // Convert line breaks to HTML for proper email formatting
+        return wpautop($parsed);
     }
     
     /**
