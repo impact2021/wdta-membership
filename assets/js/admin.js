@@ -3,9 +3,14 @@
  */
 
 jQuery(document).ready(function($) {
+    // Check if wdtaAdmin is defined
+    if (typeof wdtaAdmin === 'undefined') {
+        console.error('wdtaAdmin object is not defined! Ajax calls will fail.');
+        return;
+    }
     
-    // Approve membership
-    $('.wdta-approve-membership').on('click', function(e) {
+    // Approve membership (using event delegation)
+    $(document).on('click', '.wdta-approve-membership', function(e) {
         e.preventDefault();
         
         var button = $(this);
@@ -43,8 +48,8 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Reject membership
-    $('.wdta-reject-membership').on('click', function(e) {
+    // Reject membership (using event delegation)
+    $(document).on('click', '.wdta-reject-membership', function(e) {
         e.preventDefault();
         
         var button = $(this);
@@ -82,8 +87,8 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Edit membership - open modal
-    $('.wdta-edit-membership').on('click', function(e) {
+    // Edit membership - open modal (using event delegation)
+    $(document).on('click', '.wdta-edit-membership', function(e) {
         e.preventDefault();
         
         var button = $(this);
@@ -102,23 +107,23 @@ jQuery(document).ready(function($) {
         $('#edit-payment-amount').val(paymentAmount);
         $('#edit-expiry-date').val(expiryDate);
         
-        // Show modal
-        $('#wdta-edit-membership-modal').show();
+        // Show modal by adding class
+        $('#wdta-edit-membership-modal').addClass('wdta-modal-active');
     });
     
-    // Close modal
-    $('.wdta-modal-close').on('click', function(e) {
+    // Close modal (using event delegation)
+    $(document).on('click', '.wdta-modal-close', function(e) {
         e.preventDefault();
-        $('#wdta-edit-membership-modal').hide();
+        $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
-    // Close modal on overlay click
-    $('.wdta-modal-overlay').on('click', function() {
-        $('#wdta-edit-membership-modal').hide();
+    // Close modal on overlay click (using event delegation)
+    $(document).on('click', '.wdta-modal-overlay', function() {
+        $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
-    // Edit membership - save changes
-    $('#wdta-edit-membership-form').on('submit', function(e) {
+    // Edit membership - save changes (using event delegation)
+    $(document).on('submit', '#wdta-edit-membership-form', function(e) {
         e.preventDefault();
         
         var form = $(this);

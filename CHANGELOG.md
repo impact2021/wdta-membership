@@ -2,6 +2,25 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.0.0] - 2024-11-24
+
+### Fixed
+- **Edit button functionality**: Fixed Edit button on admin memberships list page not responding to clicks
+- Improved JavaScript event handling using event delegation for more robust behavior
+- Enhanced script loading checks to support various WordPress admin page hook formats
+- Added comprehensive debug logging to help diagnose script loading issues
+
+### Changed
+- Refactored all admin JavaScript event handlers to use event delegation
+- Improved `enqueue_admin_scripts` hook checking with explicit page list and fallback patterns
+- Added validation check for `wdtaAdmin` object before executing AJAX calls
+
+### Technical Details
+- Event handlers now use `$(document).on()` instead of direct element binding
+- Admin page hooks now explicitly checked: `toplevel_page_wdta-memberships`, `membership_page_wdta-*`
+- Added fallback checks for both `wdta-` and `wdta_` patterns in hook names
+- Console logging added for debugging (to be removed in production)
+
 ## [2.1.0] - 2024-11-24
 
 ### Added - Dynamic Email Reminder System

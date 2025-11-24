@@ -296,6 +296,16 @@ This plugin is licensed under GPL v2 or later.
 
 ## Changelog
 
+### Version 3.0.0
+- Fixed Edit button on admin memberships list page
+- Improved JavaScript event handling
+- Enhanced admin script loading
+
+### Version 2.1.0
+- Dynamic email reminder system
+- Add/remove reminders functionality
+- Flexible timing configuration
+
 ### Version 1.0.0
 - Initial release
 - Stripe payment integration
