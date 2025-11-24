@@ -53,6 +53,16 @@ settings_errors('wdta_emails');
             </tr>
             
             <tr>
+                <th scope="row"><label>Signup Email CC Recipients</label></th>
+                <td>
+                    <input type="text" id="wdta_signup_email_cc" name="wdta_signup_email_cc" 
+                           value="<?php echo esc_attr(get_option('wdta_signup_email_cc', 'marketing@wdta.org.au, treasurer@wdta.org.au')); ?>" 
+                           class="large-text" placeholder="email1@example.com, email2@example.com">
+                    <p class="description">Comma-separated email addresses to CC on signup/payment confirmation emails (default: marketing@wdta.org.au, treasurer@wdta.org.au)</p>
+                </td>
+            </tr>
+            
+            <tr>
                 <th scope="row"><label for="wdta_email_stripe_confirmation">Stripe Payment Confirmation</label></th>
                 <td>
                     <input type="text" id="wdta_email_stripe_confirmation_subject" name="wdta_email_stripe_confirmation_subject" 
@@ -159,6 +169,18 @@ WDTA Team'),
         </table>
         
         <h2>Payment Reminder Emails</h2>
+        
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label>Reminder Email CC Recipients</label></th>
+                <td>
+                    <input type="text" id="wdta_reminder_email_cc" name="wdta_reminder_email_cc" 
+                           value="<?php echo esc_attr(get_option('wdta_reminder_email_cc', 'marketing@wdta.org.au')); ?>" 
+                           class="large-text" placeholder="email1@example.com, email2@example.com">
+                    <p class="description">Comma-separated email addresses to CC on reminder emails (default: marketing@wdta.org.au)</p>
+                </td>
+            </tr>
+        </table>
         
         <div id="wdta-reminders-container">
             <?php
