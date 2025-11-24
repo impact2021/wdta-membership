@@ -10,6 +10,23 @@ if (!defined('ABSPATH')) {
 class WDTA_Payment_Stripe {
     
     /**
+     * Stripe API base URL
+     */
+    const STRIPE_API_URL = 'https://api.stripe.com/v1';
+    
+    /**
+     * Membership amount in AUD including 2.2% Stripe surcharge
+     */
+    const MEMBERSHIP_AMOUNT_WITH_SURCHARGE = 970.90;
+    
+    /**
+     * Membership amount in cents (for Stripe API)
+     * Note: This must equal MEMBERSHIP_AMOUNT_WITH_SURCHARGE * 100
+     * 970.90 AUD = 97090 cents
+     */
+    const MEMBERSHIP_AMOUNT_CENTS = 97090;
+    
+    /**
      * Single instance
      */
     private static $instance = null;
@@ -191,33 +208,60 @@ class WDTA_Payment_Stripe {
         // Extract user_id and year from session metadata
         $user_id = isset($session['metadata']['user_id']) ? intval($session['metadata']['user_id']) : 0;
         $year = isset($session['metadata']['year']) ? intval($session['metadata']['year']) : date('Y');
+        $payment_id = isset($session['payment_intent']) ? $session['payment_intent'] : null;
         
         if (!$user_id) {
             return;
         }
         
-        // Update membership record
-        WDTA_Database::save_membership(array(
-            'user_id' => $user_id,
-            'membership_year' => $year,
-            'payment_status' => 'completed',
-            'payment_date' => current_time('mysql'),
-            'stripe_payment_id' => $session['payment_intent'],
-            'status' => 'active'
-        ));
-        
-        // Update user role
-        do_action('wdta_membership_activated', $user_id, $year);
-        
-        // Send confirmation email
-        $this->send_payment_confirmation($user_id, $year);
+        $this->activate_membership($user_id, $year, $payment_id);
     }
     
     /**
      * Handle payment intent succeeded
      */
     private function handle_payment_intent_succeeded($payment_intent) {
-        // Additional handling if needed
+        // Extract user_id and year from payment intent metadata
+        $user_id = isset($payment_intent['metadata']['user_id']) ? intval($payment_intent['metadata']['user_id']) : 0;
+        $year = isset($payment_intent['metadata']['year']) ? intval($payment_intent['metadata']['year']) : date('Y');
+        $payment_id = isset($payment_intent['id']) ? $payment_intent['id'] : null;
+        
+        if (!$user_id) {
+            error_log('WDTA Payment: No user_id in payment intent metadata');
+            return;
+        }
+        
+        $this->activate_membership($user_id, $year, $payment_id);
+    }
+    
+    /**
+     * Activate membership after successful payment
+     * 
+     * @param int $user_id WordPress user ID
+     * @param int $year Membership year
+     * @param string|null $payment_id Stripe payment intent ID
+     */
+    private function activate_membership($user_id, $year, $payment_id = null) {
+        // Update membership record
+        $membership_data = array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_status' => 'completed',
+            'payment_date' => current_time('mysql'),
+            'status' => 'active'
+        );
+        
+        if ($payment_id) {
+            $membership_data['stripe_payment_id'] = $payment_id;
+        }
+        
+        WDTA_Database::save_membership($membership_data);
+        
+        // Update user role
+        do_action('wdta_membership_activated', $user_id, $year);
+        
+        // Send confirmation email
+        $this->send_payment_confirmation($user_id, $year);
     }
     
     /**
@@ -273,6 +317,65 @@ WDTA Team');
     }
     
     /**
+     * Create a payment intent via Stripe API
+     * 
+     * @param int $user_id WordPress user ID
+     * @param int $year Membership year
+     * @param string $secret_key Stripe secret API key
+     * @return array|WP_Error Array with 'client_secret' on success, WP_Error on failure
+     */
+    private function create_stripe_payment_intent($user_id, $year, $secret_key) {
+        $user = get_userdata($user_id);
+        
+        if (!$user) {
+            return new WP_Error('invalid_user', 'Invalid user ID');
+        }
+        
+        // Validate Stripe secret key format (only secret keys, not restricted keys)
+        if (empty($secret_key) || !preg_match('/^(sk_test_|sk_live_)/', $secret_key)) {
+            return new WP_Error('invalid_api_key', 'Invalid Stripe secret key format. Must start with sk_test_ or sk_live_');
+        }
+        
+        // Create PaymentIntent using Stripe API
+        $response = wp_remote_post(self::STRIPE_API_URL . '/payment_intents', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'amount' => self::MEMBERSHIP_AMOUNT_CENTS,
+                'currency' => 'aud',
+                'description' => 'WDTA Membership ' . $year,
+                'metadata[user_id]' => $user_id,
+                'metadata[year]' => $year,
+                'metadata[user_email]' => $user->user_email,
+                'metadata[user_name]' => $user->display_name,
+            ),
+            'timeout' => 30,
+        ));
+        
+        if (is_wp_error($response)) {
+            return new WP_Error('api_error', 'Failed to connect to payment processor: ' . $response->get_error_message());
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        
+        if ($status_code !== 200) {
+            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
+            return new WP_Error('stripe_error', $error_message);
+        }
+        
+        if (!isset($body['client_secret'])) {
+            return new WP_Error('invalid_response', 'Invalid payment processor response');
+        }
+        
+        return array(
+            'client_secret' => $body['client_secret']
+        );
+    }
+    
+    /**
      * Enqueue Stripe scripts
      */
     public function enqueue_stripe_scripts() {
@@ -319,34 +422,24 @@ WDTA Team');
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90, // $950 + 2.2% surcharge
+            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
             'status' => 'pending'
         ));
         
-        // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
-        // \Stripe\Stripe::setApiKey($secret_key);
-        // $paymentIntent = \Stripe\PaymentIntent::create([
-        //     'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
-        //     'currency' => 'aud',
-        //     'description' => 'WDTA Membership ' . $year,
-        //     'metadata' => [
-        //         'user_id' => $user_id,
-        //         'year' => $year,
-        //         'user_email' => $user->user_email,
-        //         'user_name' => $user->display_name,
-        //     ],
-        // ]);
+        // Create PaymentIntent using Stripe API
+        $result = $this->create_stripe_payment_intent($user_id, $year, $secret_key);
         
-        // For now, return mock payment intent data
-        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
-        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+            return;
+        }
         
         wp_send_json_success(array(
-            'clientSecret' => $client_secret,
-            'amount' => 950.00,
+            'clientSecret' => $result['client_secret'],
+            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'currency' => 'AUD'
         ));
     }
@@ -414,7 +507,7 @@ WDTA Team');
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90,
+            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -428,15 +521,17 @@ WDTA Team');
             return;
         }
         
-        // Create Payment Intent with Stripe API
-        // In production, use actual Stripe API
-        // For now, return mock payment intent data
-        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
-        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
+        // Create PaymentIntent using Stripe API
+        $result = $this->create_stripe_payment_intent($user_id, $year, $secret_key);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+            return;
+        }
         
         wp_send_json_success(array(
-            'clientSecret' => $client_secret,
-            'amount' => 970.90,
+            'clientSecret' => $result['client_secret'],
+            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'currency' => 'AUD',
             'user_id' => $user_id
         ));
