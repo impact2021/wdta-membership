@@ -45,6 +45,9 @@ $payment_year = $applicable_year;
 
 $payment_year_membership = $user_id ? WDTA_Database::get_user_membership($user_id, $payment_year) : null;
 $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id, $payment_year) : false;
+
+// Get membership price from settings (default: $950.00)
+$membership_price = floatval(get_option('wdta_membership_price', '950.00'));
 ?>
 
 <div class="wdta-membership-form">
@@ -52,7 +55,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <!-- Allow non-logged in users to register and purchase on the same page -->
         <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
         <div class="wdta-pricing-info">
-            <p><strong>Annual membership fee: $950 AUD</strong></p>
+            <p><strong>Annual membership fee: $<?php echo number_format($membership_price, 2); ?> AUD</strong></p>
             <?php if ($is_past_cutoff): ?>
                 <p class="wdta-info-text">You are registering for <?php echo $payment_year; ?> membership.</p>
             <?php endif; ?>
@@ -116,17 +119,21 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                 <p class="wdta-payment-description">Secure payment via Stripe</p>
                 
                 <div class="wdta-stripe-pricing">
+                    <?php
+                    $stripe_surcharge = $membership_price * 0.022; // 2.2%
+                    $stripe_total = $membership_price + $stripe_surcharge;
+                    ?>
                     <div class="wdta-price-line">
                         <span>Membership fee:</span>
-                        <span>$950.00 AUD</span>
+                        <span>$<?php echo number_format($membership_price, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-surcharge">
                         <span>Card processing fee (2.2%):</span>
-                        <span>$20.90 AUD</span>
+                        <span>$<?php echo number_format($stripe_surcharge, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-total">
                         <span><strong>Total amount:</strong></span>
-                        <span><strong>$970.90 AUD</strong></span>
+                        <span><strong>$<?php echo number_format($stripe_total, 2); ?> AUD</strong></span>
                     </div>
                 </div>
                 
@@ -135,10 +142,10 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                         <!-- Stripe Card Element will be inserted here -->
                     </div>
                     
-                    <div id="wdta-card-errors-new-user" class="wdta-error-message" role="alert"></div>
+                    <div id="wdta-card-errors-new-user" class="wdta-error-message" role="alert" style="display:none;"></div>
                     
                     <button id="wdta-stripe-submit-new-user" class="button button-primary" type="submit">
-                        <span id="wdta-button-text-new-user">Register & Pay $970.90 AUD</span>
+                        <span id="wdta-button-text-new-user">Register & Pay $<?php echo number_format($stripe_total, 2); ?> AUD</span>
                         <span id="wdta-spinner-new-user" class="wdta-spinner" style="display:none;"></span>
                     </button>
                 </form>
@@ -157,7 +164,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                         <li><strong>Account Name:</strong> <?php echo esc_html(get_option('wdta_bank_account_name', 'To be configured')); ?></li>
                         <li><strong>BSB:</strong> <?php echo esc_html(get_option('wdta_bank_bsb', 'To be configured')); ?></li>
                         <li><strong>Account Number:</strong> <?php echo esc_html(get_option('wdta_bank_account_number', 'To be configured')); ?></li>
-                        <li><strong>Amount:</strong> $950 AUD</li>
+                        <li><strong>Amount:</strong> $<?php echo number_format($membership_price, 2); ?> AUD</li>
                         <li><strong>Reference:</strong> Your name and "WDTA <?php echo $current_year; ?>"</li>
                     </ul>
                 </div>
@@ -202,7 +209,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
         <?php else: ?>
             <h2>WDTA Membership - <?php echo $payment_year; ?></h2>
             <div class="wdta-pricing-info">
-                <p><strong>Annual membership fee: $950 AUD</strong></p>
+                <p><strong>Annual membership fee: $<?php echo number_format($membership_price, 2); ?> AUD</strong></p>
                 <?php if ($is_past_cutoff): ?>
                     <p class="wdta-info-text">You are paying for <?php echo $payment_year; ?> membership.</p>
                 <?php endif; ?>
@@ -216,17 +223,21 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                 <p class="wdta-payment-description">Secure payment via Stripe</p>
                 
                 <div class="wdta-stripe-pricing">
+                    <?php
+                    $stripe_surcharge_logged = $membership_price * 0.022; // 2.2%
+                    $stripe_total_logged = $membership_price + $stripe_surcharge_logged;
+                    ?>
                     <div class="wdta-price-line">
                         <span>Membership fee:</span>
-                        <span>$950.00 AUD</span>
+                        <span>$<?php echo number_format($membership_price, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-surcharge">
                         <span>Card processing fee (2.2%):</span>
-                        <span>$20.90 AUD</span>
+                        <span>$<?php echo number_format($stripe_surcharge_logged, 2); ?> AUD</span>
                     </div>
                     <div class="wdta-price-line wdta-total">
                         <span><strong>Total amount:</strong></span>
-                        <span><strong>$970.90 AUD</strong></span>
+                        <span><strong>$<?php echo number_format($stripe_total_logged, 2); ?> AUD</strong></span>
                     </div>
                 </div>
                 
@@ -235,10 +246,10 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                         <!-- Stripe Card Element will be inserted here -->
                     </div>
                     
-                    <div id="wdta-card-errors" class="wdta-error-message" role="alert"></div>
+                    <div id="wdta-card-errors" class="wdta-error-message" role="alert" style="display:none;"></div>
                     
                     <button id="wdta-stripe-submit" class="button button-primary" type="submit">
-                        <span id="wdta-button-text">Pay $970.90 AUD</span>
+                        <span id="wdta-button-text">Pay $<?php echo number_format($stripe_total_logged, 2); ?> AUD</span>
                         <span id="wdta-spinner" class="wdta-spinner" style="display:none;"></span>
                     </button>
                 </form>
@@ -257,7 +268,7 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
                         <li><strong>Account Name:</strong> <?php echo esc_html(get_option('wdta_bank_account_name', 'To be configured')); ?></li>
                         <li><strong>BSB:</strong> <?php echo esc_html(get_option('wdta_bank_bsb', 'To be configured')); ?></li>
                         <li><strong>Account Number:</strong> <?php echo esc_html(get_option('wdta_bank_account_number', 'To be configured')); ?></li>
-                        <li><strong>Amount:</strong> $950 AUD</li>
+                        <li><strong>Amount:</strong> $<?php echo number_format($membership_price, 2); ?> AUD</li>
                         <li><strong>Reference:</strong> Your name and "WDTA <?php echo $payment_year; ?>"</li>
                     </ul>
                 </div>
@@ -344,7 +355,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     clientSecret = response.data.clientSecret;
                 } else {
-                    $('#wdta-card-errors').text(response.data.message);
+                    $('#wdta-card-errors').text(response.data.message).show();
                 }
             }
         });
@@ -355,7 +366,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         
         if (!stripe || !cardElement || !clientSecret) {
-            $('#wdta-card-errors').text('Payment system not properly initialized. Please refresh and try again.');
+            $('#wdta-card-errors').text('Payment system not properly initialized. Please refresh and try again.').show();
             return;
         }
         
@@ -373,7 +384,7 @@ jQuery(document).ready(function($) {
         }).then(function(result) {
             if (result.error) {
                 // Show error to customer
-                $('#wdta-card-errors').text(result.error.message);
+                $('#wdta-card-errors').text(result.error.message).show();
                 setLoading(false);
             } else {
                 // Payment succeeded
@@ -531,7 +542,7 @@ jQuery(document).ready(function($) {
         $('#wdta-registration-errors').hide();
         
         if (!stripe || !cardElement) {
-            $('#wdta-card-errors-new-user').text('Payment system not properly initialized. Please refresh and try again.');
+            $('#wdta-card-errors-new-user').text('Payment system not properly initialized. Please refresh and try again.').show();
             return;
         }
         
@@ -565,7 +576,7 @@ jQuery(document).ready(function($) {
                         }
                     }).then(function(result) {
                         if (result.error) {
-                            $('#wdta-card-errors-new-user').text(result.error.message);
+                            $('#wdta-card-errors-new-user').text(result.error.message).show();
                             setLoadingNewUser(false);
                         } else {
                             if (result.paymentIntent.status === 'succeeded') {
@@ -577,12 +588,12 @@ jQuery(document).ready(function($) {
                         }
                     });
                 } else {
-                    $('#wdta-card-errors-new-user').text(response.data.message);
+                    $('#wdta-card-errors-new-user').text(response.data.message).show();
                     setLoadingNewUser(false);
                 }
             },
             error: function() {
-                $('#wdta-card-errors-new-user').text('An error occurred. Please try again.');
+                $('#wdta-card-errors-new-user').text('An error occurred. Please try again.').show();
                 setLoadingNewUser(false);
             }
         });
