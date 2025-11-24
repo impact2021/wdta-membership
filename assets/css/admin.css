@@ -147,3 +147,13 @@
 #wdta-add-reminder {
     margin-top: 10px;
 }
+
+/* Delete membership button */
+.wdta-delete-membership {
+    color: #b32d2e;
+}
+
+.wdta-delete-membership:hover {
+    color: #dc3232;
+    border-color: #dc3232;
+}

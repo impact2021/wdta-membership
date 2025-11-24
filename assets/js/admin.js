@@ -161,4 +161,43 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // Delete membership (using event delegation)
+    $(document).on('click', '.wdta-delete-membership', function(e) {
+        e.preventDefault();
+        
+        var button = $(this);
+        var userId = button.data('user-id');
+        var year = button.data('year');
+        
+        if (!confirm('Are you sure you want to delete this membership? This action cannot be undone.')) {
+            return;
+        }
+        
+        button.prop('disabled', true).text('Deleting...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_delete_membership',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: year
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Membership deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data.message);
+                    button.prop('disabled', false).text('Delete');
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                button.prop('disabled', false).text('Delete');
+            }
+        });
+    });
+    
 });
