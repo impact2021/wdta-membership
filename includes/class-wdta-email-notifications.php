@@ -66,96 +66,17 @@ class WDTA_Email_Notifications {
     }
     
     /**
-     * Send reminder email 1 month before (December 1st)
+     * Send dynamic reminder email
      */
-    public static function send_reminder_1_month($user_id, $year) {
+    public static function send_dynamic_reminder($user_id, $year, $reminder) {
         $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1month_subject', 'WDTA Membership Renewal - Due January 1st, ' . $year);
-        $template = get_option('wdta_email_reminder_1month', self::get_default_template('1_month'));
         
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send reminder email 1 week before (December 25th)
-     */
-    public static function send_reminder_1_week($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1week_subject', 'WDTA Membership Renewal - Due in 1 Week (January 1st, ' . $year . ')');
-        $template = get_option('wdta_email_reminder_1week', self::get_default_template('1_week'));
+        if (!$user) {
+            return false;
+        }
         
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send reminder email 1 day before (December 31st)
-     */
-    public static function send_reminder_1_day($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_reminder_1day_subject', 'WDTA Membership Renewal - Due Tomorrow (January 1st, ' . $year . ')');
-        $template = get_option('wdta_email_reminder_1day', self::get_default_template('1_day'));
-        
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send overdue email 1 day after (January 2nd)
-     */
-    public static function send_overdue_1_day($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_overdue_1day_subject', 'WDTA Membership Overdue - Please Renew');
-        $template = get_option('wdta_email_overdue_1day', self::get_default_template('overdue_1_day'));
-        
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send overdue email 1 week after (January 8th)
-     */
-    public static function send_overdue_1_week($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_overdue_1week_subject', 'WDTA Membership Overdue - Action Required');
-        $template = get_option('wdta_email_overdue_1week', self::get_default_template('overdue_1_week'));
-        
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send overdue email end of January (January 31st)
-     */
-    public static function send_overdue_end_jan($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_overdue_end_jan_subject', 'WDTA Membership Overdue - 2 Months Remaining');
-        $template = get_option('wdta_email_overdue_end_jan', self::get_default_template('overdue_end_jan'));
-        
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send overdue email end of February (February 28th/29th)
-     */
-    public static function send_overdue_end_feb($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_overdue_end_feb_subject', 'WDTA Membership Overdue - Final Month');
-        $template = get_option('wdta_email_overdue_end_feb', self::get_default_template('overdue_end_feb'));
-        
-        $message = self::parse_template($template, $user, $year);
-        self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Send final overdue email end of March (March 31st)
-     */
-    public static function send_overdue_end_mar($user_id, $year) {
-        $user = get_userdata($user_id);
-        $subject = get_option('wdta_email_overdue_end_mar_subject', 'WDTA Membership - Final Notice');
-        $template = get_option('wdta_email_overdue_end_mar', self::get_default_template('overdue_end_mar'));
+        $subject = isset($reminder['subject']) ? $reminder['subject'] : 'WDTA Membership Reminder';
+        $template = isset($reminder['body']) ? $reminder['body'] : '';
         
         $message = self::parse_template($template, $user, $year);
         self::send_email($user->user_email, $subject, $message);

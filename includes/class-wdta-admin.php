@@ -371,29 +371,26 @@ class WDTA_Admin {
             }
         }
         
-        // Reminder email templates
-        $email_templates = array(
-            'reminder_1month',
-            'reminder_1week',
-            'reminder_1day',
-            'overdue_1day',
-            'overdue_1week',
-            'overdue_end_jan',
-            'overdue_end_feb',
-            'overdue_end_mar'
-        );
-        
-        foreach ($email_templates as $template) {
-            // Save enabled/disabled status
-            update_option('wdta_email_' . $template . '_enabled', isset($_POST['wdta_email_' . $template . '_enabled']) ? '1' : '0');
+        // Save dynamic reminders
+        if (isset($_POST['wdta_reminders']) && is_array($_POST['wdta_reminders'])) {
+            $reminders = array();
             
-            // Save subject and body
-            if (isset($_POST['wdta_email_' . $template . '_subject'])) {
-                update_option('wdta_email_' . $template . '_subject', sanitize_text_field($_POST['wdta_email_' . $template . '_subject']));
+            foreach ($_POST['wdta_reminders'] as $reminder_id => $reminder_data) {
+                $reminders[] = array(
+                    'id' => intval($reminder_data['id']),
+                    'enabled' => isset($reminder_data['enabled']) && $reminder_data['enabled'] === '1',
+                    'timing' => intval($reminder_data['timing']),
+                    'unit' => sanitize_text_field($reminder_data['unit']),
+                    'period' => sanitize_text_field($reminder_data['period']),
+                    'subject' => sanitize_text_field($reminder_data['subject']),
+                    'body' => wp_kses_post($reminder_data['body'])
+                );
             }
-            if (isset($_POST['wdta_email_' . $template . '_body'])) {
-                update_option('wdta_email_' . $template . '_body', wp_kses_post($_POST['wdta_email_' . $template . '_body']));
-            }
+            
+            update_option('wdta_email_reminders', $reminders);
+        } else {
+            // If no reminders submitted, clear the option
+            update_option('wdta_email_reminders', array());
         }
         
         add_settings_error('wdta_emails', 'emails_updated', 'Email templates saved successfully.', 'updated');
