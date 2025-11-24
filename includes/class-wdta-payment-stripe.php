@@ -10,12 +10,19 @@ if (!defined('ABSPATH')) {
 class WDTA_Payment_Stripe {
     
     /**
+     * Stripe API base URL
+     */
+    const STRIPE_API_URL = 'https://api.stripe.com/v1';
+    
+    /**
      * Membership amount in AUD including 2.2% Stripe surcharge
      */
     const MEMBERSHIP_AMOUNT_WITH_SURCHARGE = 970.90;
     
     /**
      * Membership amount in cents (for Stripe API)
+     * Note: This must equal MEMBERSHIP_AMOUNT_WITH_SURCHARGE * 100
+     * 970.90 AUD = 97090 cents
      */
     const MEMBERSHIP_AMOUNT_CENTS = 97090;
     
@@ -320,8 +327,13 @@ WDTA Team');
             return new WP_Error('invalid_user', 'Invalid user ID');
         }
         
+        // Validate Stripe secret key format
+        if (empty($secret_key) || !preg_match('/^(sk_test_|sk_live_|rk_test_|rk_live_)/', $secret_key)) {
+            return new WP_Error('invalid_api_key', 'Invalid Stripe API key format');
+        }
+        
         // Create PaymentIntent using Stripe API
-        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
+        $response = wp_remote_post(self::STRIPE_API_URL . '/payment_intents', array(
             'headers' => array(
                 'Authorization' => 'Bearer ' . $secret_key,
                 'Content-Type' => 'application/x-www-form-urlencoded',
