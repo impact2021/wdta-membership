@@ -77,7 +77,7 @@ class WDTA_Membership_Email {
         }
         
         $subject = get_option('wdta_membership_reminder' . $reminder_number . '_subject', 'WDTA Membership Reminder');
-        $headers = self::get_email_headers();
+        $headers = self::get_email_headers('reminder');
         
         $sent_count = 0;
         foreach ($users as $user) {
