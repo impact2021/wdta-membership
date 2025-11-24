@@ -328,6 +328,8 @@ class WDTA_Admin {
         }
         
         // If payment status is being set to completed, automatically set membership status to active
+        // This allows admins to activate memberships regardless of current status (pending, rejected, expired)
+        // as payment completion should grant access
         if ($payment_status === 'completed' && $status !== 'active') {
             $status = 'active';
         }
