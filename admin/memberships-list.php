@@ -60,7 +60,13 @@ if (!defined('ABSPATH')) {
                 </tr>
             <?php else: ?>
                 <?php foreach ($memberships as $membership): ?>
-                    <?php $user = get_userdata($membership->user_id); ?>
+                    <?php 
+                    $user = get_userdata($membership->user_id);
+                    // Skip administrators
+                    if ($user && in_array('administrator', $user->roles)) {
+                        continue;
+                    }
+                    ?>
                     <tr>
                         <td>
                             <?php echo esc_html($user ? $user->display_name : 'Unknown'); ?>
@@ -117,6 +123,12 @@ if (!defined('ABSPATH')) {
                                     Reject
                                 </button>
                             <?php endif; ?>
+                            <button class="button button-link-delete wdta-delete-membership" 
+                                    data-user-id="<?php echo esc_attr($membership->user_id); ?>"
+                                    data-year="<?php echo esc_attr($membership->membership_year); ?>"
+                                    style="color: #b32d2e;">
+                                Delete
+                            </button>
                         </td>
                     </tr>
                 <?php endforeach; ?>

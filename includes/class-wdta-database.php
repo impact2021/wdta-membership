@@ -205,4 +205,22 @@ class WDTA_Database {
         
         return $users;
     }
+    
+    /**
+     * Delete a membership record
+     */
+    public static function delete_membership($user_id, $year) {
+        global $wpdb;
+        
+        $table_name = self::get_table_name();
+        
+        return $wpdb->delete(
+            $table_name,
+            array(
+                'user_id' => $user_id,
+                'membership_year' => $year
+            ),
+            array('%d', '%d')
+        );
+    }
 }

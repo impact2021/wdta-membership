@@ -40,6 +40,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_approve_membership', array($this, 'approve_membership'));
         add_action('wp_ajax_wdta_reject_membership', array($this, 'reject_membership'));
         add_action('wp_ajax_wdta_update_membership', array($this, 'update_membership'));
+        add_action('wp_ajax_wdta_delete_membership', array($this, 'delete_membership'));
     }
     
     /**
@@ -349,6 +350,34 @@ class WDTA_Admin {
         $user_roles->update_user_role($user_id, $year);
         
         wp_send_json_success(array('message' => 'Membership updated successfully'));
+    }
+    
+    /**
+     * Delete membership (AJAX)
+     */
+    public function delete_membership() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'Invalid user ID'));
+            return;
+        }
+        
+        $result = WDTA_Database::delete_membership($user_id, $year);
+        
+        if ($result !== false) {
+            wp_send_json_success(array('message' => 'Membership deleted successfully'));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to delete membership'));
+        }
     }
     
     /**
