@@ -126,7 +126,7 @@ if (!defined('ABSPATH')) {
 </div>
 
 <!-- Edit Membership Modal -->
-<div id="wdta-edit-membership-modal" style="display:none;">
+<div id="wdta-edit-membership-modal">
     <div class="wdta-modal-overlay"></div>
     <div class="wdta-modal-content">
         <div class="wdta-modal-header">
@@ -186,6 +186,12 @@ if (!defined('ABSPATH')) {
 </div>
 
 <style>
+#wdta-edit-membership-modal {
+    display: none;
+}
+#wdta-edit-membership-modal.wdta-modal-active {
+    display: block;
+}
 .wdta-modal-overlay {
     position: fixed;
     top: 0;

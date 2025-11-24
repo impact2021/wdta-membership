@@ -118,19 +118,22 @@ jQuery(document).ready(function($) {
         $('#edit-expiry-date').val(expiryDate);
         
         console.log('Showing modal');
-        // Show modal
-        $('#wdta-edit-membership-modal').show();
+        // Show modal by adding class
+        $('#wdta-edit-membership-modal').addClass('wdta-modal-active');
+        console.log('Modal should now be visible');
     });
     
     // Close modal (using event delegation)
     $(document).on('click', '.wdta-modal-close', function(e) {
         e.preventDefault();
-        $('#wdta-edit-membership-modal').hide();
+        console.log('Close button clicked');
+        $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
     // Close modal on overlay click (using event delegation)
     $(document).on('click', '.wdta-modal-overlay', function() {
-        $('#wdta-edit-membership-modal').hide();
+        console.log('Overlay clicked');
+        $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
     // Edit membership - save changes
