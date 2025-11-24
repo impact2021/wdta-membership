@@ -1,0 +1,701 @@
+/**
+ * Frontend styles for WDTA Membership plugin
+ */
+
+.wdta-membership-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Year selector styles */
+.wdta-year-selector {
+    background: #f5f5f5;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.wdta-year-selector h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.wdta-year-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.wdta-year-buttons .button {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.wdta-year-buttons .button:not(.button-primary) {
+    background: #fff;
+    color: #333;
+    border: 2px solid #ddd;
+}
+
+.wdta-year-buttons .button:not(.button-primary):hover {
+    border-color: #999;
+    background: #f9f9f9;
+}
+
+.wdta-year-buttons .button-primary {
+    background: #635bff;
+    color: white;
+    border: 2px solid #635bff;
+}
+
+.wdta-year-buttons .button-primary:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.wdta-success-message,
+.wdta-info-message,
+.wdta-error-message {
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.wdta-success-message {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.wdta-info-message {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+.wdta-error-message {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.wdta-payment-methods {
+    margin-top: 30px;
+}
+
+.wdta-payment-option {
+    background: #f9f9f9;
+    padding: 25px;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Stripe pricing display */
+.wdta-stripe-pricing {
+    background: #fff;
+    padding: 15px;
+    margin: 15px 0 20px;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+.wdta-price-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 15px;
+}
+
+.wdta-price-line.wdta-surcharge {
+    color: #666;
+    font-size: 14px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.wdta-price-line.wdta-total {
+    border-top: 2px solid #333;
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 16px;
+}
+
+.wdta-payment-option h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #333;
+}
+
+.wdta-payment-description {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Stripe inline form styles */
+.wdta-stripe-payment {
+    background: #fff;
+    border: 2px solid #635bff;
+}
+
+.wdta-card-element {
+    background: #fff;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    min-height: 44px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s ease;
+}
+
+.wdta-card-element:hover {
+    border-color: #aab7c4;
+}
+
+.wdta-card-element.StripeElement--focus {
+    border-color: #635bff;
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.2);
+}
+
+.wdta-card-element.StripeElement--invalid {
+    border-color: #fa755a;
+}
+
+#wdta-card-errors {
+    color: #fa755a;
+    font-size: 14px;
+    margin: 10px 0;
+    min-height: 20px;
+}
+
+#wdta-stripe-submit {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-stripe-submit:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-stripe-submit:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+#wdta-stripe-submit:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.3);
+}
+
+.wdta-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: wdta-spin 0.6s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes wdta-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Payment divider */
+.wdta-payment-divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.wdta-payment-divider:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #ddd;
+}
+
+.wdta-payment-divider span {
+    background: #fff;
+    padding: 0 15px;
+    position: relative;
+    color: #999;
+    font-weight: 600;
+}
+
+/* Bank transfer section */
+.wdta-bank-details {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.wdta-bank-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+.wdta-bank-details li {
+    padding: 5px 0;
+}
+
+.wdta-bank-form {
+    margin-top: 20px;
+}
+
+.wdta-bank-form h5 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.wdta-bank-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.wdta-bank-form input[type="text"],
+.wdta-bank-form input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.wdta-bank-form input:focus {
+    outline: none;
+    border-color: #635bff;
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.2);
+}
+
+/* Success/error messages */
+#wdta-message {
+    margin: 20px 0;
+}
+
+#wdta-message .success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+}
+
+#wdta-message .error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+}
+
+/* Login Form Shortcode Styles */
+.wdta-login-shortcode {
+    max-width: 450px;
+    margin: 20px auto;
+}
+
+.wdta-login-box-shortcode {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.wdta-login-box-shortcode h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+}
+
+.wdta-login-form-inline {
+    width: 100%;
+}
+
+.wdta-login-form-inline .wdta-form-group {
+    margin-bottom: 20px;
+}
+
+.wdta-login-form-inline label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.wdta-login-form-inline input[type="text"],
+.wdta-login-form-inline input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.wdta-login-form-inline input:focus {
+    outline: none;
+    border-color: #635bff;
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.2);
+}
+
+.wdta-login-form-inline .wdta-remember-me {
+    margin-bottom: 15px;
+}
+
+.wdta-login-form-inline .wdta-remember-me label {
+    font-weight: normal;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.wdta-login-form-inline .wdta-remember-me input[type="checkbox"] {
+    margin-right: 8px;
+    margin-top: 0;
+    cursor: pointer;
+}
+
+.wdta-login-button-shortcode {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+    position: relative;
+    text-align: center;
+}
+
+.wdta-login-button-shortcode:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.wdta-login-button-shortcode:disabled {
+    background: linear-gradient(135deg, #aab7c4 0%, #999 100%);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.wdta-login-button-shortcode:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.wdta-login-button-shortcode .button-spinner {
+    font-size: 20px;
+    letter-spacing: 2px;
+    animation: wdta-pulse 1s ease-in-out infinite;
+}
+
+@keyframes wdta-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.wdta-login-form-inline .wdta-form-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.wdta-login-form-inline .wdta-form-footer a {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.wdta-login-form-inline .wdta-form-footer a:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+#wdta-login-message-shortcode {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: none;
+}
+
+#wdta-login-message-shortcode.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+    display: block;
+}
+
+#wdta-login-message-shortcode.success {
+    background: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+    display: block;
+}
+
+/* Registration Form Styles */
+.wdta-registration-section {
+    background: #f9f9f9;
+    padding: 25px;
+    margin: 20px 0 30px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.wdta-registration-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #333;
+}
+
+.wdta-form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.wdta-form-field {
+    flex: 1;
+}
+
+.wdta-form-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.wdta-form-field input[type="text"],
+.wdta-form-field input[type="email"],
+.wdta-form-field input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.wdta-form-field input:focus {
+    outline: none;
+    border-color: #635bff;
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.2);
+}
+
+.wdta-form-field small {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Password toggle wrapper */
+.wdta-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wdta-password-wrapper input {
+    flex: 1;
+    padding-right: 45px;
+}
+
+.wdta-password-toggle {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.wdta-password-toggle:hover {
+    color: #333;
+}
+
+.wdta-password-toggle:focus {
+    outline: 2px solid #635bff;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.wdta-eye-icon {
+    display: block;
+    user-select: none;
+}
+
+#wdta-registration-errors {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 15px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+/* New user payment form adjustments */
+#wdta-stripe-submit-new-user,
+#wdta-card-errors-new-user,
+#wdta-card-element-new-user {
+    /* Inherit existing Stripe styles */
+}
+
+#wdta-stripe-submit-new-user {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-stripe-submit-new-user:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-stripe-submit-new-user:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+/* Bank transfer submit button styling to match Stripe button */
+#wdta-bank-submit-new-user {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-bank-submit-new-user:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-bank-submit-new-user:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+#wdta-bank-submit-new-user:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.3);
+}
+
+#wdta-card-errors-new-user {
+    color: #fa755a;
+    font-size: 14px;
+    margin: 10px 0;
+    min-height: 20px;
+}
+
+#wdta-message-new-user {
+    margin: 20px 0;
+}
+
+#wdta-message-new-user .success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+}
+
+#wdta-message-new-user .error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .wdta-membership-form {
+        padding: 0 15px;
+    }
+    
+    .wdta-payment-option {
+        padding: 15px;
+    }
+    
+    .wdta-login-shortcode {
+        margin: 15px;
+    }
+    
+    .wdta-login-box-shortcode {
+        padding: 20px;
+    }
+    
+    .wdta-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .wdta-registration-section {
+        padding: 15px;
+    }
+}
