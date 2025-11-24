@@ -48,6 +48,9 @@ $payment_year_active = $user_id ? WDTA_Database::has_active_membership($user_id,
 
 // Get membership price from settings (default: $950.00)
 $membership_price = floatval(get_option('wdta_membership_price', '950.00'));
+
+// Stripe surcharge rate (2.2% card processing fee)
+$stripe_surcharge_rate = 0.022;
 ?>
 
 <div class="wdta-membership-form">
@@ -120,7 +123,7 @@ $membership_price = floatval(get_option('wdta_membership_price', '950.00'));
                 
                 <div class="wdta-stripe-pricing">
                     <?php
-                    $stripe_surcharge = $membership_price * 0.022; // 2.2%
+                    $stripe_surcharge = $membership_price * $stripe_surcharge_rate;
                     $stripe_total = $membership_price + $stripe_surcharge;
                     ?>
                     <div class="wdta-price-line">
@@ -224,7 +227,7 @@ $membership_price = floatval(get_option('wdta_membership_price', '950.00'));
                 
                 <div class="wdta-stripe-pricing">
                     <?php
-                    $stripe_surcharge_logged = $membership_price * 0.022; // 2.2%
+                    $stripe_surcharge_logged = $membership_price * $stripe_surcharge_rate;
                     $stripe_total_logged = $membership_price + $stripe_surcharge_logged;
                     ?>
                     <div class="wdta-price-line">

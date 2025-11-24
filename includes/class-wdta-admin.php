@@ -186,7 +186,12 @@ class WDTA_Admin {
         // Membership pricing
         if (isset($_POST['wdta_membership_price'])) {
             $price = floatval($_POST['wdta_membership_price']);
-            update_option('wdta_membership_price', $price);
+            // Validate price is positive and within reasonable bounds (0-10000 AUD)
+            if ($price >= 0 && $price <= 10000) {
+                update_option('wdta_membership_price', $price);
+            } else {
+                add_settings_error('wdta_settings', 'invalid_price', 'Membership price must be between $0 and $10,000 AUD.', 'error');
+            }
         }
         
         // Stripe settings
