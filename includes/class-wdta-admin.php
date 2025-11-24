@@ -327,6 +327,13 @@ class WDTA_Admin {
             return;
         }
         
+        // If payment status is being set to completed, automatically set membership status to active
+        // This allows admins to activate memberships regardless of current status (pending, rejected, expired)
+        // as payment completion should grant access
+        if ($payment_status === 'completed' && $status !== 'active') {
+            $status = 'active';
+        }
+        
         // Update membership record
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
@@ -337,17 +344,9 @@ class WDTA_Admin {
             'expiry_date' => $expiry_date
         ));
         
-        // Update user role based on status
-        $user = get_userdata($user_id);
-        if ($user) {
-            if ($status === 'active') {
-                $user->remove_role('wdta_inactive_member');
-                $user->add_role('wdta_active_member');
-            } else {
-                $user->remove_role('wdta_active_member');
-                $user->add_role('wdta_inactive_member');
-            }
-        }
+        // Update user role using the centralized WDTA_User_Roles system
+        $user_roles = WDTA_User_Roles::get_instance();
+        $user_roles->update_user_role($user_id, $year);
         
         wp_send_json_success(array('message' => 'Membership updated successfully'));
     }
