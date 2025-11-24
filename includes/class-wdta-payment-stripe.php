@@ -15,16 +15,14 @@ class WDTA_Payment_Stripe {
     const STRIPE_API_URL = 'https://api.stripe.com/v1';
     
     /**
-     * Membership amount in AUD including 2.2% Stripe surcharge
+     * Default membership base price (without surcharge)
      */
-    const MEMBERSHIP_AMOUNT_WITH_SURCHARGE = 970.90;
+    const DEFAULT_MEMBERSHIP_PRICE = 950.00;
     
     /**
-     * Membership amount in cents (for Stripe API)
-     * Note: This must equal MEMBERSHIP_AMOUNT_WITH_SURCHARGE * 100
-     * 970.90 AUD = 97090 cents
+     * Stripe surcharge rate (2.2%)
      */
-    const MEMBERSHIP_AMOUNT_CENTS = 97090;
+    const STRIPE_SURCHARGE_RATE = 0.022;
     
     /**
      * Single instance
@@ -46,6 +44,36 @@ class WDTA_Payment_Stripe {
      */
     private function __construct() {
         // Private constructor
+    }
+    
+    /**
+     * Get membership base price from settings
+     * 
+     * @return float Base membership price in AUD
+     */
+    private function get_membership_base_price() {
+        return floatval(get_option('wdta_membership_price', self::DEFAULT_MEMBERSHIP_PRICE));
+    }
+    
+    /**
+     * Calculate membership amount with Stripe surcharge
+     * 
+     * @return float Total amount including surcharge
+     */
+    private function get_membership_amount_with_surcharge() {
+        $base_price = $this->get_membership_base_price();
+        $surcharge = $base_price * self::STRIPE_SURCHARGE_RATE;
+        return $base_price + $surcharge;
+    }
+    
+    /**
+     * Calculate membership amount in cents for Stripe API
+     * 
+     * @return int Amount in cents
+     */
+    private function get_membership_amount_cents() {
+        $amount_with_surcharge = $this->get_membership_amount_with_surcharge();
+        return intval(round($amount_with_surcharge * 100));
     }
     
     /**
@@ -110,10 +138,11 @@ class WDTA_Payment_Stripe {
         
         // Create pending membership record
         $expiry_date = $year . '-12-31';
+        $amount_with_surcharge = $this->get_membership_amount_with_surcharge();
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90, // $950 + 2.2% surcharge
+            'payment_amount' => $amount_with_surcharge,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -336,6 +365,9 @@ WDTA Team');
             return new WP_Error('invalid_api_key', 'Invalid Stripe secret key format. Must start with sk_test_ or sk_live_');
         }
         
+        // Calculate amount dynamically from settings
+        $amount_cents = $this->get_membership_amount_cents();
+        
         // Create PaymentIntent using Stripe API
         $response = wp_remote_post(self::STRIPE_API_URL . '/payment_intents', array(
             'headers' => array(
@@ -343,7 +375,7 @@ WDTA Team');
                 'Content-Type' => 'application/x-www-form-urlencoded',
             ),
             'body' => array(
-                'amount' => self::MEMBERSHIP_AMOUNT_CENTS,
+                'amount' => $amount_cents,
                 'currency' => 'aud',
                 'description' => 'WDTA Membership ' . $year,
                 'metadata[user_id]' => $user_id,
@@ -419,10 +451,11 @@ WDTA Team');
         
         // Create pending membership record
         $expiry_date = $year . '-12-31';
+        $amount_with_surcharge = $this->get_membership_amount_with_surcharge();
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
+            'payment_amount' => $amount_with_surcharge,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -439,7 +472,7 @@ WDTA Team');
         
         wp_send_json_success(array(
             'clientSecret' => $result['client_secret'],
-            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
+            'amount' => $amount_with_surcharge,
             'currency' => 'AUD'
         ));
     }
@@ -504,10 +537,11 @@ WDTA Team');
         
         // Create membership record
         $expiry_date = $year . '-12-31';
+        $amount_with_surcharge = $this->get_membership_amount_with_surcharge();
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
+            'payment_amount' => $amount_with_surcharge,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -531,7 +565,7 @@ WDTA Team');
         
         wp_send_json_success(array(
             'clientSecret' => $result['client_secret'],
-            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
+            'amount' => $amount_with_surcharge,
             'currency' => 'AUD',
             'user_id' => $user_id
         ));

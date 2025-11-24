@@ -2,6 +2,23 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.1.0] - 2025-11-24
+
+### Fixed
+- **Payment amount mismatch**: Fixed critical bug where backend charged hardcoded $970.90 while frontend displayed dynamic price from settings
+- Users no longer receive "insufficient funds" errors when membership price is changed in admin settings
+- Payment amount is now calculated dynamically from `wdta_membership_price` option with proper 2.2% Stripe surcharge
+
+### Changed
+- Replaced hardcoded `MEMBERSHIP_AMOUNT_WITH_SURCHARGE` and `MEMBERSHIP_AMOUNT_CENTS` constants with dynamic calculation methods
+- Added `get_membership_base_price()`, `get_membership_amount_with_surcharge()`, and `get_membership_amount_cents()` helper methods
+- All payment intent creation now uses dynamic amounts consistent with frontend display
+
+### Technical Details
+- Modified `includes/class-wdta-payment-stripe.php` to read membership price from WordPress options
+- Ensured consistency between frontend display and Stripe API charges
+- Proper cent conversion using `intval(round($amount * 100))` to avoid floating-point precision issues
+
 ## [3.0.0] - 2024-11-24
 
 ### Fixed
