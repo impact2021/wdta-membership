@@ -201,7 +201,7 @@ function wdta_membership_migrate_reminders() {
                 'subject' => 'WDTA Membership Renewal - Due January 1st',
                 'body' => 'Dear {user_name},
 
-This is a reminder that your WDTA membership for {year} will be due on January 1st, {year}.
+This is a reminder that your WDTA membership for {year} will be due on January 1st.
 
 The annual membership fee is ${amount} AUD and must be paid by {deadline}.
 

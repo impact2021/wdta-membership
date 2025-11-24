@@ -100,6 +100,8 @@ class WDTA_Cron {
             // Check if today matches the send date
             if ($today->format('Y-m-d') === $send_date->format('Y-m-d')) {
                 // Determine which year's membership to check
+                // Before expiry: remind about next year's membership (due Jan 1 of next year)
+                // After expiry: remind about current year's overdue membership
                 $target_year = ($period === 'before') ? $next_year : $current_year;
                 
                 // Send reminders

@@ -275,10 +275,14 @@ WDTA Team'
         jQuery(document).ready(function($) {
             var reminderCounter = <?php echo count($reminders); ?>;
             
+            // Find the highest existing ID to ensure uniqueness
+            var maxId = <?php echo !empty($reminders) ? max(array_column($reminders, 'id')) : 0; ?>;
+            
             // Add new reminder
             $('#wdta-add-reminder').on('click', function() {
                 reminderCounter++;
-                var newReminderId = Date.now(); // Use timestamp for unique ID
+                maxId++;
+                var newReminderId = maxId; // Use incremental counter for unique ID
                 
                 var reminderHtml = '<div class="wdta-reminder-item" data-reminder-id="' + newReminderId + '">' +
                     '<div class="wdta-reminder-header" style="background: #f5f5f5; padding: 15px; margin: 15px 0; border-left: 4px solid #2271b1;">' +
