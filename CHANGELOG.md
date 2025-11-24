@@ -2,6 +2,55 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## Version Status Note
+
+**Current Version: 2.0.0** (as of 2024-11-24)
+
+This release consolidates features from versions 1.0.0 through 1.2.0 into the official 2.0.0 release. The version number was updated to reflect the significant feature additions including:
+- Inline registration with payment
+- Configurable year cutoff settings
+- Admin membership editing capabilities
+- Customizable email templates with WYSIWYG editor
+- Settings page tabs restoration
+- Binary membership status (active/inactive)
+- December 31st expiry date change
+
+**Version 3.0 Status:** There is currently no Version 3.0 planned or in development. Future enhancements are outlined in the roadmap section below.
+
+---
+
+## [2.0.0] - 2024-11-24
+
+### Major Release
+This is a major version release that consolidates all features from v1.0.0 through v1.2.0.
+
+### Features Included
+- Complete membership management system
+- Stripe and bank transfer payment processing
+- Automated email notification system (8 configurable reminders)
+- Page access control
+- Inline registration with payment integration
+- Admin membership editing
+- Settings page with tabs (Payment, Access Control, Email, Documentation)
+- WYSIWYG email template editor
+- Configurable year cutoff for membership payments
+- Custom login page at `/member-login/`
+- Binary membership status (active/inactive - no grace period)
+
+### Changed from Previous Versions
+- **Expiry date**: Memberships now expire on December 31st (changed from March 31st)
+- **Automatic deactivation**: Unpaid memberships become inactive on January 1st
+- **Version numbering**: Consolidated to 2.0.0 to reflect maturity of the plugin
+
+### Technical Details
+- WordPress 5.0+ compatible
+- PHP 7.2+ required
+- MySQL 5.6+ required
+- Annual membership fee: $950 AUD
+- Stripe processing surcharge: 2.2% ($20.90)
+
+---
+
 ## [1.2.0] - 2024-11-23
 
 ### Changed - BREAKING CHANGES
@@ -179,34 +228,42 @@ Eight automated email reminders sent on schedule:
 
 ## Future Enhancements (Roadmap)
 
-### Planned for 1.1.0
+**Note:** Version 2.0.0 has been released. The items previously planned for versions 1.1.0, 1.2.0, and 2.0.0 are now being considered for future releases (2.1.0+). There is currently **no Version 3.0 planned**.
+
+### Potential Future Features (Version TBD)
+The following features may be considered for future releases based on user feedback and requirements:
+
+#### Enhanced Data Management
 - [ ] Export membership data to CSV
 - [ ] Import members from CSV
-- [ ] Membership renewal discount codes
-- [ ] Multiple membership tiers/levels
-- [ ] Automatic currency conversion
-- [ ] Member dashboard widget
-- [ ] Email notification preview in admin
-- [ ] Test mode for email system
+- [ ] Advanced reporting and analytics
+- [ ] Activity logging
 
-### Planned for 1.2.0
+#### Payment & Membership Options
 - [ ] PayPal payment integration
 - [ ] Recurring payment support
-- [ ] Member directory
-- [ ] Activity logging
-- [ ] Advanced reporting
-- [ ] Member communication tools
-- [ ] Custom member fields
-- [ ] Integration with popular membership plugins
-
-### Planned for 2.0.0
+- [ ] Multiple membership tiers/levels
+- [ ] Membership renewal discount codes
 - [ ] Multi-year memberships
 - [ ] Family/group memberships
 - [ ] Partial payment plans
+
+#### Member Features
+- [ ] Member directory
+- [ ] Member dashboard widget
+- [ ] Member communication tools
 - [ ] Member benefits management
+- [ ] Custom member fields
+
+#### Admin & System Features
+- [ ] Email notification preview in admin
+- [ ] Test mode for email system
+- [ ] Automatic currency conversion
+- [ ] Integration with popular membership plugins
+
+#### Advanced Features
 - [ ] Event registration integration
 - [ ] Mobile app API
-- [ ] Advanced analytics
 - [ ] White-label options
 
 ---
@@ -215,16 +272,31 @@ Eight automated email reminders sent on schedule:
 
 | Version | Release Date | Notes |
 |---------|--------------|-------|
+| 2.0.0   | 2024-11-24  | Major release - consolidates all v1.x features |
+| 1.2.0   | 2024-11-23  | Binary membership status, Dec 31st expiry |
+| 1.1.4   | 2024-11-21  | Documentation improvements |
+| 1.1.3   | 2024-11-21  | WYSIWYG email editor |
+| 1.1.2   | 2024-11-21  | Access control fixes, date formatting |
+| 1.1.1   | 2024-11-21  | Smart year selector |
+| 1.1.0   | 2024-11-21  | Custom login page, Stripe surcharge |
 | 1.0.0   | 2024-11-21  | Initial release |
 
 ---
 
 ## Upgrade Notes
 
+### Upgrading to 2.0.0
+If you're running any v1.x version, no database changes are required. Version 2.0.0 is primarily a version number consolidation that reflects the mature state of the plugin with all features from v1.0.0-1.2.0 included.
+
+**Important changes to note:**
+- Membership expiry is December 31st (changed from March 31st in early versions)
+- No grace period - membership status is binary (active/inactive)
+- All existing settings, memberships, and payment data are preserved
+
 ### Upgrading to 1.0.0
 This is the initial release. No upgrade path needed.
 
-### Future Upgrades
+### General Upgrade Guidelines
 Always backup your database before upgrading. The plugin will automatically:
 - Update database schema if needed
 - Preserve existing membership data

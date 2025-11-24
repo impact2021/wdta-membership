@@ -263,13 +263,25 @@ For issues, questions, or feature requests, please contact the WDTA development 
 
 This plugin is licensed under GPL v2 or later.
 
+## Version Information
+
+**Current Version:** 2.0.0 (Released: November 24, 2024)
+
+This is a major release consolidating all features from versions 1.0.0 through 1.2.0. For detailed version history and upgrade notes, see [CHANGELOG.md](CHANGELOG.md).
+
+**Version 3.0 Status:** There is currently no Version 3.0 planned or in development. Future enhancements are tracked in the CHANGELOG roadmap section.
+
 ## Changelog
 
-### Version 1.0.0
-- Initial release
-- Stripe payment integration
-- Bank transfer support
-- Automated email reminders
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+### Version 2.0.0 Highlights
+- Complete membership management system
+- Stripe and bank transfer payments
+- Automated email notifications (8 configurable reminders)
 - Page access control
-- Admin dashboard
-- Member portal
+- Admin membership editing
+- WYSIWYG email template editor
+- Custom login page
+- December 31st membership expiry
+- Binary membership status (active/inactive)
