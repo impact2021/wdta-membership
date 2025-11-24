@@ -10,6 +10,16 @@ if (!defined('ABSPATH')) {
 class WDTA_Payment_Stripe {
     
     /**
+     * Membership amount in AUD including 2.2% Stripe surcharge
+     */
+    const MEMBERSHIP_AMOUNT_WITH_SURCHARGE = 970.90;
+    
+    /**
+     * Membership amount in cents (for Stripe API)
+     */
+    const MEMBERSHIP_AMOUNT_CENTS = 97090;
+    
+    /**
      * Single instance
      */
     private static $instance = null;
@@ -296,6 +306,60 @@ WDTA Team');
     }
     
     /**
+     * Create a payment intent via Stripe API
+     * 
+     * @param int $user_id WordPress user ID
+     * @param int $year Membership year
+     * @param string $secret_key Stripe secret API key
+     * @return array|WP_Error Array with 'client_secret' on success, WP_Error on failure
+     */
+    private function create_stripe_payment_intent($user_id, $year, $secret_key) {
+        $user = get_userdata($user_id);
+        
+        if (!$user) {
+            return new WP_Error('invalid_user', 'Invalid user ID');
+        }
+        
+        // Create PaymentIntent using Stripe API
+        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'amount' => self::MEMBERSHIP_AMOUNT_CENTS,
+                'currency' => 'aud',
+                'description' => 'WDTA Membership ' . $year,
+                'metadata[user_id]' => $user_id,
+                'metadata[year]' => $year,
+                'metadata[user_email]' => $user->user_email,
+                'metadata[user_name]' => $user->display_name,
+            ),
+            'timeout' => 30,
+        ));
+        
+        if (is_wp_error($response)) {
+            return new WP_Error('api_error', 'Failed to connect to payment processor: ' . $response->get_error_message());
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        
+        if ($status_code !== 200) {
+            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
+            return new WP_Error('stripe_error', $error_message);
+        }
+        
+        if (!isset($body['client_secret'])) {
+            return new WP_Error('invalid_response', 'Invalid payment processor response');
+        }
+        
+        return array(
+            'client_secret' => $body['client_secret']
+        );
+    }
+    
+    /**
      * Enqueue Stripe scripts
      */
     public function enqueue_stripe_scripts() {
@@ -342,7 +406,7 @@ WDTA Team');
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90, // $950 + 2.2% surcharge
+            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -350,45 +414,16 @@ WDTA Team');
         ));
         
         // Create PaymentIntent using Stripe API
-        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $secret_key,
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
-            'body' => array(
-                'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
-                'currency' => 'aud',
-                'description' => 'WDTA Membership ' . $year,
-                'metadata[user_id]' => $user_id,
-                'metadata[year]' => $year,
-                'metadata[user_email]' => $user->user_email,
-                'metadata[user_name]' => $user->display_name,
-            ),
-            'timeout' => 30,
-        ));
+        $result = $this->create_stripe_payment_intent($user_id, $year, $secret_key);
         
-        if (is_wp_error($response)) {
-            wp_send_json_error(array('message' => 'Failed to connect to payment processor: ' . $response->get_error_message()));
-            return;
-        }
-        
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-        $status_code = wp_remote_retrieve_response_code($response);
-        
-        if ($status_code !== 200) {
-            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
-            wp_send_json_error(array('message' => $error_message));
-            return;
-        }
-        
-        if (!isset($body['client_secret'])) {
-            wp_send_json_error(array('message' => 'Invalid payment processor response'));
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
             return;
         }
         
         wp_send_json_success(array(
-            'clientSecret' => $body['client_secret'],
-            'amount' => 970.90,
+            'clientSecret' => $result['client_secret'],
+            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'currency' => 'AUD'
         ));
     }
@@ -456,7 +491,7 @@ WDTA Team');
         WDTA_Database::save_membership(array(
             'user_id' => $user_id,
             'membership_year' => $year,
-            'payment_amount' => 970.90,
+            'payment_amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
             'expiry_date' => $expiry_date,
@@ -470,49 +505,17 @@ WDTA Team');
             return;
         }
         
-        // Get user data for payment intent
-        $user = get_userdata($user_id);
-        
         // Create PaymentIntent using Stripe API
-        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $secret_key,
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
-            'body' => array(
-                'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
-                'currency' => 'aud',
-                'description' => 'WDTA Membership ' . $year,
-                'metadata[user_id]' => $user_id,
-                'metadata[year]' => $year,
-                'metadata[user_email]' => $user->user_email,
-                'metadata[user_name]' => $user->display_name,
-            ),
-            'timeout' => 30,
-        ));
+        $result = $this->create_stripe_payment_intent($user_id, $year, $secret_key);
         
-        if (is_wp_error($response)) {
-            wp_send_json_error(array('message' => 'Failed to connect to payment processor: ' . $response->get_error_message()));
-            return;
-        }
-        
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-        $status_code = wp_remote_retrieve_response_code($response);
-        
-        if ($status_code !== 200) {
-            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
-            wp_send_json_error(array('message' => $error_message));
-            return;
-        }
-        
-        if (!isset($body['client_secret'])) {
-            wp_send_json_error(array('message' => 'Invalid payment processor response'));
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
             return;
         }
         
         wp_send_json_success(array(
-            'clientSecret' => $body['client_secret'],
-            'amount' => 970.90,
+            'clientSecret' => $result['client_secret'],
+            'amount' => self::MEMBERSHIP_AMOUNT_WITH_SURCHARGE,
             'currency' => 'AUD',
             'user_id' => $user_id
         ));
