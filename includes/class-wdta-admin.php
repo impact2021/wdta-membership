@@ -349,6 +349,28 @@ class WDTA_Admin {
             update_option('wdta_inactive_report_emails', sanitize_text_field($_POST['wdta_inactive_report_emails']));
         }
         
+        // Additional admin recipients for payment notifications
+        if (isset($_POST['wdta_payment_admin_recipients'])) {
+            update_option('wdta_payment_admin_recipients', sanitize_text_field($_POST['wdta_payment_admin_recipients']));
+        }
+        
+        // Welcome/confirmation email templates
+        $confirmation_templates = array(
+            'stripe_confirmation',
+            'bank_pending',
+            'bank_approved'
+        );
+        
+        foreach ($confirmation_templates as $template) {
+            // Save subject and body
+            if (isset($_POST['wdta_email_' . $template . '_subject'])) {
+                update_option('wdta_email_' . $template . '_subject', sanitize_text_field($_POST['wdta_email_' . $template . '_subject']));
+            }
+            if (isset($_POST['wdta_email_' . $template . '_body'])) {
+                update_option('wdta_email_' . $template . '_body', wp_kses_post($_POST['wdta_email_' . $template . '_body']));
+            }
+        }
+        
         // Reminder email templates
         $email_templates = array(
             'reminder_1month',

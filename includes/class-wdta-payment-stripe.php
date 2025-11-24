@@ -226,15 +226,34 @@ class WDTA_Payment_Stripe {
     private function send_payment_confirmation($user_id, $year) {
         $user = get_userdata($user_id);
         $to = $user->user_email;
-        $subject = 'WDTA Membership Payment Confirmed - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Thank you for your WDTA membership payment for {$year}.\n\n";
-        $message .= "Payment Details:\n";
-        $message .= "Membership fee: \$950.00 AUD\n";
-        $message .= "Card processing fee (2.2%): \$20.90 AUD\n";
-        $message .= "Total paid: \$970.90 AUD\n\n";
-        $message .= "Your membership is now active and will remain valid until December 31, {$year}.\n\n";
-        $message .= "Best regards,\nWDTA Team";
+        
+        // Get customizable template
+        $subject = get_option('wdta_email_stripe_confirmation_subject', 'WDTA Membership Payment Confirmed - {year}');
+        $template = get_option('wdta_email_stripe_confirmation_body', 
+'Dear {user_name},
+
+Thank you for your WDTA membership payment for {year}.
+
+Payment Details:
+Membership fee: $950.00 AUD
+Card processing fee (2.2%): $20.90 AUD
+Total paid: $970.90 AUD
+
+Your membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team');
+        
+        // Replace placeholders
+        $replacements = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{site_name}' => get_bloginfo('name')
+        );
+        
+        $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
+        $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
         wp_mail($to, $subject, $message);
     }

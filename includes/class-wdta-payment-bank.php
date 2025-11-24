@@ -93,17 +93,46 @@ class WDTA_Payment_Bank {
     private function notify_admin_of_bank_transfer($user_id, $year, $reference) {
         $user = get_userdata($user_id);
         $admin_email = get_option('admin_email');
+        $additional_recipients = get_option('wdta_payment_admin_recipients', '');
         
-        $subject = 'New Bank Transfer Submission - WDTA Membership ' . $year;
-        $message = "A new bank transfer payment has been submitted:\n\n";
-        $message .= "User: {$user->display_name} ({$user->user_email})\n";
-        $message .= "Year: {$year}\n";
-        $message .= "Reference: {$reference}\n";
-        $message .= "Amount: \$950 AUD\n\n";
-        $message .= "Please verify the payment and update the membership status in the admin panel.\n";
-        $message .= admin_url('admin.php?page=wdta-memberships');
+        // Get customizable template
+        $subject = get_option('wdta_email_bank_pending_subject', 'New Bank Transfer Submission - WDTA Membership {year}');
+        $template = get_option('wdta_email_bank_pending_body',
+'A new bank transfer payment has been submitted:
+
+User: {user_name} ({user_email})
+Year: {year}
+Reference: {reference}
+Amount: $950 AUD
+
+Please verify the payment and update the membership status in the admin panel.
+{admin_url}');
         
+        // Replace placeholders
+        $replacements = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{reference}' => $reference,
+            '{admin_url}' => admin_url('admin.php?page=wdta-memberships'),
+            '{site_name}' => get_bloginfo('name')
+        );
+        
+        $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
+        $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+        
+        // Send to admin
         wp_mail($admin_email, $subject, $message);
+        
+        // Send to additional recipients if configured
+        if (!empty($additional_recipients)) {
+            $recipients = array_map('trim', explode(',', $additional_recipients));
+            foreach ($recipients as $recipient) {
+                if (is_email($recipient)) {
+                    wp_mail($recipient, $subject, $message);
+                }
+            }
+        }
     }
     
     /**
@@ -131,11 +160,29 @@ class WDTA_Payment_Bank {
     private static function send_approval_confirmation($user_id, $year) {
         $user = get_userdata($user_id);
         $to = $user->user_email;
-        $subject = 'WDTA Membership Activated - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Your bank transfer payment of \$950.00 AUD for {$year} has been verified.\n\n";
-        $message .= "Your WDTA membership is now active and will remain valid until " . wdta_format_date("December 31, {$year}") . ".\n\n";
-        $message .= "Best regards,\nWDTA Team";
+        
+        // Get customizable template
+        $subject = get_option('wdta_email_bank_approved_subject', 'WDTA Membership Activated - {year}');
+        $template = get_option('wdta_email_bank_approved_body',
+'Dear {user_name},
+
+Your bank transfer payment of $950.00 AUD for {year} has been verified.
+
+Your WDTA membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team');
+        
+        // Replace placeholders
+        $replacements = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{site_name}' => get_bloginfo('name')
+        );
+        
+        $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
+        $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
         wp_mail($to, $subject, $message);
     }
