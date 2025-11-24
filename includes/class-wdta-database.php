@@ -208,6 +208,14 @@ class WDTA_Database {
     
     /**
      * Delete a membership record
+     * 
+     * Permanently removes a membership record from the database. This is useful
+     * for cleaning up orphaned memberships when users are deleted or removing
+     * incorrect membership entries.
+     * 
+     * @param int $user_id The WordPress user ID
+     * @param int $year The membership year
+     * @return int|false The number of rows deleted, or false on error
      */
     public static function delete_membership($user_id, $year) {
         global $wpdb;

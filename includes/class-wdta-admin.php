@@ -354,6 +354,22 @@ class WDTA_Admin {
     
     /**
      * Delete membership (AJAX)
+     * 
+     * Permanently removes a membership record from the database. This endpoint
+     * handles AJAX requests from the admin interface to delete memberships.
+     * Useful for cleaning up orphaned memberships or removing incorrect entries.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The WordPress user ID
+     * - year (int): The membership year
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
      */
     public function delete_membership() {
         check_ajax_referer('wdta_admin_nonce', 'nonce');

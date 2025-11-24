@@ -125,8 +125,7 @@ if (!defined('ABSPATH')) {
                             <?php endif; ?>
                             <button class="button button-link-delete wdta-delete-membership" 
                                     data-user-id="<?php echo esc_attr($membership->user_id); ?>"
-                                    data-year="<?php echo esc_attr($membership->membership_year); ?>"
-                                    style="color: #b32d2e;">
+                                    data-year="<?php echo esc_attr($membership->membership_year); ?>">
                                 Delete
                             </button>
                         </td>
