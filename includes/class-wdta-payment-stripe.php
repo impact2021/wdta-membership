@@ -217,7 +217,30 @@ class WDTA_Payment_Stripe {
      * Handle payment intent succeeded
      */
     private function handle_payment_intent_succeeded($payment_intent) {
-        // Additional handling if needed
+        // Extract user_id and year from payment intent metadata
+        $user_id = isset($payment_intent['metadata']['user_id']) ? intval($payment_intent['metadata']['user_id']) : 0;
+        $year = isset($payment_intent['metadata']['year']) ? intval($payment_intent['metadata']['year']) : date('Y');
+        
+        if (!$user_id) {
+            error_log('WDTA Payment: No user_id in payment intent metadata');
+            return;
+        }
+        
+        // Update membership record
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_status' => 'completed',
+            'payment_date' => current_time('mysql'),
+            'stripe_payment_id' => $payment_intent['id'],
+            'status' => 'active'
+        ));
+        
+        // Update user role
+        do_action('wdta_membership_activated', $user_id, $year);
+        
+        // Send confirmation email
+        $this->send_payment_confirmation($user_id, $year);
     }
     
     /**
@@ -326,27 +349,46 @@ WDTA Team');
             'status' => 'pending'
         ));
         
-        // In production, this would create a Stripe PaymentIntent with Stripe PHP SDK:
-        // \Stripe\Stripe::setApiKey($secret_key);
-        // $paymentIntent = \Stripe\PaymentIntent::create([
-        //     'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
-        //     'currency' => 'aud',
-        //     'description' => 'WDTA Membership ' . $year,
-        //     'metadata' => [
-        //         'user_id' => $user_id,
-        //         'year' => $year,
-        //         'user_email' => $user->user_email,
-        //         'user_name' => $user->display_name,
-        //     ],
-        // ]);
+        // Create PaymentIntent using Stripe API
+        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
+                'currency' => 'aud',
+                'description' => 'WDTA Membership ' . $year,
+                'metadata[user_id]' => $user_id,
+                'metadata[year]' => $year,
+                'metadata[user_email]' => $user->user_email,
+                'metadata[user_name]' => $user->display_name,
+            ),
+            'timeout' => 30,
+        ));
         
-        // For now, return mock payment intent data
-        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
-        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
+        if (is_wp_error($response)) {
+            wp_send_json_error(array('message' => 'Failed to connect to payment processor: ' . $response->get_error_message()));
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        
+        if ($status_code !== 200) {
+            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
+            wp_send_json_error(array('message' => $error_message));
+            return;
+        }
+        
+        if (!isset($body['client_secret'])) {
+            wp_send_json_error(array('message' => 'Invalid payment processor response'));
+            return;
+        }
         
         wp_send_json_success(array(
-            'clientSecret' => $client_secret,
-            'amount' => 950.00,
+            'clientSecret' => $body['client_secret'],
+            'amount' => 970.90,
             'currency' => 'AUD'
         ));
     }
@@ -428,14 +470,48 @@ WDTA Team');
             return;
         }
         
-        // Create Payment Intent with Stripe API
-        // In production, use actual Stripe API
-        // For now, return mock payment intent data
-        // Generate a valid mock client secret (Stripe requires at least 24 chars for each part)
-        $client_secret = 'pi_' . bin2hex(random_bytes(12)) . '_secret_' . bin2hex(random_bytes(12));
+        // Get user data for payment intent
+        $user = get_userdata($user_id);
+        
+        // Create PaymentIntent using Stripe API
+        $response = wp_remote_post('https://api.stripe.com/v1/payment_intents', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'amount' => 97090, // $970.90 in cents (includes 2.2% surcharge)
+                'currency' => 'aud',
+                'description' => 'WDTA Membership ' . $year,
+                'metadata[user_id]' => $user_id,
+                'metadata[year]' => $year,
+                'metadata[user_email]' => $user->user_email,
+                'metadata[user_name]' => $user->display_name,
+            ),
+            'timeout' => 30,
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error(array('message' => 'Failed to connect to payment processor: ' . $response->get_error_message()));
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        
+        if ($status_code !== 200) {
+            $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Payment processor error';
+            wp_send_json_error(array('message' => $error_message));
+            return;
+        }
+        
+        if (!isset($body['client_secret'])) {
+            wp_send_json_error(array('message' => 'Invalid payment processor response'));
+            return;
+        }
         
         wp_send_json_success(array(
-            'clientSecret' => $client_secret,
+            'clientSecret' => $body['client_secret'],
             'amount' => 970.90,
             'currency' => 'AUD',
             'user_id' => $user_id
