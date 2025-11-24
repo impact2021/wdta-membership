@@ -33,6 +33,22 @@ function wdta_format_date($date_string) {
     return date('d/m/Y', strtotime($date_string));
 }
 
+/**
+ * Get default email reminder template
+ */
+function wdta_get_default_reminder_template() {
+    return 'Dear {user_name},
+
+This is a reminder about your WDTA membership for {year}.
+
+The annual membership fee is ${amount} AUD and must be paid by {deadline}.
+
+You can renew your membership at: {renewal_url}
+
+Best regards,
+WDTA Team';
+}
+
 // Include required files
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-membership.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-database.php';
@@ -199,16 +215,7 @@ function wdta_membership_migrate_reminders() {
                 'unit' => 'days',
                 'period' => 'before',
                 'subject' => 'WDTA Membership Renewal - Due January 1st',
-                'body' => 'Dear {user_name},
-
-This is a reminder that your WDTA membership for {year} will be due on January 1st.
-
-The annual membership fee is ${amount} AUD and must be paid by {deadline}.
-
-You can renew your membership at: {renewal_url}
-
-Best regards,
-WDTA Team'
+                'body' => wdta_get_default_reminder_template()
             )
         );
         update_option('wdta_email_reminders', $default_reminder);

@@ -271,12 +271,26 @@ WDTA Team'
             <button type="button" id="wdta-add-reminder" class="button button-secondary">+ Add Another Reminder</button>
         </p>
         
+        <?php
+        // Get default template for JavaScript
+        $default_template_js = esc_js(wdta_get_default_reminder_template());
+        ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
             var reminderCounter = <?php echo count($reminders); ?>;
             
             // Find the highest existing ID to ensure uniqueness
-            var maxId = <?php echo !empty($reminders) ? max(array_column($reminders, 'id')) : 0; ?>;
+            var maxId = <?php 
+                if (!empty($reminders)) {
+                    $ids = array_map(function($r) { return isset($r['id']) ? intval($r['id']) : 0; }, $reminders);
+                    echo max($ids);
+                } else {
+                    echo 0;
+                }
+            ?>;
+            
+            // Default template from PHP
+            var defaultTemplate = '<?php echo $default_template_js; ?>';
             
             // Add new reminder
             $('#wdta-add-reminder').on('click', function() {
@@ -316,7 +330,7 @@ WDTA Team'
                         '<input type="text" name="wdta_reminders[' + newReminderId + '][subject]" value="" class="large-text" placeholder="Email Subject">' +
                         '<br><br>' +
                         '<label><strong>Email Body:</strong></label>' +
-                        '<textarea name="wdta_reminders[' + newReminderId + '][body]" rows="10" class="large-text">Dear {user_name},\n\nThis is a reminder about your WDTA membership for {year}.\n\nThe annual membership fee is ${amount} AUD and must be paid by {deadline}.\n\nYou can renew your membership at: {renewal_url}\n\nBest regards,\nWDTA Team</textarea>' +
+                        '<textarea name="wdta_reminders[' + newReminderId + '][body]" rows="10" class="large-text">' + defaultTemplate + '</textarea>' +
                     '</div>' +
                 '</div>';
                 
