@@ -101,3 +101,49 @@
     background: #e7f3ff;
     color: #004085;
 }
+
+/* Dynamic reminder styles */
+.wdta-reminder-item {
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    background: #fff;
+    transition: box-shadow 0.3s ease;
+}
+
+.wdta-reminder-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.wdta-reminder-header {
+    background: #f5f5f5;
+    padding: 15px;
+    border-left: 4px solid #2271b1;
+}
+
+.wdta-reminder-header label {
+    font-weight: 600;
+}
+
+.wdta-reminder-header input[type="number"],
+.wdta-reminder-header select {
+    margin: 0 5px;
+}
+
+.wdta-reminder-content {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-top: none;
+}
+
+.wdta-remove-reminder {
+    color: #b32d2e;
+}
+
+.wdta-remove-reminder:hover {
+    color: #dc3232;
+    border-color: #dc3232;
+}
+
+#wdta-add-reminder {
+    margin-top: 10px;
+}
