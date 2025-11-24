@@ -97,7 +97,20 @@ class WDTA_Admin {
      * Enqueue admin scripts
      */
     public function enqueue_admin_scripts($hook) {
-        if (strpos($hook, 'wdta-') === false) {
+        // List of our admin page hooks
+        $wdta_pages = array(
+            'toplevel_page_wdta-memberships',
+            'membership_page_wdta-memberships',
+            'membership_page_wdta-settings',
+            'membership_page_wdta-emails',
+            'membership_page_wdta-documentation'
+        );
+        
+        // Check if we're on one of our admin pages
+        // Also check for any page containing 'wdta-' or 'wdta_' as fallback
+        if (!in_array($hook, $wdta_pages) && 
+            strpos($hook, 'wdta-') === false && 
+            strpos($hook, 'wdta_') === false) {
             return;
         }
         
