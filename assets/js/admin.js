@@ -8,9 +8,16 @@ jQuery(document).ready(function($) {
     console.log('Edit buttons found:', $('.wdta-edit-membership').length);
     console.log('Modal element found:', $('#wdta-edit-membership-modal').length);
     
+    // Check if wdtaAdmin is defined
+    if (typeof wdtaAdmin === 'undefined') {
+        console.error('wdtaAdmin object is not defined! Ajax calls will fail.');
+        return;
+    }
+    
     // Approve membership (using event delegation)
     $(document).on('click', '.wdta-approve-membership', function(e) {
         e.preventDefault();
+        console.log('Approve button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
@@ -50,6 +57,7 @@ jQuery(document).ready(function($) {
     // Reject membership (using event delegation)
     $(document).on('click', '.wdta-reject-membership', function(e) {
         e.preventDefault();
+        console.log('Reject button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
