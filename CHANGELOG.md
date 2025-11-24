@@ -2,6 +2,33 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [2.1.0] - 2024-11-24
+
+### Added - Dynamic Email Reminder System
+- **Dynamic reminder configuration**: Admins can now add/remove email reminders dynamically
+- **Flexible timing**: Configure reminders to be sent X days or weeks BEFORE or AFTER membership expiry
+- **Add/Remove reminders**: "Add Another Reminder" button to create unlimited custom reminders
+- **Individual enable/disable**: Each reminder has its own checkbox to enable or disable it
+- **Default configuration**: New installations start with 1 reminder (30 days before expiry)
+
+### Changed
+- Replaced 8 hardcoded reminder emails with dynamic, configurable system
+- Reminders now stored in WordPress options as serialized array
+- Cron job updated to process dynamic reminders based on configuration
+- Email templates page completely redesigned for dynamic reminders
+
+### Migration
+- Automatic migration of existing hardcoded reminders to new dynamic system
+- Runs once on plugin initialization
+- Preserves all existing reminder settings (enabled/disabled, subject, body)
+- Falls back to default 1 reminder if no existing configuration found
+
+### Technical Details
+- New option: `wdta_email_reminders` stores array of reminder configurations
+- Each reminder contains: id, enabled, timing, unit, period, subject, body
+- JavaScript handles add/remove functionality in admin interface
+- Enhanced CSS styling for reminder sections
+
 ## [1.2.0] - 2024-11-23
 
 ### Changed - BREAKING CHANGES
