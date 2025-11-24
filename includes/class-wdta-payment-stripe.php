@@ -255,7 +255,21 @@ WDTA Team');
         $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
         $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
-        wp_mail($to, $subject, $message);
+        // Prepare headers with CC
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        
+        // Add CC recipients for signup emails
+        $cc_recipients = get_option('wdta_signup_email_cc', 'marketing@wdta.org.au, treasurer@wdta.org.au');
+        if (!empty($cc_recipients)) {
+            $cc_emails = array_map('trim', explode(',', $cc_recipients));
+            foreach ($cc_emails as $cc_email) {
+                if (is_email($cc_email)) {
+                    $headers[] = 'Cc: ' . $cc_email;
+                }
+            }
+        }
+        
+        wp_mail($to, $subject, $message, $headers);
     }
     
     /**

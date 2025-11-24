@@ -366,6 +366,16 @@ class WDTA_Admin {
             update_option('wdta_payment_admin_recipients', sanitize_text_field($_POST['wdta_payment_admin_recipients']));
         }
         
+        // CC recipients for signup emails
+        if (isset($_POST['wdta_signup_email_cc'])) {
+            update_option('wdta_signup_email_cc', sanitize_text_field($_POST['wdta_signup_email_cc']));
+        }
+        
+        // CC recipients for reminder emails
+        if (isset($_POST['wdta_reminder_email_cc'])) {
+            update_option('wdta_reminder_email_cc', sanitize_text_field($_POST['wdta_reminder_email_cc']));
+        }
+        
         // Welcome/confirmation email templates
         $confirmation_templates = array(
             'stripe_confirmation',

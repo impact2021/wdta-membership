@@ -160,6 +160,17 @@ class WDTA_Membership_Email {
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
         $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
         
+        // Add CC recipients for reminder emails
+        $cc_recipients = get_option('wdta_reminder_email_cc', 'marketing@wdta.org.au');
+        if (!empty($cc_recipients)) {
+            $cc_emails = array_map('trim', explode(',', $cc_recipients));
+            foreach ($cc_emails as $cc_email) {
+                if (is_email($cc_email)) {
+                    $headers[] = 'Cc: ' . $cc_email;
+                }
+            }
+        }
+        
         return $headers;
     }
     
