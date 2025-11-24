@@ -121,6 +121,9 @@ Please verify the payment and update the membership status in the admin panel.
         $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
         $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
+        // Convert line breaks to HTML for proper email formatting
+        $message = wpautop($message);
+        
         // Send to admin
         wp_mail($admin_email, $subject, $message);
         
@@ -183,6 +186,9 @@ WDTA Team');
         
         $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
         $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+        
+        // Convert line breaks to HTML for proper email formatting
+        $message = wpautop($message);
         
         // Prepare headers with CC
         $headers = array('Content-Type: text/html; charset=UTF-8');
