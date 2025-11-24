@@ -39,6 +39,7 @@ class WDTA_Payment_Stripe {
         add_action('wp_ajax_nopriv_wdta_create_stripe_session', array($this, 'create_checkout_session'));
         add_action('wp_ajax_wdta_create_payment_intent', array($this, 'create_payment_intent'));
         add_action('wp_ajax_nopriv_wdta_create_payment_intent', array($this, 'create_payment_intent'));
+        add_action('wp_ajax_nopriv_wdta_register_and_create_payment_intent', array($this, 'register_and_create_payment_intent'));
         add_action('rest_api_init', array($this, 'register_webhook_endpoint'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_stripe_scripts'));
@@ -225,15 +226,34 @@ class WDTA_Payment_Stripe {
     private function send_payment_confirmation($user_id, $year) {
         $user = get_userdata($user_id);
         $to = $user->user_email;
-        $subject = 'WDTA Membership Payment Confirmed - ' . $year;
-        $message = "Dear {$user->display_name},\n\n";
-        $message .= "Thank you for your WDTA membership payment for {$year}.\n\n";
-        $message .= "Payment Details:\n";
-        $message .= "Membership fee: \$950.00 AUD\n";
-        $message .= "Card processing fee (2.2%): \$20.90 AUD\n";
-        $message .= "Total paid: \$970.90 AUD\n\n";
-        $message .= "Your membership is now active and will remain valid until December 31, {$year}.\n\n";
-        $message .= "Best regards,\nWDTA Team";
+        
+        // Get customizable template
+        $subject = get_option('wdta_email_stripe_confirmation_subject', 'WDTA Membership Payment Confirmed - {year}');
+        $template = get_option('wdta_email_stripe_confirmation_body', 
+'Dear {user_name},
+
+Thank you for your WDTA membership payment for {year}.
+
+Payment Details:
+Membership fee: $950.00 AUD
+Card processing fee (2.2%): $20.90 AUD
+Total paid: $970.90 AUD
+
+Your membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team');
+        
+        // Replace placeholders
+        $replacements = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{site_name}' => get_bloginfo('name')
+        );
+        
+        $subject = str_replace(array_keys($replacements), array_values($replacements), $subject);
+        $message = str_replace(array_keys($replacements), array_values($replacements), $template);
         
         wp_mail($to, $subject, $message);
     }
@@ -313,6 +333,96 @@ class WDTA_Payment_Stripe {
             'clientSecret' => $client_secret,
             'amount' => 950.00,
             'currency' => 'AUD'
+        ));
+    }
+    
+    /**
+     * Register new user and create payment intent
+     */
+    public function register_and_create_payment_intent() {
+        check_ajax_referer('wdta_membership_nonce', 'nonce');
+        
+        // Get and validate registration data
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
+        $first_name = isset($_POST['first_name']) ? sanitize_text_field($_POST['first_name']) : '';
+        $last_name = isset($_POST['last_name']) ? sanitize_text_field($_POST['last_name']) : '';
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        
+        // Validate required fields
+        if (empty($email) || empty($password) || empty($first_name) || empty($last_name)) {
+            wp_send_json_error(array('message' => 'All fields are required'));
+            return;
+        }
+        
+        // Validate email format
+        if (!is_email($email)) {
+            wp_send_json_error(array('message' => 'Invalid email address'));
+            return;
+        }
+        
+        // Validate password strength
+        if (strlen($password) < 8) {
+            wp_send_json_error(array('message' => 'Password must be at least 8 characters'));
+            return;
+        }
+        
+        // Check if email already exists
+        if (email_exists($email)) {
+            wp_send_json_error(array('message' => 'This email is already registered. Please log in instead.'));
+            return;
+        }
+        
+        // Create the user account
+        $username = $email; // Use email as username
+        $user_id = wp_create_user($username, $password, $email);
+        
+        if (is_wp_error($user_id)) {
+            wp_send_json_error(array('message' => 'Could not create account: ' . $user_id->get_error_message()));
+            return;
+        }
+        
+        // Update user meta with first and last name
+        wp_update_user(array(
+            'ID' => $user_id,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'display_name' => $first_name . ' ' . $last_name
+        ));
+        
+        // Log the user in
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
+        
+        // Create membership record
+        $expiry_date = $year . '-12-31';
+        WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_amount' => 970.90,
+            'payment_method' => 'stripe',
+            'payment_status' => 'pending',
+            'expiry_date' => $expiry_date,
+            'status' => 'pending'
+        ));
+        
+        $secret_key = get_option('wdta_stripe_secret_key');
+        
+        if (!$secret_key) {
+            wp_send_json_error(array('message' => 'Stripe not configured'));
+            return;
+        }
+        
+        // Create Payment Intent with Stripe API
+        // In production, use actual Stripe API
+        // For now, return mock payment intent data
+        $client_secret = 'pi_test_' . uniqid() . '_secret_' . uniqid();
+        
+        wp_send_json_success(array(
+            'clientSecret' => $client_secret,
+            'amount' => 970.90,
+            'currency' => 'AUD',
+            'user_id' => $user_id
         ));
     }
 }

@@ -474,6 +474,204 @@
     display: block;
 }
 
+/* Registration Form Styles */
+.wdta-registration-section {
+    background: #f9f9f9;
+    padding: 25px;
+    margin: 20px 0 30px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.wdta-registration-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #333;
+}
+
+.wdta-form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.wdta-form-field {
+    flex: 1;
+}
+
+.wdta-form-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.wdta-form-field input[type="text"],
+.wdta-form-field input[type="email"],
+.wdta-form-field input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.wdta-form-field input:focus {
+    outline: none;
+    border-color: #635bff;
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.2);
+}
+
+.wdta-form-field small {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Password toggle wrapper */
+.wdta-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wdta-password-wrapper input {
+    flex: 1;
+    padding-right: 45px;
+}
+
+.wdta-password-toggle {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.wdta-password-toggle:hover {
+    color: #333;
+}
+
+.wdta-password-toggle:focus {
+    outline: 2px solid #635bff;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.wdta-eye-icon {
+    display: block;
+    user-select: none;
+}
+
+#wdta-registration-errors {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 15px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+/* New user payment form adjustments */
+#wdta-stripe-submit-new-user,
+#wdta-card-errors-new-user,
+#wdta-card-element-new-user {
+    /* Inherit existing Stripe styles */
+}
+
+#wdta-stripe-submit-new-user {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-stripe-submit-new-user:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-stripe-submit-new-user:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+/* Bank transfer submit button styling to match Stripe button */
+#wdta-bank-submit-new-user {
+    background: #635bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+#wdta-bank-submit-new-user:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+#wdta-bank-submit-new-user:disabled {
+    background: #aab7c4;
+    cursor: not-allowed;
+}
+
+#wdta-bank-submit-new-user:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.3);
+}
+
+#wdta-card-errors-new-user {
+    color: #fa755a;
+    font-size: 14px;
+    margin: 10px 0;
+    min-height: 20px;
+}
+
+#wdta-message-new-user {
+    margin: 20px 0;
+}
+
+#wdta-message-new-user .success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+}
+
+#wdta-message-new-user .error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px 20px;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .wdta-membership-form {
@@ -490,5 +688,14 @@
     
     .wdta-login-box-shortcode {
         padding: 20px;
+    }
+    
+    .wdta-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .wdta-registration-section {
+        padding: 15px;
     }
 }

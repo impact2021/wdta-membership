@@ -31,8 +31,13 @@ if (is_user_logged_in()) {
             
             <div class="wdta-form-group">
                 <label for="wdta_password">Password</label>
-                <input type="password" id="wdta_password" name="password" required 
-                       placeholder="Enter your password">
+                <div class="wdta-password-wrapper">
+                    <input type="password" id="wdta_password" name="password" required 
+                           placeholder="Enter your password">
+                    <button type="button" class="wdta-password-toggle" aria-label="Show password">
+                        <span class="wdta-eye-icon">👁</span>
+                    </button>
+                </div>
             </div>
             
             <div class="wdta-form-group wdta-remember-me">
@@ -58,6 +63,22 @@ if (is_user_logged_in()) {
 
 <script>
 jQuery(document).ready(function($) {
+    // Password toggle functionality
+    $('.wdta-password-toggle').on('click', function() {
+        var $input = $(this).siblings('input');
+        var $icon = $(this).find('.wdta-eye-icon');
+        
+        if ($input.attr('type') === 'password') {
+            $input.attr('type', 'text');
+            $icon.text('🙈');
+            $(this).attr('aria-label', 'Hide password');
+        } else {
+            $input.attr('type', 'password');
+            $icon.text('👁');
+            $(this).attr('aria-label', 'Show password');
+        }
+    });
+    
     $('#wdta-login-form-shortcode').on('submit', function(e) {
         e.preventDefault();
         
@@ -86,9 +107,9 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     $message.addClass('success').html(response.data.message || 'Login successful! Redirecting...');
-                    // Redirect after short delay
+                    // Redirect after short delay with forced reload
                     setTimeout(function() {
-                        window.location.href = response.data.redirect || '<?php echo get_permalink(); ?>';
+                        window.location.replace(response.data.redirect || '<?php echo get_permalink(); ?>');
                     }, 500);
                 } else {
                     $message.addClass('error').html(response.data.message || 'Login failed. Please try again.');

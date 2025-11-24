@@ -39,6 +39,125 @@ settings_errors('wdta_emails');
             </tr>
         </table>
         
+        <h2>Welcome & Confirmation Emails</h2>
+        
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label>Additional Admin Recipients</label></th>
+                <td>
+                    <input type="text" id="wdta_payment_admin_recipients" name="wdta_payment_admin_recipients" 
+                           value="<?php echo esc_attr(get_option('wdta_payment_admin_recipients', '')); ?>" 
+                           class="large-text" placeholder="email1@example.com, email2@example.com">
+                    <p class="description">Comma-separated email addresses to receive copies of payment notifications (in addition to site admin)</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row"><label for="wdta_email_stripe_confirmation">Stripe Payment Confirmation</label></th>
+                <td>
+                    <input type="text" id="wdta_email_stripe_confirmation_subject" name="wdta_email_stripe_confirmation_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_stripe_confirmation_subject', 'WDTA Membership Payment Confirmed - {year}')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_stripe_confirmation_body', 
+'Dear {user_name},
+
+Thank you for your WDTA membership payment for {year}.
+
+Payment Details:
+Membership fee: $950.00 AUD
+Card processing fee (2.2%): $20.90 AUD
+Total paid: $970.90 AUD
+
+Your membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_stripe_confirmation_body',
+                        array(
+                            'textarea_rows' => 12,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                    <p class="description">Sent when a Stripe payment is successfully completed</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row"><label for="wdta_email_bank_pending">Bank Transfer Pending (Admin Notification)</label></th>
+                <td>
+                    <input type="text" id="wdta_email_bank_pending_subject" name="wdta_email_bank_pending_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_bank_pending_subject', 'New Bank Transfer Submission - WDTA Membership {year}')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_bank_pending_body', 
+'A new bank transfer payment has been submitted:
+
+User: {user_name} ({user_email})
+Year: {year}
+Reference: {reference}
+Amount: $950 AUD
+
+Please verify the payment and update the membership status in the admin panel.
+{admin_url}'),
+                        'wdta_email_bank_pending_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                    <p class="description">Sent to admin when a user submits bank transfer details</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row"><label for="wdta_email_bank_approved">Bank Transfer Approved (User Confirmation)</label></th>
+                <td>
+                    <input type="text" id="wdta_email_bank_approved_subject" name="wdta_email_bank_approved_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_bank_approved_subject', 'WDTA Membership Activated - {year}')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php 
+                    wp_editor(
+                        get_option('wdta_email_bank_approved_body', 
+'Dear {user_name},
+
+Your bank transfer payment of $950.00 AUD for {year} has been verified.
+
+Your WDTA membership is now active and will remain valid until December 31, {year}.
+
+Best regards,
+WDTA Team'),
+                        'wdta_email_bank_approved_body',
+                        array(
+                            'textarea_rows' => 10,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                    <p class="description">Sent when admin approves a bank transfer payment</p>
+                </td>
+            </tr>
+        </table>
+        
         <h2>Payment Reminder Emails</h2>
         
         <table class="form-table">

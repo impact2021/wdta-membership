@@ -85,6 +85,10 @@ class WDTA_Membership {
         
         // Enqueue frontend styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_styles'));
+        
+        // AJAX handlers for login form
+        add_action('wp_ajax_nopriv_wdta_ajax_login', array($this, 'handle_ajax_login'));
+        add_action('wp_ajax_wdta_ajax_login', array($this, 'handle_ajax_login'));
     }
     
     /**
@@ -134,5 +138,67 @@ class WDTA_Membership {
         ob_start();
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'templates/login-form-shortcode.php';
         return ob_get_clean();
+    }
+    
+    /**
+     * Handle AJAX login request
+     */
+    public function handle_ajax_login() {
+        // Get credentials
+        $username = isset($_POST['username']) ? sanitize_text_field($_POST['username']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
+        $remember = isset($_POST['remember']) ? (bool) $_POST['remember'] : false;
+        
+        // Validate inputs
+        if (empty($username) || empty($password)) {
+            wp_send_json_error(array(
+                'message' => 'Please provide both username and password.'
+            ));
+            return;
+        }
+        
+        // Attempt to authenticate
+        $creds = array(
+            'user_login'    => $username,
+            'user_password' => $password,
+            'remember'      => $remember
+        );
+        
+        $user = wp_signon($creds, is_ssl());
+        
+        if (is_wp_error($user)) {
+            wp_send_json_error(array(
+                'message' => $user->get_error_message()
+            ));
+            return;
+        }
+        
+        // Login successful
+        // Determine redirect URL based on user role
+        $redirect_url = home_url('/');
+        
+        // Get user roles
+        if (isset($user->roles) && is_array($user->roles)) {
+            $user_role = $user->roles[0];
+            
+            // Check for custom redirect
+            $custom_redirect = get_option('wdta_login_redirect_' . $user_role, '');
+            
+            if (!empty($custom_redirect)) {
+                if ($custom_redirect === 'home') {
+                    $redirect_url = home_url('/');
+                } elseif (is_numeric($custom_redirect)) {
+                    $page_url = get_permalink(intval($custom_redirect));
+                    if ($page_url) {
+                        $redirect_url = $page_url;
+                    }
+                }
+            }
+        }
+        
+        wp_send_json_success(array(
+            'message' => 'Login successful!',
+            'redirect' => $redirect_url
+        ));
     }
 }
