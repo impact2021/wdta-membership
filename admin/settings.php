@@ -78,6 +78,19 @@ foreach ($all_roles as $role_key => $role_data) {
         <div id="payment-settings" class="tab-content" style="display:none;">
             <h2>Payment Settings</h2>
             
+            <h3>Membership Pricing</h3>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="wdta_membership_price">Membership Price (AUD)</label></th>
+                    <td>
+                        <input type="number" step="0.01" min="0" id="wdta_membership_price" name="wdta_membership_price" 
+                               value="<?php echo esc_attr(get_option('wdta_membership_price', '950.00')); ?>" 
+                               class="regular-text">
+                        <p class="description">Annual membership fee in Australian Dollars</p>
+                    </td>
+                </tr>
+            </table>
+            
             <h3>Stripe Payment Settings</h3>
             <table class="form-table">
                 <tr>

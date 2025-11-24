@@ -64,6 +64,6 @@ $current_year = date('Y');
         <?php endif; ?>
     <?php else: ?>
         <p>You do not have a membership for <?php echo $current_year; ?>.</p>
-        <p><a href="<?php echo home_url('/membership'); ?>" class="button">Purchase Membership</a></p>
+        <p><a href="https://www.wdta.org.au/new-membership-form/" class="button">Purchase Membership</a></p>
     <?php endif; ?>
 </div>
