@@ -4,11 +4,12 @@
 
 jQuery(document).ready(function($) {
     console.log('WDTA Admin JS loaded');
-    console.log('wdtaAdmin object:', wdtaAdmin);
+    console.log('wdtaAdmin object:', typeof wdtaAdmin !== 'undefined' ? wdtaAdmin : 'undefined');
     console.log('Edit buttons found:', $('.wdta-edit-membership').length);
+    console.log('Modal element found:', $('#wdta-edit-membership-modal').length);
     
-    // Approve membership
-    $('.wdta-approve-membership').on('click', function(e) {
+    // Approve membership (using event delegation)
+    $(document).on('click', '.wdta-approve-membership', function(e) {
         e.preventDefault();
         
         var button = $(this);
@@ -46,8 +47,8 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Reject membership
-    $('.wdta-reject-membership').on('click', function(e) {
+    // Reject membership (using event delegation)
+    $(document).on('click', '.wdta-reject-membership', function(e) {
         e.preventDefault();
         
         var button = $(this);
@@ -85,8 +86,8 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Edit membership - open modal
-    $('.wdta-edit-membership').on('click', function(e) {
+    // Edit membership - open modal (using event delegation)
+    $(document).on('click', '.wdta-edit-membership', function(e) {
         e.preventDefault();
         console.log('Edit button clicked');
         
@@ -113,14 +114,14 @@ jQuery(document).ready(function($) {
         $('#wdta-edit-membership-modal').show();
     });
     
-    // Close modal
-    $('.wdta-modal-close').on('click', function(e) {
+    // Close modal (using event delegation)
+    $(document).on('click', '.wdta-modal-close', function(e) {
         e.preventDefault();
         $('#wdta-edit-membership-modal').hide();
     });
     
-    // Close modal on overlay click
-    $('.wdta-modal-overlay').on('click', function() {
+    // Close modal on overlay click (using event delegation)
+    $(document).on('click', '.wdta-modal-overlay', function() {
         $('#wdta-edit-membership-modal').hide();
     });
     
