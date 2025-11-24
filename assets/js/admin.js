@@ -3,6 +3,9 @@
  */
 
 jQuery(document).ready(function($) {
+    console.log('WDTA Admin JS loaded');
+    console.log('wdtaAdmin object:', wdtaAdmin);
+    console.log('Edit buttons found:', $('.wdta-edit-membership').length);
     
     // Approve membership
     $('.wdta-approve-membership').on('click', function(e) {
@@ -85,6 +88,7 @@ jQuery(document).ready(function($) {
     // Edit membership - open modal
     $('.wdta-edit-membership').on('click', function(e) {
         e.preventDefault();
+        console.log('Edit button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
@@ -94,6 +98,8 @@ jQuery(document).ready(function($) {
         var paymentAmount = button.data('payment-amount');
         var expiryDate = button.data('expiry-date');
         
+        console.log('User ID:', userId, 'Year:', year, 'Expiry:', expiryDate);
+        
         // Populate form
         $('#edit-user-id').val(userId);
         $('#edit-year').val(year);
@@ -102,6 +108,7 @@ jQuery(document).ready(function($) {
         $('#edit-payment-amount').val(paymentAmount);
         $('#edit-expiry-date').val(expiryDate);
         
+        console.log('Showing modal');
         // Show modal
         $('#wdta-edit-membership-modal').show();
     });
