@@ -3,11 +3,6 @@
  */
 
 jQuery(document).ready(function($) {
-    console.log('WDTA Admin JS loaded');
-    console.log('wdtaAdmin object:', typeof wdtaAdmin !== 'undefined' ? wdtaAdmin : 'undefined');
-    console.log('Edit buttons found:', $('.wdta-edit-membership').length);
-    console.log('Modal element found:', $('#wdta-edit-membership-modal').length);
-    
     // Check if wdtaAdmin is defined
     if (typeof wdtaAdmin === 'undefined') {
         console.error('wdtaAdmin object is not defined! Ajax calls will fail.');
@@ -17,7 +12,6 @@ jQuery(document).ready(function($) {
     // Approve membership (using event delegation)
     $(document).on('click', '.wdta-approve-membership', function(e) {
         e.preventDefault();
-        console.log('Approve button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
@@ -57,7 +51,6 @@ jQuery(document).ready(function($) {
     // Reject membership (using event delegation)
     $(document).on('click', '.wdta-reject-membership', function(e) {
         e.preventDefault();
-        console.log('Reject button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
@@ -97,7 +90,6 @@ jQuery(document).ready(function($) {
     // Edit membership - open modal (using event delegation)
     $(document).on('click', '.wdta-edit-membership', function(e) {
         e.preventDefault();
-        console.log('Edit button clicked');
         
         var button = $(this);
         var userId = button.data('user-id');
@@ -107,8 +99,6 @@ jQuery(document).ready(function($) {
         var paymentAmount = button.data('payment-amount');
         var expiryDate = button.data('expiry-date');
         
-        console.log('User ID:', userId, 'Year:', year, 'Expiry:', expiryDate);
-        
         // Populate form
         $('#edit-user-id').val(userId);
         $('#edit-year').val(year);
@@ -117,27 +107,23 @@ jQuery(document).ready(function($) {
         $('#edit-payment-amount').val(paymentAmount);
         $('#edit-expiry-date').val(expiryDate);
         
-        console.log('Showing modal');
         // Show modal by adding class
         $('#wdta-edit-membership-modal').addClass('wdta-modal-active');
-        console.log('Modal should now be visible');
     });
     
     // Close modal (using event delegation)
     $(document).on('click', '.wdta-modal-close', function(e) {
         e.preventDefault();
-        console.log('Close button clicked');
         $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
     // Close modal on overlay click (using event delegation)
     $(document).on('click', '.wdta-modal-overlay', function() {
-        console.log('Overlay clicked');
         $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
-    // Edit membership - save changes
-    $('#wdta-edit-membership-form').on('submit', function(e) {
+    // Edit membership - save changes (using event delegation)
+    $(document).on('submit', '#wdta-edit-membership-form', function(e) {
         e.preventDefault();
         
         var form = $(this);
