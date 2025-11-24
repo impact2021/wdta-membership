@@ -46,84 +46,37 @@ The plugin features a **dynamic email reminder system** that allows you to:
 - Expiry date tracking
 - Multiple payment method support
 
-## Installation
+## Quick Start
 
 1. Upload the `wdta-membership` folder to `/wp-content/plugins/`
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to **WDTA Membership > Settings** to configure:
-   - Stripe API keys
-   - Bank account details
-   - Email settings
-   - Restricted pages
+   - Stripe API keys (get from https://stripe.com)
+   - Bank transfer details
+   - Payment year cutoff date (default: November 1st)
+   - Access control (restricted pages)
+4. Go to **WDTA Membership > Emails** to configure:
+   - Email reminder schedules
+   - CC recipients for signup emails (default: marketing@wdta.org.au, treasurer@wdta.org.au)
+   - CC recipients for reminder emails (default: marketing@wdta.org.au)
+   - Inactive users report settings
+5. Create pages with shortcodes: `[wdta_membership_form]` and `[wdta_membership_status]`
 
-## Configuration
+**To understand how the plugin works in detail**, see **HOW-IT-WORKS.md**
 
-### Stripe Setup
-1. Create a Stripe account at https://stripe.com
-2. Get your API keys from the Stripe Dashboard
-3. Enter your Publishable Key and Secret Key in the plugin settings
-4. Set up a webhook endpoint pointing to: `https://yoursite.com/wp-json/wdta/v1/stripe-webhook`
-5. Copy the webhook signing secret to the plugin settings
+### Available Shortcodes
 
-### Bank Transfer Setup
-1. Enter your bank account details in the settings
-2. These will be displayed to members choosing bank transfer
-3. Admin must manually approve payments after verification
-
-### Access Control
-1. Select which pages require active membership
-2. Optionally create a custom "Access Denied" page
-3. Administrators always have access to test
-
-## Usage
-
-### For Members
-
-**Shortcodes:**
 - `[wdta_membership_form]` - Display payment form and membership options
 - `[wdta_membership_status]` - Show current membership status
 - `[wdta_login_form]` - Display login form anywhere on your site
 
-**Custom Login Page:**
-The plugin creates a custom branded login page at `/member-login/` that replaces the default WordPress login. Features include:
+### Custom Login Page
+
+The plugin creates a custom branded login page at `/member-login/` with:
 - Professional gradient design
-- Lost password functionality at `/member-login/lost-password/`
+- Lost password functionality
 - AJAX-powered login (no page refresh)
-- Remember me option
 - Automatic redirect from wp-login.php
-
-Members can log in at: `https://yoursite.com/member-login/`
-
-### For Administrators
-
-**Admin Menu:**
-- **All Memberships**: View and manage all member payments
-- **Settings**: Configure plugin options
-
-**Approving Bank Transfers:**
-1. Go to WDTA Membership > All Memberships
-2. Find pending bank transfer payments
-3. Verify the payment in your bank account
-4. Click "Approve" to activate the membership
-
-## Payment Flow
-
-### Stripe Payment
-1. Member clicks "Pay with Card"
-2. Redirected to Stripe Checkout
-3. Payment processed securely
-4. Webhook confirms payment
-5. Membership automatically activated
-6. Confirmation email sent
-
-### Bank Transfer
-1. Member views bank account details
-2. Makes transfer with reference
-3. Submits payment details via form
-4. Admin receives notification
-5. Admin verifies and approves payment
-6. Membership activated
-7. Confirmation email sent
 
 ## Email Schedule & Configuration
 
@@ -234,49 +187,7 @@ wdta-membership/
 - `wdta_restricted_pages` - Filter restricted page IDs
 - `wdta_email_template` - Filter email templates
 
-## Troubleshooting
 
-### Custom Login Page Shows 404
-
-If `/member-login/` shows a 404 error:
-
-1. Go to **Settings → Permalinks** in WordPress admin
-2. Click **"Save Changes"** (don't change anything, just click save)
-3. This flushes WordPress permalinks and registers the custom login route
-4. Now visit your login page at: `https://yoursite.com/member-login/`
-
-**Why this happens:** The custom login page uses WordPress rewrite rules. When installing via symlink, Git Updater, or manual upload, the plugin activation hook may not fire, so permalinks need to be manually flushed.
-
-**Note:** You only need to do this once after plugin installation or updates that add new routes.
-
-### Approved Bank Transfer Not Granting Access
-
-If a member's bank transfer was approved but they still can't access restricted pages:
-
-1. Go to **WDTA Membership → All Memberships**
-2. Find the member's record
-3. Verify the status shows "Active"
-4. Check the expiry date is in the future
-5. Ask the member to log out and log back in
-6. Clear any page caching plugins
-
-### Email Reminders Not Sending
-
-1. Check WordPress Cron is working: Install "WP Crontrol" plugin
-2. Verify email server settings are correct
-3. Check spam folders
-4. Test email delivery with a WordPress mail tester plugin
-
-### Stripe Webhook Not Working
-
-1. Verify webhook endpoint: `https://yoursite.com/wp-json/wdta/v1/stripe-webhook`
-2. Check webhook signing secret is entered correctly
-3. View webhook logs in Stripe Dashboard
-4. Ensure your site is accessible (not behind firewall/localhost)
-
-### Date Format Issues
-
-All dates are displayed in dd/mm/yyyy (Australian) format throughout the plugin. If you see different formats, clear your browser cache.
 
 ## Security
 
