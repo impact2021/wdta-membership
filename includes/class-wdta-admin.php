@@ -445,7 +445,7 @@ class WDTA_Admin {
         $payment_status = isset($_POST['payment_status']) ? sanitize_text_field($_POST['payment_status']) : 'pending';
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'pending';
         $payment_amount = isset($_POST['payment_amount']) ? floatval($_POST['payment_amount']) : 950.00;
-        $expiry_date = isset($_POST['expiry_date']) ? sanitize_text_field($_POST['expiry_date']) : date('Y') . '-12-31';
+        $expiry_date = isset($_POST['expiry_date']) ? sanitize_text_field($_POST['expiry_date']) : $year . '-12-31';
         
         if (!$user_id) {
             wp_send_json_error(array('message' => 'Please select a user'));

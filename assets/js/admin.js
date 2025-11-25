@@ -217,6 +217,12 @@ jQuery(document).ready(function($) {
         $('#wdta-add-membership-modal').addClass('wdta-modal-active');
     });
     
+    // Update expiry date when year changes
+    $(document).on('change', '#add-year', function() {
+        var selectedYear = $(this).val();
+        $('#add-expiry-date').val(selectedYear + '-12-31');
+    });
+    
     // Close add membership modal (using event delegation)
     $(document).on('click', '#wdta-add-membership-modal .wdta-modal-close, #wdta-add-membership-modal .wdta-modal-overlay', function(e) {
         e.preventDefault();
