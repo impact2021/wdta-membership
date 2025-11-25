@@ -35,6 +35,10 @@ if (!defined('ABSPATH')) {
             
             <input type="submit" class="button" value="Filter">
         </form>
+        
+        <button type="button" class="button button-primary wdta-add-membership" style="margin-left: 10px;">
+            Add New Membership
+        </button>
     </div>
     
     <table class="wp-list-table widefat fixed striped">
@@ -196,11 +200,116 @@ if (!defined('ABSPATH')) {
     </div>
 </div>
 
+<!-- Add New Membership Modal -->
+<div id="wdta-add-membership-modal">
+    <div class="wdta-modal-overlay"></div>
+    <div class="wdta-modal-content">
+        <div class="wdta-modal-header">
+            <h2>Add New Membership</h2>
+            <button class="wdta-modal-close">&times;</button>
+        </div>
+        <div class="wdta-modal-body">
+            <form id="wdta-add-membership-form">
+                <table class="form-table">
+                    <tr>
+                        <th><label for="add-user-search">User</label></th>
+                        <td>
+                            <select id="add-user-id" name="user_id" required style="width: 100%;">
+                                <option value="">Select a user...</option>
+                                <?php
+                                // Get all non-admin users
+                                $users = get_users(array(
+                                    'role__not_in' => array('administrator'),
+                                    'orderby' => 'display_name',
+                                    'order' => 'ASC'
+                                ));
+                                foreach ($users as $user) {
+                                    printf(
+                                        '<option value="%d">%s (%s)</option>',
+                                        esc_attr($user->ID),
+                                        esc_html($user->display_name),
+                                        esc_html($user->user_email)
+                                    );
+                                }
+                                ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-year">Membership Year</label></th>
+                        <td>
+                            <select id="add-year" name="year" required>
+                                <?php for ($y = date('Y') + 1; $y >= 2020; $y--): ?>
+                                    <option value="<?php echo $y; ?>" <?php selected($current_year, $y); ?>>
+                                        <?php echo $y; ?>
+                                    </option>
+                                <?php endfor; ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-payment-method">Payment Method</label></th>
+                        <td>
+                            <select id="add-payment-method" name="payment_method">
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="stripe">Stripe</option>
+                                <option value="manual">Manual / Admin</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-payment-status">Payment Status</label></th>
+                        <td>
+                            <select id="add-payment-status" name="payment_status">
+                                <option value="pending">Pending</option>
+                                <option value="pending_verification">Pending Verification</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-status">Membership Status</label></th>
+                        <td>
+                            <select id="add-status" name="status">
+                                <option value="pending">Pending</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-payment-amount">Payment Amount (AUD)</label></th>
+                        <td>
+                            <input type="number" id="add-payment-amount" name="payment_amount" step="0.01" min="0" value="950.00">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="add-expiry-date">Expiry Date</label></th>
+                        <td>
+                            <input type="date" id="add-expiry-date" name="expiry_date" value="<?php echo date('Y') . '-12-31'; ?>">
+                        </td>
+                    </tr>
+                </table>
+                
+                <div class="wdta-modal-actions">
+                    <button type="submit" class="button button-primary">Add Membership</button>
+                    <button type="button" class="button wdta-modal-close">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
-#wdta-edit-membership-modal {
+#wdta-edit-membership-modal,
+#wdta-add-membership-modal {
     display: none;
 }
-#wdta-edit-membership-modal.wdta-modal-active {
+#wdta-edit-membership-modal.wdta-modal-active,
+#wdta-add-membership-modal.wdta-modal-active {
     display: block;
 }
 .wdta-modal-overlay {
@@ -257,5 +366,16 @@ if (!defined('ABSPATH')) {
 }
 .wdta-modal-actions button {
     margin-left: 10px;
+}
+.wdta-filters {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+.wdta-filters form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 </style>

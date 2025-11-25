@@ -112,13 +112,13 @@ jQuery(document).ready(function($) {
     });
     
     // Close modal (using event delegation)
-    $(document).on('click', '.wdta-modal-close', function(e) {
+    $(document).on('click', '#wdta-edit-membership-modal .wdta-modal-close', function(e) {
         e.preventDefault();
         $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
     // Close modal on overlay click (using event delegation)
-    $(document).on('click', '.wdta-modal-overlay', function() {
+    $(document).on('click', '#wdta-edit-membership-modal .wdta-modal-overlay', function() {
         $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
@@ -196,6 +196,82 @@ jQuery(document).ready(function($) {
             error: function() {
                 alert('An error occurred. Please try again.');
                 button.prop('disabled', false).text('Delete');
+            }
+        });
+    });
+    
+    // Add membership - open modal (using event delegation)
+    $(document).on('click', '.wdta-add-membership', function(e) {
+        e.preventDefault();
+        
+        // Reset form
+        $('#wdta-add-membership-form')[0].reset();
+        
+        // Set default values
+        var currentYear = new Date().getFullYear();
+        $('#add-year').val(currentYear);
+        $('#add-expiry-date').val(currentYear + '-12-31');
+        $('#add-payment-amount').val('950.00');
+        
+        // Show modal by adding class
+        $('#wdta-add-membership-modal').addClass('wdta-modal-active');
+    });
+    
+    // Update expiry date when year changes
+    $(document).on('change', '#add-year', function() {
+        var selectedYear = $(this).val();
+        $('#add-expiry-date').val(selectedYear + '-12-31');
+    });
+    
+    // Close add membership modal (using event delegation)
+    $(document).on('click', '#wdta-add-membership-modal .wdta-modal-close, #wdta-add-membership-modal .wdta-modal-overlay', function(e) {
+        e.preventDefault();
+        $('#wdta-add-membership-modal').removeClass('wdta-modal-active');
+    });
+    
+    // Add membership - save (using event delegation)
+    $(document).on('submit', '#wdta-add-membership-form', function(e) {
+        e.preventDefault();
+        
+        var form = $(this);
+        var submitButton = form.find('button[type="submit"]');
+        var originalText = submitButton.text();
+        
+        // Validate user selection
+        var userId = $('#add-user-id').val();
+        if (!userId) {
+            alert('Please select a user');
+            return;
+        }
+        
+        submitButton.prop('disabled', true).text('Adding...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_add_membership',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: $('#add-year').val(),
+                payment_method: $('#add-payment-method').val(),
+                payment_status: $('#add-payment-status').val(),
+                status: $('#add-status').val(),
+                payment_amount: $('#add-payment-amount').val(),
+                expiry_date: $('#add-expiry-date').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Membership added successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data.message);
+                    submitButton.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                submitButton.prop('disabled', false).text(originalText);
             }
         });
     });
