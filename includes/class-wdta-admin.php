@@ -41,6 +41,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_reject_membership', array($this, 'reject_membership'));
         add_action('wp_ajax_wdta_update_membership', array($this, 'update_membership'));
         add_action('wp_ajax_wdta_delete_membership', array($this, 'delete_membership'));
+        add_action('wp_ajax_wdta_add_membership', array($this, 'add_membership'));
     }
     
     /**
@@ -404,6 +405,125 @@ class WDTA_Admin {
             wp_send_json_success(array('message' => 'Membership deleted successfully'));
         } else {
             wp_send_json_error(array('message' => 'Failed to delete membership'));
+        }
+    }
+    
+    /**
+     * Add new membership (AJAX)
+     * 
+     * Creates a new membership record for a user who doesn't have one for the specified year.
+     * This allows admins to add memberships for users who currently have no membership records.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The WordPress user ID
+     * - year (int): The membership year
+     * - payment_method (string): Payment method (bank_transfer, stripe, manual)
+     * - payment_status (string): Payment status
+     * - status (string): Membership status
+     * - payment_amount (float): Payment amount
+     * - expiry_date (string): Expiry date in Y-m-d format
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function add_membership() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $payment_method = isset($_POST['payment_method']) ? sanitize_text_field($_POST['payment_method']) : 'manual';
+        $payment_status = isset($_POST['payment_status']) ? sanitize_text_field($_POST['payment_status']) : 'pending';
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'pending';
+        $payment_amount = isset($_POST['payment_amount']) ? floatval($_POST['payment_amount']) : 950.00;
+        $expiry_date = isset($_POST['expiry_date']) ? sanitize_text_field($_POST['expiry_date']) : date('Y') . '-12-31';
+        
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'Please select a user'));
+            return;
+        }
+        
+        // Check if user exists
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Validate year (reasonable range)
+        if ($year < 2000 || $year > date('Y') + 5) {
+            wp_send_json_error(array('message' => 'Invalid membership year'));
+            return;
+        }
+        
+        // Validate payment_method
+        $valid_payment_methods = array('bank_transfer', 'stripe', 'manual');
+        if (!in_array($payment_method, $valid_payment_methods)) {
+            wp_send_json_error(array('message' => 'Invalid payment method'));
+            return;
+        }
+        
+        // Validate payment_status  
+        $valid_payment_statuses = array('pending', 'pending_verification', 'completed', 'failed', 'rejected');
+        if (!in_array($payment_status, $valid_payment_statuses)) {
+            wp_send_json_error(array('message' => 'Invalid payment status'));
+            return;
+        }
+        
+        // Validate membership status
+        $valid_statuses = array('pending', 'active', 'expired', 'rejected');
+        if (!in_array($status, $valid_statuses)) {
+            wp_send_json_error(array('message' => 'Invalid membership status'));
+            return;
+        }
+        
+        // Validate expiry_date format
+        if (!empty($expiry_date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $expiry_date)) {
+            wp_send_json_error(array('message' => 'Invalid expiry date format'));
+            return;
+        }
+        
+        // Check if membership already exists for this user and year
+        $existing = WDTA_Database::get_user_membership($user_id, $year);
+        if ($existing) {
+            wp_send_json_error(array('message' => 'This user already has a membership for ' . $year . '. Please edit the existing membership instead.'));
+            return;
+        }
+        
+        // If payment status is being set to completed, automatically set membership status to active
+        if ($payment_status === 'completed' && $status !== 'active') {
+            $status = 'active';
+        }
+        
+        // Create membership record
+        $result = WDTA_Database::save_membership(array(
+            'user_id' => $user_id,
+            'membership_year' => $year,
+            'payment_method' => $payment_method,
+            'payment_status' => $payment_status,
+            'status' => $status,
+            'payment_amount' => $payment_amount,
+            'expiry_date' => $expiry_date,
+            'payment_date' => ($payment_status === 'completed') ? current_time('mysql') : null
+        ));
+        
+        if ($result) {
+            // Update user role using the centralized WDTA_User_Roles system
+            $user_roles = WDTA_User_Roles::get_instance();
+            $user_roles->update_user_role($user_id, $year);
+            
+            wp_send_json_success(array('message' => 'Membership added successfully'));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to add membership'));
         }
     }
     
