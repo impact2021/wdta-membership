@@ -71,6 +71,7 @@ class WDTA_Cron {
         }
         
         $today = new DateTime();
+        $today->setTime(0, 0, 0); // Reset time to start of day for date comparison
         
         // Membership expiry date is always December 31st of current year
         $expiry_date = new DateTime($current_year . '-12-31');
@@ -97,17 +98,43 @@ class WDTA_Cron {
                 $send_date->modify("+{$days} days");
             }
             
-            // Check if today matches the send date
-            if ($today->format('Y-m-d') === $send_date->format('Y-m-d')) {
-                // Determine which year's membership to check
-                // Before expiry: remind about next year's membership (due Jan 1 of next year)
-                // After expiry: remind about current year's overdue membership
-                $target_year = ($period === 'before') ? $next_year : $current_year;
-                
+            // Determine which year's membership to check
+            // Before expiry: remind about next year's membership (due Jan 1 of next year)
+            // After expiry: remind about current year's overdue membership
+            $target_year = ($period === 'before') ? $next_year : $current_year;
+            
+            // Get reminder ID, defaulting to a unique key if not set
+            $reminder_id = isset($reminder['id']) ? $reminder['id'] : md5(serialize($reminder));
+            
+            // Check if the send date has passed and this reminder hasn't been sent yet for this target year
+            // This allows reminders to be sent even if the cron didn't run on the exact send date
+            if ($today >= $send_date && !self::reminder_already_sent($reminder_id, $target_year)) {
                 // Send reminders
                 self::send_dynamic_reminder($reminder, $target_year);
+                
+                // Mark this reminder as sent for this year
+                self::mark_reminder_sent($reminder_id, $target_year);
             }
         }
+    }
+    
+    /**
+     * Check if a reminder has already been sent for a specific year
+     */
+    private static function reminder_already_sent($reminder_id, $year) {
+        $sent_reminders = get_option('wdta_sent_reminders', array());
+        $key = $reminder_id . '_' . $year;
+        return isset($sent_reminders[$key]);
+    }
+    
+    /**
+     * Mark a reminder as sent for a specific year
+     */
+    private static function mark_reminder_sent($reminder_id, $year) {
+        $sent_reminders = get_option('wdta_sent_reminders', array());
+        $key = $reminder_id . '_' . $year;
+        $sent_reminders[$key] = current_time('mysql');
+        update_option('wdta_sent_reminders', $sent_reminders);
     }
     
     /**
