@@ -61,6 +61,11 @@ class WDTA_Cron {
     }
     
     /**
+     * Cache for sent reminders to avoid multiple database queries
+     */
+    private static $sent_reminders_cache = null;
+    
+    /**
      * Process dynamic reminders based on configuration
      */
     private static function process_dynamic_reminders($current_year, $next_year) {
@@ -71,9 +76,13 @@ class WDTA_Cron {
         }
         
         $today = new DateTime();
+        $today->setTime(0, 0, 0); // Reset time to start of day for date comparison
         
         // Membership expiry date is always December 31st of current year
         $expiry_date = new DateTime($current_year . '-12-31');
+        
+        // Load sent reminders cache once for all reminder checks
+        self::$sent_reminders_cache = get_option('wdta_sent_reminders', array());
         
         foreach ($reminders as $reminder) {
             // Skip if reminder is disabled
@@ -97,17 +106,73 @@ class WDTA_Cron {
                 $send_date->modify("+{$days} days");
             }
             
-            // Check if today matches the send date
-            if ($today->format('Y-m-d') === $send_date->format('Y-m-d')) {
-                // Determine which year's membership to check
-                // Before expiry: remind about next year's membership (due Jan 1 of next year)
-                // After expiry: remind about current year's overdue membership
-                $target_year = ($period === 'before') ? $next_year : $current_year;
-                
+            // Determine which year's membership to check
+            // Before expiry: remind about next year's membership (due Jan 1 of next year)
+            // After expiry: remind about current year's overdue membership
+            $target_year = ($period === 'before') ? $next_year : $current_year;
+            
+            // Get reminder ID using a deterministic key based on reminder properties
+            $reminder_id = self::get_reminder_id($reminder);
+            
+            // Check if the send date has passed and this reminder hasn't been sent yet for this target year
+            // This allows reminders to be sent even if the cron didn't run on the exact send date
+            if ($today >= $send_date && !self::reminder_already_sent($reminder_id, $target_year)) {
                 // Send reminders
                 self::send_dynamic_reminder($reminder, $target_year);
+                
+                // Mark this reminder as sent for this year
+                self::mark_reminder_sent($reminder_id, $target_year);
             }
         }
+        
+        // Clear cache after processing
+        self::$sent_reminders_cache = null;
+    }
+    
+    /**
+     * Generate a deterministic reminder ID
+     * Uses reminder properties to create a stable identifier
+     */
+    private static function get_reminder_id($reminder) {
+        // Use the explicit ID if set
+        if (isset($reminder['id'])) {
+            return $reminder['id'];
+        }
+        
+        // Create a deterministic key from timing, unit, and period
+        $timing = isset($reminder['timing']) ? $reminder['timing'] : 0;
+        $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
+        $period = isset($reminder['period']) ? $reminder['period'] : 'before';
+        
+        return "reminder_{$timing}_{$unit}_{$period}";
+    }
+    
+    /**
+     * Generate a unique key for tracking sent reminders
+     */
+    private static function get_sent_reminder_key($reminder_id, $year) {
+        return $reminder_id . '_' . $year;
+    }
+    
+    /**
+     * Check if a reminder has already been sent for a specific year
+     */
+    private static function reminder_already_sent($reminder_id, $year) {
+        $key = self::get_sent_reminder_key($reminder_id, $year);
+        return isset(self::$sent_reminders_cache[$key]);
+    }
+    
+    /**
+     * Mark a reminder as sent for a specific year
+     */
+    private static function mark_reminder_sent($reminder_id, $year) {
+        $key = self::get_sent_reminder_key($reminder_id, $year);
+        
+        // Update cache first to prevent duplicate sends in same execution
+        self::$sent_reminders_cache[$key] = true;
+        
+        // Persist to database
+        update_option('wdta_sent_reminders', self::$sent_reminders_cache);
     }
     
     /**
