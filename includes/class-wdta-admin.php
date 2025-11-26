@@ -87,6 +87,15 @@ class WDTA_Admin {
         
         add_submenu_page(
             'wdta-memberships',
+            'Scheduled Emails',
+            'Scheduled Emails',
+            'manage_options',
+            'wdta-scheduled-emails',
+            array($this, 'scheduled_emails_page')
+        );
+        
+        add_submenu_page(
+            'wdta-memberships',
             'Documentation',
             'Docs',
             'manage_options',
@@ -105,6 +114,7 @@ class WDTA_Admin {
             'membership_page_wdta-memberships',
             'membership_page_wdta-settings',
             'membership_page_wdta-emails',
+            'membership_page_wdta-scheduled-emails',
             'membership_page_wdta-documentation'
         );
         
@@ -178,6 +188,13 @@ class WDTA_Admin {
      */
     public function documentation_page() {
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/documentation.php';
+    }
+    
+    /**
+     * Scheduled emails page - shows upcoming email reminders
+     */
+    public function scheduled_emails_page() {
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/scheduled-emails.php';
     }
     
     /**
