@@ -148,31 +148,31 @@ class WDTA_Cron {
     }
     
     /**
+     * Generate a unique key for tracking sent reminders
+     */
+    private static function get_sent_reminder_key($reminder_id, $year) {
+        return $reminder_id . '_' . $year;
+    }
+    
+    /**
      * Check if a reminder has already been sent for a specific year
      */
     private static function reminder_already_sent($reminder_id, $year) {
-        // Use cached value if available
-        $sent_reminders = self::$sent_reminders_cache !== null 
-            ? self::$sent_reminders_cache 
-            : get_option('wdta_sent_reminders', array());
-        $key = $reminder_id . '_' . $year;
-        return isset($sent_reminders[$key]);
+        $key = self::get_sent_reminder_key($reminder_id, $year);
+        return isset(self::$sent_reminders_cache[$key]);
     }
     
     /**
      * Mark a reminder as sent for a specific year
      */
     private static function mark_reminder_sent($reminder_id, $year) {
-        // Get fresh data from database to avoid race conditions
-        $sent_reminders = get_option('wdta_sent_reminders', array());
-        $key = $reminder_id . '_' . $year;
-        $sent_reminders[$key] = true;
-        update_option('wdta_sent_reminders', $sent_reminders);
+        $key = self::get_sent_reminder_key($reminder_id, $year);
         
-        // Update cache
-        if (self::$sent_reminders_cache !== null) {
-            self::$sent_reminders_cache[$key] = true;
-        }
+        // Update cache first to prevent duplicate sends in same execution
+        self::$sent_reminders_cache[$key] = true;
+        
+        // Persist to database
+        update_option('wdta_sent_reminders', self::$sent_reminders_cache);
     }
     
     /**
