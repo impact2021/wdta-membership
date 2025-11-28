@@ -593,8 +593,17 @@ class WDTA_Admin {
         $reminder = null;
         
         foreach ($reminders as $r) {
-            $r_id = isset($r['id']) ? $r['id'] : '';
-            if ($r_id == $reminder_id || "reminder_{$r['timing']}_{$r['unit']}_{$r['period']}" === $reminder_id) {
+            // Validate that required fields exist
+            if (!isset($r['timing']) || !isset($r['unit']) || !isset($r['period'])) {
+                continue;
+            }
+            
+            // Build the deterministic ID for this reminder (same logic as WDTA_Cron::get_reminder_id)
+            $r_explicit_id = isset($r['id']) ? strval($r['id']) : '';
+            $r_generated_id = "reminder_{$r['timing']}_{$r['unit']}_{$r['period']}";
+            
+            // Match against explicit ID or generated ID
+            if (($r_explicit_id !== '' && $r_explicit_id === $reminder_id) || $r_generated_id === $reminder_id) {
                 $reminder = $r;
                 break;
             }

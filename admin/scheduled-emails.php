@@ -98,8 +98,9 @@ foreach ($reminders as $reminder) {
                 // Get recipients using cache
                 $recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
                 
-                // Only add if there are recipients (for overdue, we want to show even if no recipients for info)
-                if (!empty($recipients) || $is_upcoming) {
+                // Only add if there are recipients
+                // Skip showing scheduled emails that have no recipients to send to
+                if (!empty($recipients)) {
                     $scheduled_emails[] = array(
                         'reminder' => $reminder,
                         'send_date' => $send_date,
