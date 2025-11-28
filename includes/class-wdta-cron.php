@@ -191,8 +191,20 @@ class WDTA_Cron {
      * 
      * @param string $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
+     * @return bool True if marked successfully, false if invalid parameters
      */
     public static function mark_reminder_as_sent($reminder_id, $year) {
+        // Validate parameters
+        if (empty($reminder_id) || !is_string($reminder_id)) {
+            return false;
+        }
+        
+        $year = intval($year);
+        $current_year = intval(date('Y'));
+        if ($year < $current_year - 10 || $year > $current_year + 10) {
+            return false;
+        }
+        
         // Load existing sent reminders from database
         $sent_reminders = get_option('wdta_sent_reminders', array());
         $key = $reminder_id . '_' . $year;
@@ -202,6 +214,8 @@ class WDTA_Cron {
         
         // Persist to database
         update_option('wdta_sent_reminders', $sent_reminders);
+        
+        return true;
     }
     
     /**

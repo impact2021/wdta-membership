@@ -390,11 +390,12 @@ jQuery(document).ready(function($) {
                         target_year: targetYear
                     },
                     complete: function() {
+                        var markedSentMsg = ' Reminder marked as sent.';
                         button.text('Sent ' + sent + '/' + total);
                         if (failed > 0) {
-                            alert(sent + ' emails sent successfully. ' + failed + ' failed. The reminder has been marked as sent to prevent automatic resends.');
+                            alert(sent + ' emails sent. ' + failed + ' failed.' + markedSentMsg);
                         } else {
-                            alert('All ' + sent + ' emails sent successfully! The reminder has been marked as sent to prevent automatic resends.');
+                            alert('All ' + sent + ' emails sent!' + markedSentMsg);
                         }
                     }
                 });

@@ -648,17 +648,28 @@ class WDTA_Admin {
         }
         
         $reminder_id = isset($_POST['reminder_id']) ? sanitize_text_field($_POST['reminder_id']) : '';
-        $target_year = isset($_POST['target_year']) ? intval($_POST['target_year']) : date('Y');
+        $target_year = isset($_POST['target_year']) ? intval($_POST['target_year']) : 0;
         
         if (empty($reminder_id)) {
             wp_send_json_error(array('message' => 'Invalid reminder ID'));
             return;
         }
         
-        // Mark the reminder as sent so cron won't send duplicates
-        WDTA_Cron::mark_reminder_as_sent($reminder_id, $target_year);
+        // Validate year is within reasonable bounds
+        $current_year = intval(date('Y'));
+        if ($target_year < $current_year - 10 || $target_year > $current_year + 10) {
+            wp_send_json_error(array('message' => 'Invalid target year'));
+            return;
+        }
         
-        wp_send_json_success(array('message' => 'Reminder marked as sent'));
+        // Mark the reminder as sent so cron won't send duplicates
+        $result = WDTA_Cron::mark_reminder_as_sent($reminder_id, $target_year);
+        
+        if ($result) {
+            wp_send_json_success(array('message' => 'Reminder marked as sent'));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to mark reminder as sent'));
+        }
     }
     
     /**
