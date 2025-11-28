@@ -43,6 +43,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_delete_membership', array($this, 'delete_membership'));
         add_action('wp_ajax_wdta_add_membership', array($this, 'add_membership'));
         add_action('wp_ajax_wdta_send_scheduled_email', array($this, 'send_scheduled_email'));
+        add_action('wp_ajax_wdta_mark_reminder_sent', array($this, 'mark_reminder_sent'));
     }
     
     /**
@@ -618,6 +619,46 @@ class WDTA_Admin {
         WDTA_Email_Notifications::send_dynamic_reminder($user_id, $target_year, $reminder);
         
         wp_send_json_success(array('message' => 'Email sent successfully to ' . $user->user_email));
+    }
+    
+    /**
+     * Mark a reminder as sent (AJAX)
+     * 
+     * This is called after the admin uses "Send All Now" to manually send all overdue emails.
+     * Marking the reminder as sent prevents the cron from sending duplicate emails.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - reminder_id (string): The reminder identifier
+     * - target_year (int): The membership year the reminder is for
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function mark_reminder_sent() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $reminder_id = isset($_POST['reminder_id']) ? sanitize_text_field($_POST['reminder_id']) : '';
+        $target_year = isset($_POST['target_year']) ? intval($_POST['target_year']) : date('Y');
+        
+        if (empty($reminder_id)) {
+            wp_send_json_error(array('message' => 'Invalid reminder ID'));
+            return;
+        }
+        
+        // Mark the reminder as sent so cron won't send duplicates
+        WDTA_Cron::mark_reminder_as_sent($reminder_id, $target_year);
+        
+        wp_send_json_success(array('message' => 'Reminder marked as sent'));
     }
     
     /**
