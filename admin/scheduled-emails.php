@@ -113,9 +113,13 @@ usort($scheduled_emails, function($a, $b) {
  * Calculate time until send date
  * @param DateTime $send_date The target send date
  * @param DateTime $current_time The current time to calculate from
+ * @return array Array with 'text' for display and 'overdue' boolean
  */
 function wdta_time_until($send_date, $current_time) {
     $interval = $current_time->diff($send_date);
+    
+    // Check if the send date has passed (invert = 1 means current_time > send_date)
+    $is_overdue = $interval->invert === 1;
     
     $parts = array();
     
@@ -130,10 +134,26 @@ function wdta_time_until($send_date, $current_time) {
     }
     
     if (empty($parts)) {
-        return 'Now';
+        // Time difference is minimal (seconds only) - use the overdue check
+        return array(
+            'text' => $is_overdue ? 'Just now' : 'Now',
+            'overdue' => $is_overdue
+        );
     }
     
-    return implode(', ', $parts);
+    $time_text = implode(', ', $parts);
+    
+    if ($is_overdue) {
+        return array(
+            'text' => $time_text . ' overdue',
+            'overdue' => true
+        );
+    }
+    
+    return array(
+        'text' => $time_text,
+        'overdue' => false
+    );
 }
 ?>
 
@@ -185,10 +205,12 @@ function wdta_time_until($send_date, $current_time) {
                 </div>
                 
                 <div style="text-align: right; min-width: 200px;">
-                    <div style="background: #f0f0f1; padding: 15px 20px; border-radius: 4px; display: inline-block;">
-                        <div style="font-size: 14px; color: #646970; margin-bottom: 5px;">Time until send</div>
-                        <div style="font-size: 18px; font-weight: 600; color: #1d2327;">
-                            <?php echo esc_html($time_until); ?>
+                    <div style="background: <?php echo $time_until['overdue'] ? '#fcf0f1' : '#f0f0f1'; ?>; padding: 15px 20px; border-radius: 4px; display: inline-block;">
+                        <div style="font-size: 14px; color: <?php echo $time_until['overdue'] ? '#d63638' : '#646970'; ?>; margin-bottom: 5px;">
+                            <?php echo $time_until['overdue'] ? 'Overdue' : 'Time until send'; ?>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 600; color: <?php echo $time_until['overdue'] ? '#d63638' : '#1d2327'; ?>;">
+                            <?php echo esc_html($time_until['text']); ?>
                         </div>
                     </div>
                 </div>
