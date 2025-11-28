@@ -78,11 +78,17 @@ class WDTA_Cron {
         $today = new DateTime();
         $today->setTime(0, 0, 0); // Reset time to start of day for date comparison
         
-        // Membership expiry date is always December 31st of current year
-        $expiry_date = new DateTime($current_year . '-12-31');
-        
         // Load sent reminders cache once for all reminder checks
         self::$sent_reminders_cache = get_option('wdta_sent_reminders', array());
+        
+        // Check reminders for both current and previous year's expiry dates
+        // This ensures we catch overdue "before" reminders that were scheduled
+        // relative to the previous year's December 31st
+        $previous_year = $current_year - 1;
+        $expiry_dates = array(
+            $previous_year => new DateTime($previous_year . '-12-31'),
+            $current_year => new DateTime($current_year . '-12-31')
+        );
         
         foreach ($reminders as $reminder) {
             // Skip if reminder is disabled
@@ -90,38 +96,41 @@ class WDTA_Cron {
                 continue;
             }
             
-            // Calculate the send date for this reminder
-            $send_date = clone $expiry_date;
             $timing = intval($reminder['timing']);
-            $unit = $reminder['unit'];
-            $period = $reminder['period'];
+            $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
+            $period = isset($reminder['period']) ? $reminder['period'] : 'before';
             
             // Convert timing to days
             $days = ($unit === 'weeks') ? $timing * 7 : $timing;
             
-            // Adjust send date based on period (before or after)
-            if ($period === 'before') {
-                $send_date->modify("-{$days} days");
-            } else {
-                $send_date->modify("+{$days} days");
-            }
-            
-            // Determine which year's membership to check
-            // Before expiry: remind about next year's membership (due Jan 1 of next year)
-            // After expiry: remind about current year's overdue membership
-            $target_year = ($period === 'before') ? $next_year : $current_year;
-            
             // Get reminder ID using a deterministic key based on reminder properties
             $reminder_id = self::get_reminder_id($reminder);
             
-            // Check if the send date has passed and this reminder hasn't been sent yet for this target year
-            // This allows reminders to be sent even if the cron didn't run on the exact send date
-            if ($today >= $send_date && !self::reminder_already_sent($reminder_id, $target_year)) {
-                // Send reminders
-                self::send_dynamic_reminder($reminder, $target_year);
+            // Check each expiry date
+            foreach ($expiry_dates as $expiry_year => $expiry_date) {
+                // Calculate the send date for this reminder
+                $send_date = clone $expiry_date;
                 
-                // Mark this reminder as sent for this year
-                self::mark_reminder_sent($reminder_id, $target_year);
+                // Adjust send date based on period (before or after)
+                if ($period === 'before') {
+                    $send_date->modify("-{$days} days");
+                    // For "before" reminders, target year is the year after expiry
+                    $target_year = $expiry_year + 1;
+                } else {
+                    $send_date->modify("+{$days} days");
+                    // For "after" reminders, target year is the expiry year
+                    $target_year = $expiry_year;
+                }
+                
+                // Check if the send date has passed and this reminder hasn't been sent yet for this target year
+                // This allows reminders to be sent even if the cron didn't run on the exact send date
+                if ($today >= $send_date && !self::reminder_already_sent($reminder_id, $target_year)) {
+                    // Send reminders
+                    self::send_dynamic_reminder($reminder, $target_year);
+                    
+                    // Mark this reminder as sent for this year
+                    self::mark_reminder_sent($reminder_id, $target_year);
+                }
             }
         }
         

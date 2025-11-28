@@ -42,6 +42,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_update_membership', array($this, 'update_membership'));
         add_action('wp_ajax_wdta_delete_membership', array($this, 'delete_membership'));
         add_action('wp_ajax_wdta_add_membership', array($this, 'add_membership'));
+        add_action('wp_ajax_wdta_send_scheduled_email', array($this, 'send_scheduled_email'));
     }
     
     /**
@@ -542,6 +543,72 @@ class WDTA_Admin {
         } else {
             wp_send_json_error(array('message' => 'Failed to add membership'));
         }
+    }
+    
+    /**
+     * Send scheduled email now (AJAX)
+     * 
+     * Allows admins to manually trigger a scheduled email for a specific user.
+     * This is useful for sending overdue emails or resending failed emails.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The WordPress user ID to send email to
+     * - reminder_id (string): The reminder identifier
+     * - target_year (int): The membership year the reminder is for
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function send_scheduled_email() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $reminder_id = isset($_POST['reminder_id']) ? sanitize_text_field($_POST['reminder_id']) : '';
+        $target_year = isset($_POST['target_year']) ? intval($_POST['target_year']) : date('Y');
+        
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'Invalid user ID'));
+            return;
+        }
+        
+        // Check if user exists
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Find the reminder configuration
+        $reminders = get_option('wdta_email_reminders', array());
+        $reminder = null;
+        
+        foreach ($reminders as $r) {
+            $r_id = isset($r['id']) ? $r['id'] : '';
+            if ($r_id == $reminder_id || "reminder_{$r['timing']}_{$r['unit']}_{$r['period']}" === $reminder_id) {
+                $reminder = $r;
+                break;
+            }
+        }
+        
+        if (!$reminder) {
+            wp_send_json_error(array('message' => 'Reminder template not found'));
+            return;
+        }
+        
+        // Send the email
+        WDTA_Email_Notifications::send_dynamic_reminder($user_id, $target_year, $reminder);
+        
+        wp_send_json_success(array('message' => 'Email sent successfully to ' . $user->user_email));
     }
     
     /**
