@@ -185,6 +185,40 @@ class WDTA_Cron {
     }
     
     /**
+     * Public method to mark a reminder as sent for a specific year
+     * Used when admin manually sends all overdue emails via the "Send All Now" button
+     * This prevents the cron from sending duplicate emails
+     * 
+     * @param string $reminder_id The reminder identifier
+     * @param int $year The target year for the reminder
+     * @return bool True if marked successfully, false if invalid parameters
+     */
+    public static function mark_reminder_as_sent($reminder_id, $year) {
+        // Validate parameters
+        if (empty($reminder_id) || !is_string($reminder_id)) {
+            return false;
+        }
+        
+        $year = intval($year);
+        $current_year = intval(date('Y'));
+        if ($year < $current_year - 10 || $year > $current_year + 10) {
+            return false;
+        }
+        
+        // Load existing sent reminders from database
+        $sent_reminders = get_option('wdta_sent_reminders', array());
+        $key = $reminder_id . '_' . $year;
+        
+        // Mark as sent
+        $sent_reminders[$key] = true;
+        
+        // Persist to database
+        update_option('wdta_sent_reminders', $sent_reminders);
+        
+        return true;
+    }
+    
+    /**
      * Send a dynamic reminder email
      */
     private static function send_dynamic_reminder($reminder, $year) {

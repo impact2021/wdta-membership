@@ -382,6 +382,24 @@ The plugin uses WordPress Cron to schedule and send emails automatically.
 - **Daily Expiry Check**: Runs at midnight on Jan 1st to deactivate expired memberships
 - **Reminder Emails**: Sent on calculated dates based on your configuration
 
+### Overdue Email Handling:
+
+**Q: If an email is overdue and I don't click the manual "Send Now" button, will the system try sending the email again?**
+
+**A: Yes!** The system will automatically send overdue emails on the next cron run. Here's how it works:
+
+1. **Daily Check**: The cron job runs daily at midnight
+2. **Overdue Detection**: It checks if any reminder's scheduled date has passed
+3. **Automatic Sending**: If a reminder is overdue and hasn't been marked as "sent" yet, the system will send it to all eligible users
+4. **One-Time Only**: Once sent, the reminder is marked as "sent" for that year and won't be sent again
+
+**The "Send Now" button** on the Scheduled Emails page is for convenience - it allows you to:
+- Send overdue emails immediately without waiting for the next cron run
+- Send to individual users manually
+- Use "Send All Now" to send to all recipients and mark the reminder as complete
+
+**Important**: If you use "Send All Now", the reminder will be marked as sent, preventing the cron from sending duplicate emails.
+
 ### Important notes:
 
 - WordPress Cron requires site traffic to trigger

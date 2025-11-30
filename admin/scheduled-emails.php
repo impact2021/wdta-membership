@@ -181,6 +181,10 @@ function wdta_time_until($send_date, $current_time) {
     
     <p class="description">This page shows overdue and upcoming email reminders (within the next 3 months), who will receive them, and the status of each. Overdue emails can be sent manually using the "Send Now" button.</p>
     
+    <div class="notice notice-warning" style="margin: 15px 0;">
+        <p><strong>Automatic Retry:</strong> Overdue emails will be automatically sent by the system's daily cron job (runs at midnight). If you don't click the manual "Send Now" button, the system will still send overdue emails automatically on the next cron run. The "Send Now" button allows you to send immediately without waiting.</p>
+    </div>
+    
     <?php if (empty($scheduled_emails)) : ?>
         <div class="notice notice-info">
             <p>No email reminders are scheduled or overdue at this time.</p>
@@ -375,13 +379,26 @@ jQuery(document).ready(function($) {
         // Send emails one by one
         function sendNext(index) {
             if (index >= userIds.length) {
-                // All done
-                button.text('Sent ' + sent + '/' + total);
-                if (failed > 0) {
-                    alert(sent + ' emails sent successfully. ' + failed + ' failed.');
-                } else {
-                    alert('All ' + sent + ' emails sent successfully!');
-                }
+                // All done - mark the reminder as sent to prevent cron duplicates
+                $.ajax({
+                    url: wdtaAdmin.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'wdta_mark_reminder_sent',
+                        nonce: wdtaAdmin.nonce,
+                        reminder_id: reminderId,
+                        target_year: targetYear
+                    },
+                    complete: function() {
+                        var markedSentMsg = ' Reminder marked as sent.';
+                        button.text('Sent ' + sent + '/' + total);
+                        if (failed > 0) {
+                            alert(sent + ' emails sent. ' + failed + ' failed.' + markedSentMsg);
+                        } else {
+                            alert('All ' + sent + ' emails sent!' + markedSentMsg);
+                        }
+                    }
+                });
                 return;
             }
             
