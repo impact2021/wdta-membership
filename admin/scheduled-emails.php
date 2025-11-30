@@ -58,10 +58,11 @@ foreach ($reminders as $reminder) {
     
     // Calculate send dates for previous, current and next year's expiry
     // This ensures we catch overdue emails from previous year
+    $expiry_time = WDTA_Cron::EXPIRY_TIME;
     $expiry_dates = array(
-        $previous_year => new DateTime($previous_year . '-12-31 23:59:59'),
-        $current_year => new DateTime($current_year . '-12-31 23:59:59'),
-        $next_year => new DateTime($next_year . '-12-31 23:59:59')
+        $previous_year => new DateTime($previous_year . '-12-31 ' . $expiry_time),
+        $current_year => new DateTime($current_year . '-12-31 ' . $expiry_time),
+        $next_year => new DateTime($next_year . '-12-31 ' . $expiry_time)
     );
     
     foreach ($expiry_dates as $expiry_year => $expiry) {

@@ -10,6 +10,12 @@ if (!defined('ABSPATH')) {
 class WDTA_Cron {
     
     /**
+     * The time at which membership expires on December 31st
+     * Used for calculating reminder send times with hours/minutes precision
+     */
+    const EXPIRY_TIME = '23:59:59';
+    
+    /**
      * Schedule all cron events
      */
     public static function schedule_events() {
@@ -84,11 +90,11 @@ class WDTA_Cron {
         // Check reminders for both current and previous year's expiry dates
         // This ensures we catch overdue "before" reminders that were scheduled
         // relative to the previous year's December 31st
-        // Use 23:59:59 as the expiry time for accurate hour/minute calculations
         $previous_year = $current_year - 1;
+        $expiry_time = self::EXPIRY_TIME;
         $expiry_dates = array(
-            $previous_year => new DateTime($previous_year . '-12-31 23:59:59'),
-            $current_year => new DateTime($current_year . '-12-31 23:59:59')
+            $previous_year => new DateTime($previous_year . '-12-31 ' . $expiry_time),
+            $current_year => new DateTime($current_year . '-12-31 ' . $expiry_time)
         );
         
         foreach ($reminders as $reminder) {
