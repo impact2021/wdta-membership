@@ -259,6 +259,9 @@ class WDTA_Cron {
         $user_id = intval($user_id);
         $current_year = intval(date('Y'));
         
+        // Validate year is within a reasonable range (10 years past or future)
+        // This prevents storing/processing invalid years while allowing historical data
+        // and future scheduling within a practical business timeframe
         if ($year < $current_year - 10 || $year > $current_year + 10) {
             return false;
         }

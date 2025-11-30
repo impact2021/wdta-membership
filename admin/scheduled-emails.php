@@ -215,8 +215,9 @@ function wdta_time_until($send_date, $current_time) {
         <p><strong>Automatic Retry:</strong> Overdue emails will be automatically sent by the system's daily cron job (runs at midnight). If you don't click the manual "Send Now" button, the system will still send overdue emails automatically on the next cron run. The "Send Now" button allows you to send immediately without waiting.</p>
     </div>
     
+    <div id="wdta-scheduled-emails-container">
     <?php if (empty($scheduled_emails)) : ?>
-        <div class="notice notice-info">
+        <div class="notice notice-info wdta-no-emails-notice">
             <p>No email reminders are scheduled or overdue at this time.</p>
         </div>
     <?php else : ?>
@@ -277,8 +278,8 @@ function wdta_time_until($send_date, $current_time) {
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
             
             <div>
-                <h4 style="margin-top: 0; margin-bottom: 10px;">
-                    Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)
+                <h4 class="wdta-recipients-header" style="margin-top: 0; margin-bottom: 10px;">
+                    <span class="wdta-recipients-count">Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)</span>
                     <?php if ($time_until['overdue'] && !empty($recipients)) : ?>
                         <button type="button" class="button button-primary wdta-send-all-now" 
                                 data-reminder-id="<?php echo esc_attr(isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}"); ?>"
@@ -332,6 +333,7 @@ function wdta_time_until($send_date, $current_time) {
         <?php endforeach; ?>
         
     <?php endif; ?>
+    </div><!-- #wdta-scheduled-emails-container -->
     
     <div class="notice notice-info" style="margin-top: 30px;">
         <p>
@@ -387,11 +389,11 @@ jQuery(document).ready(function($) {
                     row.fadeOut(300, function() {
                         $(this).remove();
                         
-                        // Update the recipient count in the card header
+                        // Update the recipient count in the card header using specific class
                         var remainingRows = card.find('tbody tr').length;
-                        var recipientHeader = card.find('h4').first();
-                        var headerText = remainingRows + ' user' + (remainingRows !== 1 ? 's' : '');
-                        recipientHeader.contents().first().replaceWith('Recipients (' + headerText + ')');
+                        var recipientCountSpan = card.find('.wdta-recipients-count');
+                        var headerText = 'Recipients (' + remainingRows + ' user' + (remainingRows !== 1 ? 's' : '') + ')';
+                        recipientCountSpan.text(headerText);
                         
                         // If no more recipients, remove the entire card
                         if (remainingRows === 0) {
@@ -400,7 +402,7 @@ jQuery(document).ready(function($) {
                                 
                                 // If no more cards, show the "no emails" notice
                                 if ($('.wdta-scheduled-email-card').length === 0) {
-                                    $('.wrap h1').after('<div class="notice notice-info"><p>No email reminders are scheduled or overdue at this time.</p></div>');
+                                    $('#wdta-scheduled-emails-container').html('<div class="notice notice-info wdta-no-emails-notice"><p>No email reminders are scheduled or overdue at this time.</p></div>');
                                 }
                             });
                             
