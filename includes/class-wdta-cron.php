@@ -76,7 +76,7 @@ class WDTA_Cron {
         }
         
         $today = new DateTime();
-        $today->setTime(0, 0, 0); // Reset time to start of day for date comparison
+        // Don't reset time - we need actual time for hours/minutes calculations
         
         // Load sent reminders cache once for all reminder checks
         self::$sent_reminders_cache = get_option('wdta_sent_reminders', array());
@@ -84,10 +84,11 @@ class WDTA_Cron {
         // Check reminders for both current and previous year's expiry dates
         // This ensures we catch overdue "before" reminders that were scheduled
         // relative to the previous year's December 31st
+        // Use 23:59:59 as the expiry time for accurate hour/minute calculations
         $previous_year = $current_year - 1;
         $expiry_dates = array(
-            $previous_year => new DateTime($previous_year . '-12-31'),
-            $current_year => new DateTime($current_year . '-12-31')
+            $previous_year => new DateTime($previous_year . '-12-31 23:59:59'),
+            $current_year => new DateTime($current_year . '-12-31 23:59:59')
         );
         
         foreach ($reminders as $reminder) {
@@ -100,9 +101,6 @@ class WDTA_Cron {
             $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
             $period = isset($reminder['period']) ? $reminder['period'] : 'before';
             
-            // Convert timing to days
-            $days = ($unit === 'weeks') ? $timing * 7 : $timing;
-            
             // Get reminder ID using a deterministic key based on reminder properties
             $reminder_id = self::get_reminder_id($reminder);
             
@@ -111,13 +109,30 @@ class WDTA_Cron {
                 // Calculate the send date for this reminder
                 $send_date = clone $expiry_date;
                 
+                // Calculate offset based on unit (supports minutes, hours, days, weeks)
+                switch ($unit) {
+                    case 'minutes':
+                        $offset = $timing . ' minutes';
+                        break;
+                    case 'hours':
+                        $offset = $timing . ' hours';
+                        break;
+                    case 'weeks':
+                        $offset = ($timing * 7) . ' days';
+                        break;
+                    case 'days':
+                    default:
+                        $offset = $timing . ' days';
+                        break;
+                }
+                
                 // Adjust send date based on period (before or after)
                 if ($period === 'before') {
-                    $send_date->modify("-{$days} days");
+                    $send_date->modify("-{$offset}");
                     // For "before" reminders, target year is the year after expiry
                     $target_year = $expiry_year + 1;
                 } else {
-                    $send_date->modify("+{$days} days");
+                    $send_date->modify("+{$offset}");
                     // For "after" reminders, target year is the expiry year
                     $target_year = $expiry_year;
                 }

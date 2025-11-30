@@ -8,9 +8,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Get current date
+// Get current date/time - don't reset time so hours/minutes comparisons work correctly
 $now = new DateTime();
-$now->setTime(0, 0, 0);
 
 // Get end date (3 months from now)
 $end_date = clone $now;
@@ -57,27 +56,41 @@ foreach ($reminders as $reminder) {
     $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
     $period = isset($reminder['period']) ? $reminder['period'] : 'before';
     
-    // Convert timing to days
-    $days = ($unit === 'weeks') ? $timing * 7 : $timing;
-    
     // Calculate send dates for previous, current and next year's expiry
     // This ensures we catch overdue emails from previous year
     $expiry_dates = array(
-        $previous_year => new DateTime($previous_year . '-12-31'),
-        $current_year => new DateTime($current_year . '-12-31'),
-        $next_year => new DateTime($next_year . '-12-31')
+        $previous_year => new DateTime($previous_year . '-12-31 23:59:59'),
+        $current_year => new DateTime($current_year . '-12-31 23:59:59'),
+        $next_year => new DateTime($next_year . '-12-31 23:59:59')
     );
     
     foreach ($expiry_dates as $expiry_year => $expiry) {
         $send_date = clone $expiry;
         
+        // Calculate offset based on unit (supports minutes, hours, days, weeks)
+        switch ($unit) {
+            case 'minutes':
+                $offset = $timing . ' minutes';
+                break;
+            case 'hours':
+                $offset = $timing . ' hours';
+                break;
+            case 'weeks':
+                $offset = ($timing * 7) . ' days';
+                break;
+            case 'days':
+            default:
+                $offset = $timing . ' days';
+                break;
+        }
+        
         // Adjust send date based on period
         if ($period === 'before') {
-            $send_date->modify("-{$days} days");
+            $send_date->modify("-{$offset}");
             // For "before" reminders, target year is the year after expiry
             $target_year = $expiry_year + 1;
         } else {
-            $send_date->modify("+{$days} days");
+            $send_date->modify("+{$offset}");
             // For "after" reminders, target year is the expiry year
             $target_year = $expiry_year;
         }
@@ -206,6 +219,11 @@ function wdta_time_until($send_date, $current_time) {
             $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
             $period = isset($reminder['period']) ? $reminder['period'] : 'before';
             $subject = isset($reminder['subject']) ? $reminder['subject'] : 'No subject';
+            
+            // Format send date - include time if using hours or minutes
+            $send_date_format = ($unit === 'hours' || $unit === 'minutes') 
+                ? 'l, F j, Y \a\t g:i A' 
+                : 'l, F j, Y';
         ?>
         
         <div class="wdta-scheduled-email-card" style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; padding: 20px; margin: 20px 0; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
@@ -223,7 +241,7 @@ function wdta_time_until($send_date, $current_time) {
                     </p>
                     <p style="color: #646970; margin-bottom: 0;">
                         <strong>Send date:</strong> 
-                        <?php echo esc_html($send_date->format('l, F j, Y')); ?>
+                        <?php echo esc_html($send_date->format($send_date_format)); ?>
                     </p>
                 </div>
                 
@@ -314,6 +332,9 @@ function wdta_time_until($send_date, $current_time) {
 
 <script type="text/javascript">
 jQuery(document).ready(function($) {
+    // Track sent emails for each reminder card
+    var sentEmailsPerCard = {};
+    
     // Send email to single user
     $(document).on('click', '.wdta-send-now', function(e) {
         e.preventDefault();
@@ -323,6 +344,8 @@ jQuery(document).ready(function($) {
         var reminderId = button.data('reminder-id');
         var targetYear = button.data('target-year');
         var originalText = button.text();
+        var card = button.closest('.wdta-scheduled-email-card');
+        var cardKey = reminderId + '_' + targetYear;
         
         if (!confirm('Send this email now?')) {
             return;
@@ -344,6 +367,34 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     button.text('Sent!').addClass('button-disabled');
                     button.closest('tr').css('background-color', '#d4edda');
+                    
+                    // Track this sent email
+                    if (!sentEmailsPerCard[cardKey]) {
+                        sentEmailsPerCard[cardKey] = 0;
+                    }
+                    sentEmailsPerCard[cardKey]++;
+                    
+                    // Check if all emails in this card have been sent
+                    var totalInCard = card.find('.wdta-send-now').length;
+                    var sentInCard = card.find('.wdta-send-now.button-disabled').length;
+                    
+                    if (sentInCard === totalInCard && totalInCard > 0) {
+                        // All emails sent - mark the reminder as sent and refresh page
+                        $.ajax({
+                            url: wdtaAdmin.ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'wdta_mark_reminder_sent',
+                                nonce: wdtaAdmin.nonce,
+                                reminder_id: reminderId,
+                                target_year: targetYear
+                            },
+                            complete: function() {
+                                alert('All emails for this reminder have been sent!');
+                                location.reload();
+                            }
+                        });
+                    }
                 } else {
                     alert('Error: ' + response.data.message);
                     button.prop('disabled', false).text(originalText);
@@ -390,13 +441,14 @@ jQuery(document).ready(function($) {
                         target_year: targetYear
                     },
                     complete: function() {
-                        var markedSentMsg = ' Reminder marked as sent.';
                         button.text('Sent ' + sent + '/' + total);
                         if (failed > 0) {
-                            alert(sent + ' emails sent. ' + failed + ' failed.' + markedSentMsg);
+                            alert(sent + ' emails sent. ' + failed + ' failed. Refreshing page...');
                         } else {
-                            alert('All ' + sent + ' emails sent!' + markedSentMsg);
+                            alert('All ' + sent + ' emails sent! Refreshing page...');
                         }
+                        // Refresh the page to update the list
+                        location.reload();
                     }
                 });
                 return;
