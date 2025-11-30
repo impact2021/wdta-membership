@@ -239,6 +239,8 @@ WDTA Team'
                                                min="1" 
                                                style="width: 60px;">
                                         <select name="wdta_reminders[<?php echo esc_attr($reminder_id); ?>][unit]">
+                                            <option value="minutes" <?php selected($unit, 'minutes'); ?>>minute(s)</option>
+                                            <option value="hours" <?php selected($unit, 'hours'); ?>>hour(s)</option>
                                             <option value="days" <?php selected($unit, 'days'); ?>>day(s)</option>
                                             <option value="weeks" <?php selected($unit, 'weeks'); ?>>week(s)</option>
                                         </select>
@@ -332,6 +334,8 @@ WDTA Team'
                                     '<label>Send ' +
                                         '<input type="number" name="wdta_reminders[' + newReminderId + '][timing]" value="7" min="1" style="width: 60px;">' +
                                         '<select name="wdta_reminders[' + newReminderId + '][unit]">' +
+                                            '<option value="minutes">minute(s)</option>' +
+                                            '<option value="hours">hour(s)</option>' +
                                             '<option value="days" selected>day(s)</option>' +
                                             '<option value="weeks">week(s)</option>' +
                                         '</select>' +
