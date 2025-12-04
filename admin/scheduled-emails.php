@@ -25,6 +25,9 @@ $reminders = get_option('wdta_email_reminders', array());
 // Get sent reminders to check what's already been sent
 $sent_reminders = get_option('wdta_sent_reminders', array());
 
+// Get sent user reminders to check which users have already received specific reminders
+$sent_user_reminders = get_option('wdta_sent_reminder_users', array());
+
 // Determine current and next year
 $current_year = (int) date('Y');
 $next_year = $current_year + 1;
@@ -41,6 +44,16 @@ function wdta_get_cached_recipients($target_year, &$cache) {
         $cache[$target_year] = WDTA_Database::get_users_without_membership($target_year);
     }
     return $cache[$target_year];
+}
+
+/**
+ * Filter out users who have already received a specific reminder
+ */
+function wdta_filter_sent_recipients($recipients, $reminder_id, $target_year, $sent_user_reminders) {
+    return array_filter($recipients, function($user) use ($reminder_id, $target_year, $sent_user_reminders) {
+        $key = $reminder_id . '_' . $target_year . '_' . $user->ID;
+        return !isset($sent_user_reminders[$key]);
+    });
 }
 
 // Build list of scheduled emails
@@ -105,14 +118,17 @@ foreach ($reminders as $reminder) {
             $reminder_id = isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}";
             $sent_key = $reminder_id . '_' . $target_year;
             
-            // Check if already sent
+            // Check if already sent (entire reminder batch)
             $already_sent = isset($sent_reminders[$sent_key]);
             
             if (!$already_sent) {
                 // Get recipients using cache
                 $recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
                 
-                // Only add if there are recipients
+                // Filter out users who have already received this specific reminder
+                $recipients = wdta_filter_sent_recipients($recipients, $reminder_id, $target_year, $sent_user_reminders);
+                
+                // Only add if there are recipients remaining
                 // Skip showing scheduled emails that have no recipients to send to
                 if (!empty($recipients)) {
                     $scheduled_emails[] = array(
@@ -199,8 +215,9 @@ function wdta_time_until($send_date, $current_time) {
         <p><strong>Automatic Retry:</strong> Overdue emails will be automatically sent by the system's daily cron job (runs at midnight). If you don't click the manual "Send Now" button, the system will still send overdue emails automatically on the next cron run. The "Send Now" button allows you to send immediately without waiting.</p>
     </div>
     
+    <div id="wdta-scheduled-emails-container">
     <?php if (empty($scheduled_emails)) : ?>
-        <div class="notice notice-info">
+        <div class="notice notice-info wdta-no-emails-notice">
             <p>No email reminders are scheduled or overdue at this time.</p>
         </div>
     <?php else : ?>
@@ -261,8 +278,8 @@ function wdta_time_until($send_date, $current_time) {
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
             
             <div>
-                <h4 style="margin-top: 0; margin-bottom: 10px;">
-                    Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)
+                <h4 class="wdta-recipients-header" style="margin-top: 0; margin-bottom: 10px;">
+                    <span class="wdta-recipients-count">Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)</span>
                     <?php if ($time_until['overdue'] && !empty($recipients)) : ?>
                         <button type="button" class="button button-primary wdta-send-all-now" 
                                 data-reminder-id="<?php echo esc_attr(isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}"); ?>"
@@ -316,6 +333,7 @@ function wdta_time_until($send_date, $current_time) {
         <?php endforeach; ?>
         
     <?php endif; ?>
+    </div><!-- #wdta-scheduled-emails-container -->
     
     <div class="notice notice-info" style="margin-top: 30px;">
         <p>
@@ -347,6 +365,7 @@ jQuery(document).ready(function($) {
         var originalText = button.text();
         var card = button.closest('.wdta-scheduled-email-card');
         var cardKey = reminderId + '_' + targetYear;
+        var row = button.closest('tr');
         
         if (!confirm('Send this email now?')) {
             return;
@@ -366,36 +385,40 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    button.text('Sent!').addClass('button-disabled');
-                    button.closest('tr').css('background-color', '#d4edda');
-                    
-                    // Track this sent email
-                    if (!sentEmailsPerCard[cardKey]) {
-                        sentEmailsPerCard[cardKey] = 0;
-                    }
-                    sentEmailsPerCard[cardKey]++;
-                    
-                    // Check if all emails in this card have been sent
-                    var totalInCard = card.find('.wdta-send-now').length;
-                    var sentInCard = card.find('.wdta-send-now.button-disabled').length;
-                    
-                    if (sentInCard === totalInCard && totalInCard > 0) {
-                        // All emails sent - mark the reminder as sent and refresh page
-                        $.ajax({
-                            url: wdtaAdmin.ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'wdta_mark_reminder_sent',
-                                nonce: wdtaAdmin.nonce,
-                                reminder_id: reminderId,
-                                target_year: targetYear
-                            },
-                            complete: function() {
-                                alert('All emails for this reminder have been sent!');
-                                location.reload();
-                            }
-                        });
-                    }
+                    // Remove the row from the table with a fade effect
+                    row.fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Update the recipient count in the card header using specific class
+                        var remainingRows = card.find('tbody tr').length;
+                        var recipientCountSpan = card.find('.wdta-recipients-count');
+                        var headerText = 'Recipients (' + remainingRows + ' user' + (remainingRows !== 1 ? 's' : '') + ')';
+                        recipientCountSpan.text(headerText);
+                        
+                        // If no more recipients, remove the entire card
+                        if (remainingRows === 0) {
+                            card.fadeOut(300, function() {
+                                $(this).remove();
+                                
+                                // If no more cards, show the "no emails" notice
+                                if ($('.wdta-scheduled-email-card').length === 0) {
+                                    $('#wdta-scheduled-emails-container').html('<div class="notice notice-info wdta-no-emails-notice"><p>No email reminders are scheduled or overdue at this time.</p></div>');
+                                }
+                            });
+                            
+                            // Mark the reminder as fully sent
+                            $.ajax({
+                                url: wdtaAdmin.ajaxurl,
+                                type: 'POST',
+                                data: {
+                                    action: 'wdta_mark_reminder_sent',
+                                    nonce: wdtaAdmin.nonce,
+                                    reminder_id: reminderId,
+                                    target_year: targetYear
+                                }
+                            });
+                        }
+                    });
                 } else {
                     alert('Error: ' + response.data.message);
                     button.prop('disabled', false).text(originalText);

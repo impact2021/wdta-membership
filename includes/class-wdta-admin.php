@@ -618,6 +618,9 @@ class WDTA_Admin {
         // Send the email
         WDTA_Email_Notifications::send_dynamic_reminder($user_id, $target_year, $reminder);
         
+        // Mark this user as having received this reminder to prevent duplicates
+        WDTA_Cron::mark_user_reminder_sent($reminder_id, $target_year, $user_id);
+        
         wp_send_json_success(array('message' => 'Email sent successfully to ' . $user->user_email));
     }
     

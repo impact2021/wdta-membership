@@ -240,19 +240,88 @@ class WDTA_Cron {
     }
     
     /**
+     * Mark a reminder as sent for a specific user
+     * Used when admin manually sends an email to a single user via the "Send Now" button
+     * This prevents the user from receiving duplicate emails
+     * 
+     * @param string $reminder_id The reminder identifier
+     * @param int $year The target year for the reminder
+     * @param int $user_id The WordPress user ID
+     * @return bool True if marked successfully, false if invalid parameters
+     */
+    public static function mark_user_reminder_sent($reminder_id, $year, $user_id) {
+        // Validate parameters
+        if (empty($reminder_id) || !is_string($reminder_id)) {
+            return false;
+        }
+        
+        $year = intval($year);
+        $user_id = intval($user_id);
+        $current_year = intval(date('Y'));
+        
+        // Validate year is within a reasonable range (10 years past or future)
+        // This prevents storing/processing invalid years while allowing historical data
+        // and future scheduling within a practical business timeframe
+        if ($year < $current_year - 10 || $year > $current_year + 10) {
+            return false;
+        }
+        
+        if ($user_id <= 0) {
+            return false;
+        }
+        
+        // Load existing sent user reminders from database
+        $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
+        $key = $reminder_id . '_' . $year . '_' . $user_id;
+        
+        // Mark as sent
+        $sent_user_reminders[$key] = true;
+        
+        // Persist to database
+        update_option('wdta_sent_reminder_users', $sent_user_reminders);
+        
+        return true;
+    }
+    
+    /**
+     * Check if a reminder has been sent to a specific user
+     * 
+     * @param string $reminder_id The reminder identifier
+     * @param int $year The target year for the reminder
+     * @param int $user_id The WordPress user ID
+     * @return bool True if already sent, false otherwise
+     */
+    public static function has_user_received_reminder($reminder_id, $year, $user_id) {
+        $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
+        $key = $reminder_id . '_' . $year . '_' . $user_id;
+        return isset($sent_user_reminders[$key]);
+    }
+    
+    /**
      * Send a dynamic reminder email
      */
     private static function send_dynamic_reminder($reminder, $year) {
         // Get all users who should have membership but don't
         $users = WDTA_Database::get_users_without_membership($year);
         
+        // Get reminder ID for tracking
+        $reminder_id = self::get_reminder_id($reminder);
+        
         foreach ($users as $user) {
+            // Check if user has already received this reminder
+            if (self::has_user_received_reminder($reminder_id, $year, $user->ID)) {
+                continue;
+            }
+            
             // Check if user has pending payment (for after expiry reminders)
             $membership = WDTA_Database::get_user_membership($user->ID, $year);
             
             // Only send if no membership or payment not completed
             if (!$membership || $membership->payment_status !== 'completed') {
                 WDTA_Email_Notifications::send_dynamic_reminder($user->ID, $year, $reminder);
+                
+                // Mark user as having received this reminder
+                self::mark_user_reminder_sent($reminder_id, $year, $user->ID);
             }
         }
     }
