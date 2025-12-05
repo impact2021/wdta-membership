@@ -18,6 +18,9 @@ class WDTA_Cron {
     /**
      * Initialize cron action hooks
      * This must be called on every page load to ensure cron callbacks are registered
+     * 
+     * Note: The wdta_daily_role_check action is registered separately in WDTA_User_Roles::init()
+     * to maintain separation of concerns between email/expiry processing and role management.
      */
     public static function init() {
         // Register action callbacks for cron events
