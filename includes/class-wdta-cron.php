@@ -34,9 +34,10 @@ class WDTA_Cron {
      * Schedule all cron events
      */
     public static function schedule_events() {
-        // Schedule daily check for email notifications
+        // Schedule hourly check for email notifications
+        // This allows hour-based and minute-based reminders to work properly
         if (!wp_next_scheduled('wdta_daily_email_check')) {
-            wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_email_check');
+            wp_schedule_event(time(), 'hourly', 'wdta_daily_email_check');
         }
         
         // Schedule daily membership expiry check
@@ -47,6 +48,20 @@ class WDTA_Cron {
         // Schedule daily role check
         if (!wp_next_scheduled('wdta_daily_role_check')) {
             wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_role_check');
+        }
+    }
+    
+    /**
+     * Reschedule email check cron to run hourly
+     * Call this to update existing daily schedules to hourly
+     */
+    public static function reschedule_email_check() {
+        // Clear existing schedule
+        wp_clear_scheduled_hook('wdta_daily_email_check');
+        
+        // Reschedule as hourly
+        if (!wp_next_scheduled('wdta_daily_email_check')) {
+            wp_schedule_event(time(), 'hourly', 'wdta_daily_email_check');
         }
     }
     
