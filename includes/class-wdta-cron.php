@@ -16,6 +16,18 @@ class WDTA_Cron {
     const EXPIRY_TIME = '23:59:59';
     
     /**
+     * Initialize cron action hooks
+     * This must be called on every page load to ensure cron callbacks are registered
+     */
+    public static function init() {
+        // Register action callbacks for cron events
+        // These must be registered on every request so that when WordPress cron
+        // triggers the scheduled hooks, the callbacks are available to execute
+        add_action('wdta_daily_email_check', array(__CLASS__, 'process_email_notifications'));
+        add_action('wdta_daily_expiry_check', array(__CLASS__, 'process_membership_expiry'));
+    }
+    
+    /**
      * Schedule all cron events
      */
     public static function schedule_events() {
@@ -33,10 +45,6 @@ class WDTA_Cron {
         if (!wp_next_scheduled('wdta_daily_role_check')) {
             wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_role_check');
         }
-        
-        // Add actions
-        add_action('wdta_daily_email_check', array(__CLASS__, 'process_email_notifications'));
-        add_action('wdta_daily_expiry_check', array(__CLASS__, 'process_membership_expiry'));
     }
     
     /**

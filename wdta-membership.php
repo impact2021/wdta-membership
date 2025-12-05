@@ -71,6 +71,9 @@ function wdta_membership_init() {
     $user_roles = WDTA_User_Roles::get_instance();
     $user_roles->init();
     
+    // Initialize cron action hooks (must be called on every request)
+    WDTA_Cron::init();
+    
     // Run migration if needed
     wdta_membership_migrate_reminders();
 }
