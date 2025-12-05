@@ -188,11 +188,12 @@ class WDTA_Cron {
     /**
      * Generate a deterministic reminder ID
      * Uses reminder properties to create a stable identifier
+     * Always returns a string for consistent comparison and storage
      */
     private static function get_reminder_id($reminder) {
-        // Use the explicit ID if set
+        // Use the explicit ID if set, converting to string for consistency
         if (isset($reminder['id'])) {
-            return $reminder['id'];
+            return strval($reminder['id']);
         }
         
         // Create a deterministic key from timing, unit, and period
@@ -207,7 +208,8 @@ class WDTA_Cron {
      * Generate a unique key for tracking sent reminders
      */
     private static function get_sent_reminder_key($reminder_id, $year) {
-        return $reminder_id . '_' . $year;
+        // Ensure reminder_id is a string for consistent key generation
+        return strval($reminder_id) . '_' . $year;
     }
     
     /**
@@ -236,15 +238,16 @@ class WDTA_Cron {
      * Used when admin manually sends all overdue emails via the "Send All Now" button
      * This prevents the cron from sending duplicate emails
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @return bool True if marked successfully, false if invalid parameters
      */
     public static function mark_reminder_as_sent($reminder_id, $year) {
-        // Validate parameters
-        if (empty($reminder_id) || !is_string($reminder_id)) {
+        // Validate and normalize reminder_id to string
+        if (empty($reminder_id)) {
             return false;
         }
+        $reminder_id = strval($reminder_id);
         
         $year = intval($year);
         $current_year = intval(date('Y'));
@@ -270,16 +273,17 @@ class WDTA_Cron {
      * Used when admin manually sends an email to a single user via the "Send Now" button
      * This prevents the user from receiving duplicate emails
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @param int $user_id The WordPress user ID
      * @return bool True if marked successfully, false if invalid parameters
      */
     public static function mark_user_reminder_sent($reminder_id, $year, $user_id) {
-        // Validate parameters
-        if (empty($reminder_id) || !is_string($reminder_id)) {
+        // Validate and normalize reminder_id to string
+        if (empty($reminder_id)) {
             return false;
         }
+        $reminder_id = strval($reminder_id);
         
         $year = intval($year);
         $user_id = intval($user_id);
@@ -312,14 +316,15 @@ class WDTA_Cron {
     /**
      * Check if a reminder has been sent to a specific user
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @param int $user_id The WordPress user ID
      * @return bool True if already sent, false otherwise
      */
     public static function has_user_received_reminder($reminder_id, $year, $user_id) {
         $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
-        $key = $reminder_id . '_' . $year . '_' . $user_id;
+        // Normalize reminder_id to string for consistent key lookup
+        $key = strval($reminder_id) . '_' . $year . '_' . $user_id;
         return isset($sent_user_reminders[$key]);
     }
     
