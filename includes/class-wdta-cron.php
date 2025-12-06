@@ -16,12 +16,28 @@ class WDTA_Cron {
     const EXPIRY_TIME = '23:59:59';
     
     /**
+     * Initialize cron action hooks
+     * This must be called on every page load to ensure cron callbacks are registered
+     * 
+     * Note: The wdta_daily_role_check action is registered separately in WDTA_User_Roles::init()
+     * to maintain separation of concerns between email/expiry processing and role management.
+     */
+    public static function init() {
+        // Register action callbacks for cron events
+        // These must be registered on every request so that when WordPress cron
+        // triggers the scheduled hooks, the callbacks are available to execute
+        add_action('wdta_daily_email_check', array(__CLASS__, 'process_email_notifications'));
+        add_action('wdta_daily_expiry_check', array(__CLASS__, 'process_membership_expiry'));
+    }
+    
+    /**
      * Schedule all cron events
      */
     public static function schedule_events() {
-        // Schedule daily check for email notifications
+        // Schedule hourly check for email notifications
+        // This allows hour-based and minute-based reminders to work properly
         if (!wp_next_scheduled('wdta_daily_email_check')) {
-            wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_email_check');
+            wp_schedule_event(time(), 'hourly', 'wdta_daily_email_check');
         }
         
         // Schedule daily membership expiry check
@@ -33,10 +49,20 @@ class WDTA_Cron {
         if (!wp_next_scheduled('wdta_daily_role_check')) {
             wp_schedule_event(strtotime('00:00:00'), 'daily', 'wdta_daily_role_check');
         }
+    }
+    
+    /**
+     * Reschedule email check cron to run hourly
+     * Call this to update existing daily schedules to hourly
+     */
+    public static function reschedule_email_check() {
+        // Clear existing schedule
+        wp_clear_scheduled_hook('wdta_daily_email_check');
         
-        // Add actions
-        add_action('wdta_daily_email_check', array(__CLASS__, 'process_email_notifications'));
-        add_action('wdta_daily_expiry_check', array(__CLASS__, 'process_membership_expiry'));
+        // Reschedule as hourly
+        if (!wp_next_scheduled('wdta_daily_email_check')) {
+            wp_schedule_event(time(), 'hourly', 'wdta_daily_email_check');
+        }
     }
     
     /**
@@ -162,11 +188,12 @@ class WDTA_Cron {
     /**
      * Generate a deterministic reminder ID
      * Uses reminder properties to create a stable identifier
+     * Always returns a string for consistent comparison and storage
      */
     private static function get_reminder_id($reminder) {
-        // Use the explicit ID if set
+        // Use the explicit ID if set, converting to string for consistency
         if (isset($reminder['id'])) {
-            return $reminder['id'];
+            return strval($reminder['id']);
         }
         
         // Create a deterministic key from timing, unit, and period
@@ -181,7 +208,8 @@ class WDTA_Cron {
      * Generate a unique key for tracking sent reminders
      */
     private static function get_sent_reminder_key($reminder_id, $year) {
-        return $reminder_id . '_' . $year;
+        // Ensure reminder_id is a string for consistent key generation
+        return strval($reminder_id) . '_' . $year;
     }
     
     /**
@@ -210,15 +238,16 @@ class WDTA_Cron {
      * Used when admin manually sends all overdue emails via the "Send All Now" button
      * This prevents the cron from sending duplicate emails
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @return bool True if marked successfully, false if invalid parameters
      */
     public static function mark_reminder_as_sent($reminder_id, $year) {
-        // Validate parameters
-        if (empty($reminder_id) || !is_string($reminder_id)) {
+        // Validate and normalize reminder_id to string
+        if (empty($reminder_id)) {
             return false;
         }
+        $reminder_id = strval($reminder_id);
         
         $year = intval($year);
         $current_year = intval(date('Y'));
@@ -244,16 +273,17 @@ class WDTA_Cron {
      * Used when admin manually sends an email to a single user via the "Send Now" button
      * This prevents the user from receiving duplicate emails
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @param int $user_id The WordPress user ID
      * @return bool True if marked successfully, false if invalid parameters
      */
     public static function mark_user_reminder_sent($reminder_id, $year, $user_id) {
-        // Validate parameters
-        if (empty($reminder_id) || !is_string($reminder_id)) {
+        // Validate and normalize reminder_id to string
+        if (empty($reminder_id)) {
             return false;
         }
+        $reminder_id = strval($reminder_id);
         
         $year = intval($year);
         $user_id = intval($user_id);
@@ -286,14 +316,15 @@ class WDTA_Cron {
     /**
      * Check if a reminder has been sent to a specific user
      * 
-     * @param string $reminder_id The reminder identifier
+     * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
      * @param int $user_id The WordPress user ID
      * @return bool True if already sent, false otherwise
      */
     public static function has_user_received_reminder($reminder_id, $year, $user_id) {
         $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
-        $key = $reminder_id . '_' . $year . '_' . $user_id;
+        // Normalize reminder_id to string for consistent key lookup
+        $key = strval($reminder_id) . '_' . $year . '_' . $user_id;
         return isset($sent_user_reminders[$key]);
     }
     

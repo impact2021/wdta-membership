@@ -71,10 +71,33 @@ function wdta_membership_init() {
     $user_roles = WDTA_User_Roles::get_instance();
     $user_roles->init();
     
+    // Initialize cron action hooks (must be called on every request)
+    WDTA_Cron::init();
+    
     // Run migration if needed
     wdta_membership_migrate_reminders();
+    
+    // Ensure email check cron runs hourly (for hour-based reminders)
+    wdta_ensure_hourly_email_check();
 }
 add_action('plugins_loaded', 'wdta_membership_init');
+
+/**
+ * Ensure the email check cron runs hourly instead of daily
+ * This allows hour-based and minute-based reminders to be sent on time
+ */
+function wdta_ensure_hourly_email_check() {
+    // Check if already migrated to hourly
+    if (get_option('wdta_cron_hourly_migrated', false)) {
+        return;
+    }
+    
+    // Reschedule to hourly
+    WDTA_Cron::reschedule_email_check();
+    
+    // Mark migration complete
+    update_option('wdta_cron_hourly_migrated', true);
+}
 
 /**
  * Migrate old hardcoded reminders to new dynamic system
