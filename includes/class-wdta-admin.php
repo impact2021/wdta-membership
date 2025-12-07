@@ -246,6 +246,9 @@ class WDTA_Admin {
         if (isset($_POST['wdta_email_from_address'])) {
             update_option('wdta_email_from_address', sanitize_email($_POST['wdta_email_from_address']));
         }
+        if (isset($_POST['wdta_renewal_url'])) {
+            update_option('wdta_renewal_url', esc_url_raw($_POST['wdta_renewal_url']));
+        }
         
         // Year cutoff settings
         if (isset($_POST['wdta_year_cutoff_month'])) {

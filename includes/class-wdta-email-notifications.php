@@ -86,13 +86,16 @@ class WDTA_Email_Notifications {
      * Parse email template
      */
     private static function parse_template($template, $user, $year) {
+        // Get renewal URL from settings, fall back to default if not set
+        $renewal_url = get_option('wdta_renewal_url', home_url('/membership'));
+        
         $replacements = array(
             '{user_name}' => $user->display_name,
             '{user_email}' => $user->user_email,
             '{year}' => $year,
             '{amount}' => '950.00',
             '{deadline}' => wdta_format_date('December 31, ' . $year),
-            '{renewal_url}' => home_url('/membership'),
+            '{renewal_url}' => $renewal_url,
             '{site_name}' => get_bloginfo('name')
         );
         

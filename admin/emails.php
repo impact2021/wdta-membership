@@ -15,6 +15,7 @@ settings_errors('wdta_emails');
     <h1>Email Templates</h1>
     
     <p class="description">Customize all email messages sent to members. Available placeholders: {user_name}, {user_email}, {year}, {amount}, {deadline}, {renewal_url}, {site_name}</p>
+    <p class="description"><strong>Note:</strong> The {renewal_url} placeholder can be configured in <a href="<?php echo admin_url('admin.php?page=wdta-settings'); ?>">Settings → Payment Settings</a>. <a href="<?php echo admin_url('admin.php?page=wdta-documentation&tab=email-placeholders'); ?>">View full placeholder documentation</a>.</p>
     
     <form method="post" action="">
         <?php wp_nonce_field('wdta_emails_action', 'wdta_emails_nonce'); ?>
