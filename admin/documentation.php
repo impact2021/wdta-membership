@@ -12,9 +12,9 @@ if (!defined('ABSPATH')) {
     <h1>WDTA Membership Documentation</h1>
     
     <nav class="nav-tab-wrapper">
-        <a href="#overview" class="nav-tab nav-tab-active" onclick="showTab('overview'); return false;">Overview</a>
-        <a href="#email-placeholders" class="nav-tab" onclick="showTab('email-placeholders'); return false;">Email Placeholders</a>
-        <a href="#renewal-settings" class="nav-tab" onclick="showTab('renewal-settings'); return false;">Renewal Settings</a>
+        <a href="#overview" class="nav-tab nav-tab-active" onclick="showTab('overview', event); return false;">Overview</a>
+        <a href="#email-placeholders" class="nav-tab" onclick="showTab('email-placeholders', event); return false;">Email Placeholders</a>
+        <a href="#renewal-settings" class="nav-tab" onclick="showTab('renewal-settings', event); return false;">Renewal Settings</a>
     </nav>
     
     <div id="overview" class="tab-content" style="display:block;">
@@ -371,7 +371,7 @@ WDTA - Workplace Drug Testing Australia</pre>
 </style>
 
 <script>
-function showTab(tabId) {
+function showTab(tabId, event) {
     // Hide all tabs
     var tabs = document.querySelectorAll('.tab-content');
     for (var i = 0; i < tabs.length; i++) {
