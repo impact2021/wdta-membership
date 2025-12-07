@@ -177,6 +177,15 @@ foreach ($all_roles as $role_key => $role_data) {
                                class="regular-text">
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row"><label for="wdta_renewal_url">Renewal Page URL</label></th>
+                    <td>
+                        <input type="url" id="wdta_renewal_url" name="wdta_renewal_url" 
+                               value="<?php echo esc_attr(get_option('wdta_renewal_url', home_url('/membership'))); ?>" 
+                               class="regular-text" placeholder="https://yoursite.com/membership">
+                        <p class="description">The URL to your membership renewal/payment page. This is used for the <code>{renewal_url}</code> placeholder in email templates. Default: <code><?php echo esc_html(home_url('/membership')); ?></code></p>
+                    </td>
+                </tr>
             </table>
             
             <h3>Membership Year Settings</h3>

@@ -12,8 +12,9 @@ if (!defined('ABSPATH')) {
     <h1>WDTA Membership Documentation</h1>
     
     <nav class="nav-tab-wrapper">
-        <a href="#overview" class="nav-tab nav-tab-active" onclick="showTab('overview'); return false;">Overview</a>
-        <a href="#renewal-settings" class="nav-tab" onclick="showTab('renewal-settings'); return false;">Renewal Settings</a>
+        <a href="#overview" class="nav-tab nav-tab-active" onclick="showTab('overview', event); return false;">Overview</a>
+        <a href="#email-placeholders" class="nav-tab" onclick="showTab('email-placeholders', event); return false;">Email Placeholders</a>
+        <a href="#renewal-settings" class="nav-tab" onclick="showTab('renewal-settings', event); return false;">Renewal Settings</a>
     </nav>
     
     <div id="overview" class="tab-content" style="display:block;">
@@ -43,6 +44,154 @@ if (!defined('ABSPATH')) {
             <li><code>[wdta_membership_status]</code> - Show current membership status</li>
             <li><code>[wdta_login_form]</code> - Display login form anywhere on your site</li>
         </ul>
+    </div>
+    
+    <div id="email-placeholders" class="tab-content" style="display:none;">
+        <h2>Email Placeholders Reference</h2>
+        
+        <p class="description">Use these placeholders in your email templates to automatically insert personalized information. Placeholders use single curly braces like <code>{placeholder_name}</code>.</p>
+        
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+            <strong>Note:</strong> All placeholders use single curly braces <code>{}</code>, not double braces <code>{{}}</code>.
+        </div>
+        
+        <h3>Available Placeholders</h3>
+        
+        <table class="widefat" style="margin: 20px 0;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Placeholder</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 35%;">Example Output</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>{user_name}</code></td>
+                    <td>The member's full display name</td>
+                    <td>John Smith</td>
+                </tr>
+                <tr>
+                    <td><code>{user_email}</code></td>
+                    <td>The member's email address</td>
+                    <td>john.smith@example.com</td>
+                </tr>
+                <tr>
+                    <td><code>{year}</code></td>
+                    <td>The membership year</td>
+                    <td>2025</td>
+                </tr>
+                <tr>
+                    <td><code>{amount}</code></td>
+                    <td>The membership fee amount in AUD (without $ symbol)</td>
+                    <td>950.00</td>
+                </tr>
+                <tr>
+                    <td><code>{deadline}</code></td>
+                    <td>The payment deadline date (formatted)</td>
+                    <td>December 31, 2025</td>
+                </tr>
+                <tr>
+                    <td><code>{renewal_url}</code></td>
+                    <td>Link to the membership renewal/payment page</td>
+                    <td>https://yoursite.com/membership</td>
+                </tr>
+                <tr>
+                    <td><code>{site_name}</code></td>
+                    <td>Your WordPress site name</td>
+                    <td>WDTA - Workplace Drug Testing Australia</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>Usage Examples</h3>
+        
+        <div style="background: #f0f0f1; border-left: 4px solid #2271b1; padding: 15px; margin: 20px 0;">
+            <h4 style="margin-top: 0;">Example 1: Simple Reminder</h4>
+            <pre style="background: #fff; padding: 15px; border-radius: 3px; overflow-x: auto;">Dear {user_name},
+
+Your WDTA membership for {year} is due soon. 
+The annual fee is ${amount} AUD.
+
+Renew here: {renewal_url}
+
+Best regards,
+{site_name}</pre>
+            <p><strong>This would render as:</strong></p>
+            <pre style="background: #fff; padding: 15px; border-radius: 3px; overflow-x: auto;">Dear John Smith,
+
+Your WDTA membership for 2025 is due soon. 
+The annual fee is $950.00 AUD.
+
+Renew here: https://yoursite.com/membership
+
+Best regards,
+WDTA - Workplace Drug Testing Australia</pre>
+        </div>
+        
+        <div style="background: #f0f0f1; border-left: 4px solid #2271b1; padding: 15px; margin: 20px 0;">
+            <h4 style="margin-top: 0;">Example 2: Overdue Notice</h4>
+            <pre style="background: #fff; padding: 15px; border-radius: 3px; overflow-x: auto;">Hello {user_name},
+
+Your membership payment for {year} was due on {deadline}.
+Please pay ${amount} AUD as soon as possible.
+
+Member email: {user_email}
+Payment link: {renewal_url}
+
+Thank you,
+{site_name}</pre>
+            <p><strong>This would render as:</strong></p>
+            <pre style="background: #fff; padding: 15px; border-radius: 3px; overflow-x: auto;">Hello John Smith,
+
+Your membership payment for 2025 was due on December 31, 2025.
+Please pay $950.00 AUD as soon as possible.
+
+Member email: john.smith@example.com
+Payment link: https://yoursite.com/membership
+
+Thank you,
+WDTA - Workplace Drug Testing Australia</pre>
+        </div>
+        
+        <h3>Where to Use Placeholders</h3>
+        <p>You can use these placeholders in the following areas:</p>
+        <ul>
+            <li><strong>Email Templates</strong> (WDTA Membership → Emails):
+                <ul>
+                    <li>Stripe Payment Confirmation emails</li>
+                    <li>Bank Transfer Pending/Approved emails</li>
+                    <li>Payment Reminder emails</li>
+                </ul>
+            </li>
+            <li>Both email subjects and email bodies support placeholders</li>
+            <li>The <code>{renewal_url}</code> can be configured in Settings → Payment Settings</li>
+        </ul>
+        
+        <h3>Tips for Using Placeholders</h3>
+        <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0;">
+            <ul style="margin: 0;">
+                <li><strong>Personalization:</strong> Use <code>{user_name}</code> to make emails feel personal and direct</li>
+                <li><strong>Clear CTAs:</strong> Always include <code>{renewal_url}</code> so members know where to pay</li>
+                <li><strong>Transparency:</strong> Include <code>{amount}</code> so members know exactly what to pay</li>
+                <li><strong>Context:</strong> Use <code>{year}</code> and <code>{deadline}</code> to clarify which membership period</li>
+                <li><strong>Consistency:</strong> Keep the same placeholders across all your email templates for a cohesive experience</li>
+            </ul>
+        </div>
+        
+        <h3>Formatting Notes</h3>
+        <ul>
+            <li>Placeholders are case-sensitive and must be in lowercase</li>
+            <li>Use single curly braces: <code>{user_name}</code> ✓  not <code>{{user_name}}</code> ✗</li>
+            <li>Placeholders work in both plain text and HTML formatted content</li>
+            <li>Line breaks in your template will be preserved in the email</li>
+            <li>The WordPress editor may add HTML formatting; placeholders will still work</li>
+        </ul>
+        
+        <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+            <h4 style="margin-top: 0;">Pro Tip</h4>
+            <p style="margin-bottom: 0;">Create a test email template and send it to yourself first to verify all placeholders are rendering correctly before enabling it for all members.</p>
+        </div>
     </div>
     
     <div id="renewal-settings" class="tab-content" style="display:none;">
@@ -222,7 +371,7 @@ if (!defined('ABSPATH')) {
 </style>
 
 <script>
-function showTab(tabId) {
+function showTab(tabId, event) {
     // Hide all tabs
     var tabs = document.querySelectorAll('.tab-content');
     for (var i = 0; i < tabs.length; i++) {
@@ -239,6 +388,34 @@ function showTab(tabId) {
     document.getElementById(tabId).style.display = 'block';
     
     // Add active class to clicked nav tab
-    event.target.classList.add('nav-tab-active');
+    if (event && event.target) {
+        event.target.classList.add('nav-tab-active');
+    } else {
+        // If called without an event (e.g., on page load), find the matching nav link
+        var matchingLink = document.querySelector('a[href="#' + tabId + '"]');
+        if (matchingLink) {
+            matchingLink.classList.add('nav-tab-active');
+        }
+    }
 }
+
+// Check URL hash on page load to show the correct tab
+document.addEventListener('DOMContentLoaded', function() {
+    var hash = window.location.hash;
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    
+    // Support both hash and tab parameter
+    var tabId = null;
+    if (hash && hash.length > 1) {
+        tabId = hash.substring(1); // Remove the # from hash
+    } else if (tabParam) {
+        tabId = tabParam;
+    }
+    
+    // If a tab ID was found, show that tab
+    if (tabId && document.getElementById(tabId)) {
+        showTab(tabId);
+    }
+});
 </script>
