@@ -209,10 +209,20 @@ function wdta_time_until($send_date, $current_time) {
 <div class="wrap">
     <h1>Scheduled Email Reminders</h1>
     
-    <p class="description">This page shows overdue and upcoming email reminders (within the next 3 months), who will receive them, and the status of each. Overdue emails can be sent manually using the "Send Now" button.</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <p class="description" style="margin: 0;">This page shows overdue and upcoming email reminders (within the next 3 months), who will receive them, and the status of each. Overdue emails can be sent manually using the "Send Now" button.</p>
+        <button type="button" id="wdta-debug-sync-button" class="button button-secondary" style="white-space: nowrap;">
+            <span class="dashicons dashicons-admin-tools" style="margin-top: 3px;"></span> Debug / Sync
+        </button>
+    </div>
     
     <div class="notice notice-warning" style="margin: 15px 0;">
         <p><strong>Automatic Processing:</strong> Overdue emails will be automatically sent by the system's hourly cron job. If you don't click the manual "Send Now" button, the system will still send overdue emails automatically on the next cron run (within the hour). The "Send Now" button allows you to send immediately without waiting.</p>
+    </div>
+    
+    <div id="wdta-debug-output" style="display: none; background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #d63638; padding: 20px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Debug Information <button type="button" id="wdta-debug-close" class="button button-small" style="float: right;">Close</button></h3>
+        <div id="wdta-debug-content"></div>
     </div>
     
     <div id="wdta-scheduled-emails-container">
@@ -509,6 +519,230 @@ jQuery(document).ready(function($) {
         }
         
         sendNext(0);
+    });
+    
+    // Debug/Sync button
+    $('#wdta-debug-sync-button').on('click', function(e) {
+        e.preventDefault();
+        
+        var button = $(this);
+        var originalText = button.html();
+        
+        button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt" style="margin-top: 3px; animation: rotation 2s infinite linear;"></span> Loading...');
+        
+        // Add rotation animation
+        if (!$('#wdta-debug-rotation-css').length) {
+            $('head').append('<style id="wdta-debug-rotation-css">@keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(359deg); } }</style>');
+        }
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_debug_scheduled_emails',
+                nonce: wdtaAdmin.nonce
+            },
+            success: function(response) {
+                button.prop('disabled', false).html(originalText);
+                
+                if (response.success) {
+                    var data = response.data;
+                    var html = '<div style="font-family: monospace; font-size: 12px;">';
+                    
+                    // Summary section
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0; color: #d63638;">📊 Summary</h4>';
+                    html += '<table class="widefat" style="background: #fff;"><tbody>';
+                    html += '<tr><td><strong>Total Users:</strong></td><td>' + data.total_users + '</td></tr>';
+                    html += '<tr><td><strong>Administrators (excluded):</strong></td><td>' + data.admin_count + '</td></tr>';
+                    html += '<tr><td><strong>Recipients for ' + data.current_datetime.previous_year + ':</strong></td><td>' + data.recipients['for_year_' + data.current_datetime.previous_year] + '</td></tr>';
+                    html += '<tr><td><strong>Recipients for ' + data.current_datetime.current_year + ':</strong></td><td>' + data.recipients['for_year_' + data.current_datetime.current_year] + '</td></tr>';
+                    html += '<tr><td><strong>Recipients for ' + data.current_datetime.next_year + ':</strong></td><td>' + data.recipients['for_year_' + data.current_datetime.next_year] + '</td></tr>';
+                    html += '<tr><td><strong>Current Date/Time:</strong></td><td>' + data.current_datetime.now + ' (' + data.current_datetime.timezone + ')</td></tr>';
+                    html += '</tbody></table>';
+                    html += '</div>';
+                    
+                    // Reminder configuration
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0; color: #2271b1;">⚙️ Reminder Configuration</h4>';
+                    html += '<table class="widefat" style="background: #fff;"><tbody>';
+                    html += '<tr><td><strong>Total Reminders:</strong></td><td>' + data.reminder_config.total_reminders + '</td></tr>';
+                    html += '<tr><td><strong>Enabled:</strong></td><td>' + data.reminder_config.enabled_count + '</td></tr>';
+                    html += '<tr><td><strong>Disabled:</strong></td><td>' + data.reminder_config.disabled_count + '</td></tr>';
+                    html += '</tbody></table>';
+                    
+                    if (data.reminder_config.reminders.length > 0) {
+                        html += '<details style="margin-top: 10px;"><summary style="cursor: pointer; font-weight: bold;">View All Reminders</summary>';
+                        html += '<table class="widefat striped" style="margin-top: 10px; background: #fff;"><thead><tr><th>ID</th><th>Enabled</th><th>Timing</th><th>Subject</th></tr></thead><tbody>';
+                        data.reminder_config.reminders.forEach(function(r) {
+                            var statusColor = r.enabled ? '#00a32a' : '#d63638';
+                            html += '<tr>';
+                            html += '<td>' + r.id + '</td>';
+                            html += '<td style="color: ' + statusColor + '; font-weight: bold;">' + (r.enabled ? '✓ Yes' : '✗ No') + '</td>';
+                            html += '<td>' + r.timing + ' ' + r.unit + ' ' + r.period + '</td>';
+                            html += '<td>' + r.subject + '</td>';
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table></details>';
+                    }
+                    html += '</div>';
+                    
+                    // Expected scheduled emails
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0; color: #00a32a;">📅 Expected Scheduled Emails (What Should Show on Page)</h4>';
+                    if (data.expected_scheduled_emails.message) {
+                        html += '<p style="color: #d63638;">' + data.expected_scheduled_emails.message + '</p>';
+                    } else if (data.expected_scheduled_emails.length === 0) {
+                        html += '<p style="color: #d63638;">❌ No emails should be showing based on current configuration and data.</p>';
+                        html += '<p><strong>Possible reasons:</strong></p>';
+                        html += '<ul>';
+                        html += '<li>All reminders are disabled</li>';
+                        html += '<li>All reminders have already been sent (check sent_reminders below)</li>';
+                        html += '<li>No reminders fall within the date window (overdue within 6 months, or upcoming within 3 months)</li>';
+                        html += '<li>All potential recipients have already received individual reminders</li>';
+                        html += '</ul>';
+                    } else {
+                        html += '<table class="widefat striped" style="background: #fff;"><thead><tr><th>Reminder</th><th>Send Date</th><th>Year</th><th>Status</th><th>Recipients</th><th>Will Show?</th></tr></thead><tbody>';
+                        data.expected_scheduled_emails.forEach(function(e) {
+                            var statusText = e.is_overdue ? '🔴 Overdue' : '🟢 Upcoming';
+                            var willShow = e.will_show_on_page ? '✓ YES' : '✗ NO';
+                            var willShowColor = e.will_show_on_page ? '#00a32a' : '#d63638';
+                            var reason = '';
+                            if (e.already_sent_batch) {
+                                reason = 'Already sent (batch)';
+                            } else if (e.recipient_count_after_filter === 0) {
+                                reason = 'No recipients after filtering';
+                            }
+                            
+                            html += '<tr>';
+                            html += '<td>' + e.reminder_id + '<br/><small>' + e.timing + '</small></td>';
+                            html += '<td>' + e.send_date + '</td>';
+                            html += '<td>' + e.target_year + '</td>';
+                            html += '<td>' + statusText + '</td>';
+                            html += '<td>' + e.recipient_count_after_filter + ' (was ' + e.recipient_count_before_filter + ' before filter)</td>';
+                            html += '<td style="font-weight: bold; color: ' + willShowColor + ';">' + willShow + (reason ? '<br/><small>' + reason + '</small>' : '') + '</td>';
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table>';
+                    }
+                    html += '</div>';
+                    
+                    // Membership stats
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0;">👥 Membership Statistics</h4>';
+                    [data.current_datetime.previous_year, data.current_datetime.current_year, data.current_datetime.next_year].forEach(function(year) {
+                        var key = 'memberships_year_' + year;
+                        if (data[key]) {
+                            html += '<details style="margin-bottom: 10px;"><summary style="cursor: pointer; font-weight: bold;">' + year + ' Memberships</summary>';
+                            html += '<table class="widefat striped" style="margin-top: 10px; background: #fff;"><thead><tr><th>Status / Payment Status</th><th>Count</th></tr></thead><tbody>';
+                            var total = 0;
+                            for (var status in data[key]) {
+                                html += '<tr><td>' + status + '</td><td>' + data[key][status] + '</td></tr>';
+                                total += data[key][status];
+                            }
+                            html += '<tr style="font-weight: bold; background: #f0f0f1;"><td>TOTAL</td><td>' + total + '</td></tr>';
+                            html += '</tbody></table></details>';
+                        }
+                    });
+                    html += '</div>';
+                    
+                    // Sent reminders
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0;">📤 Sent Reminders (Batch Level)</h4>';
+                    html += '<p><strong>Total batch reminders sent:</strong> ' + data.sent_reminders.total_sent + '</p>';
+                    if (data.sent_reminders.list.length > 0) {
+                        html += '<details><summary style="cursor: pointer;">View List (' + data.sent_reminders.list.length + ' items)</summary>';
+                        html += '<ul style="max-height: 200px; overflow-y: auto;">';
+                        data.sent_reminders.list.forEach(function(key) {
+                            html += '<li>' + key + '</li>';
+                        });
+                        html += '</ul></details>';
+                    }
+                    html += '</div>';
+                    
+                    // Sent user reminders
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0;">📧 Sent User Reminders (Individual Level)</h4>';
+                    html += '<p><strong>Total individual reminders sent:</strong> ' + data.sent_user_reminders.total_sent + '</p>';
+                    if (data.sent_user_reminders.sample.length > 0) {
+                        html += '<details><summary style="cursor: pointer;">View Sample (first 10 of ' + data.sent_user_reminders.total_sent + ')</summary>';
+                        html += '<ul>';
+                        data.sent_user_reminders.sample.forEach(function(key) {
+                            html += '<li>' + key + '</li>';
+                        });
+                        html += '</ul></details>';
+                    }
+                    html += '</div>';
+                    
+                    // Administrator users
+                    if (data.admin_users && data.admin_users.length > 0) {
+                        html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                        html += '<h4 style="margin-top: 0;">🔒 Administrator Users (Excluded from Emails)</h4>';
+                        html += '<table class="widefat striped" style="background: #fff;"><thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead><tbody>';
+                        data.admin_users.forEach(function(user) {
+                            html += '<tr><td>' + user.id + '</td><td>' + user.name + '</td><td>' + user.email + '</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        html += '</div>';
+                    }
+                    
+                    // Sample user analysis
+                    html += '<div style="background: #f0f0f1; padding: 15px; margin-bottom: 20px; border-radius: 4px;">';
+                    html += '<h4 style="margin-top: 0;">🔍 Sample User Analysis (First 10 Users)</h4>';
+                    html += '<table class="widefat" style="background: #fff; font-size: 11px;"><thead><tr><th>ID</th><th>Name</th><th>Admin?</th><th>' + data.current_datetime.previous_year + '</th><th>' + data.current_datetime.current_year + '</th><th>' + data.current_datetime.next_year + '</th><th>Gets Reminders For</th></tr></thead><tbody>';
+                    data.sample_user_analysis.forEach(function(user) {
+                        html += '<tr>';
+                        html += '<td>' + user.id + '</td>';
+                        html += '<td>' + user.name + '</td>';
+                        html += '<td style="color: ' + (user.is_admin ? '#d63638' : '#00a32a') + ';">' + (user.is_admin ? 'YES' : 'NO') + '</td>';
+                        
+                        [data.current_datetime.previous_year, data.current_datetime.current_year, data.current_datetime.next_year].forEach(function(year) {
+                            var membership = user.prev_year_membership;
+                            if (year === data.current_datetime.current_year) membership = user.curr_year_membership;
+                            if (year === data.current_datetime.next_year) membership = user.next_year_membership;
+                            
+                            if (membership) {
+                                html += '<td>' + membership.status + '/<br/>' + membership.payment_status + '</td>';
+                            } else {
+                                html += '<td style="color: #646970;">-</td>';
+                            }
+                        });
+                        
+                        var reminderYears = [];
+                        for (var year in user.would_receive_reminders_for) {
+                            if (user.would_receive_reminders_for[year]) {
+                                reminderYears.push(year);
+                            }
+                        }
+                        html += '<td>' + (reminderYears.length > 0 ? reminderYears.join(', ') : 'None') + '</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    html += '</div>';
+                    
+                    // Action buttons
+                    html += '<div style="text-align: center; padding: 20px; background: #fff; border-radius: 4px;">';
+                    html += '<button type="button" onclick="location.reload();" class="button button-primary button-large">🔄 Refresh Page</button>';
+                    html += '</div>';
+                    
+                    html += '</div>';
+                    
+                    $('#wdta-debug-content').html(html);
+                    $('#wdta-debug-output').slideDown();
+                } else {
+                    alert('Error: ' + (response.data ? response.data.message : 'Unknown error'));
+                }
+            },
+            error: function() {
+                button.prop('disabled', false).html(originalText);
+                alert('An error occurred while fetching debug information.');
+            }
+        });
+    });
+    
+    // Close debug panel
+    $(document).on('click', '#wdta-debug-close', function() {
+        $('#wdta-debug-output').slideUp();
     });
 });
 </script>
