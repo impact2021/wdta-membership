@@ -2,6 +2,34 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.2] - 2026-01-08
+
+### Fixed
+- **User role assignment for expired memberships**: Fixed critical bug where users whose memberships expired were not getting their roles updated from `active_member` to `inactive_member`
+- When memberships are deactivated on January 1st (for previous year's unpaid memberships), user roles are now properly updated to reflect inactive status
+- This ensures that users with expired memberships no longer have access to member-restricted content
+
+### Changed
+- Enhanced `deactivate_expired_memberships()` function to trigger role updates for all affected users
+- Added explicit role synchronization after membership status changes
+
+### Technical Details
+- Modified `includes/class-wdta-cron.php` to call `WDTA_User_Roles::update_user_role()` for each user after their membership is marked inactive
+- Ensures role updates happen immediately when memberships expire, rather than waiting for the daily role check cron
+- This closes the gap where users could temporarily have `active_member` role with inactive membership status
+
+### Why Previous Versions Failed
+**The Problem:**
+- The `deactivate_expired_memberships()` function updated the database to set `status = 'inactive'` but did not update WordPress user roles
+- This created a mismatch: database showed inactive, but user role remained `active_member`
+- Users continued to have access to restricted content despite expired membership
+- The daily role check (`wdta_daily_role_check`) would eventually fix this, but there was a window where the mismatch existed
+
+**The Solution:**
+- After updating membership statuses in the database, we now explicitly query for all affected users
+- For each affected user, we call `update_user_role()` to synchronize their WordPress role with their membership status
+- This ensures immediate consistency between database status and user permissions
+
 ## [3.1.0] - 2026-01-08
 
 ### Fixed
