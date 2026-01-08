@@ -528,12 +528,7 @@ jQuery(document).ready(function($) {
         var button = $(this);
         var originalText = button.html();
         
-        button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt" style="margin-top: 3px; animation: rotation 2s infinite linear;"></span> Loading...');
-        
-        // Add rotation animation
-        if (!$('#wdta-debug-rotation-css').length) {
-            $('head').append('<style id="wdta-debug-rotation-css">@keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(359deg); } }</style>');
-        }
+        button.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Loading...');
         
         $.ajax({
             url: wdtaAdmin.ajaxurl,
@@ -696,10 +691,14 @@ jQuery(document).ready(function($) {
                         html += '<td>' + user.name + '</td>';
                         html += '<td style="color: ' + (user.is_admin ? '#d63638' : '#00a32a') + ';">' + (user.is_admin ? 'YES' : 'NO') + '</td>';
                         
+                        // Create membership mapping for cleaner access
+                        var membershipMap = {};
+                        membershipMap[data.current_datetime.previous_year] = user.prev_year_membership;
+                        membershipMap[data.current_datetime.current_year] = user.curr_year_membership;
+                        membershipMap[data.current_datetime.next_year] = user.next_year_membership;
+                        
                         [data.current_datetime.previous_year, data.current_datetime.current_year, data.current_datetime.next_year].forEach(function(year) {
-                            var membership = user.prev_year_membership;
-                            if (year === data.current_datetime.current_year) membership = user.curr_year_membership;
-                            if (year === data.current_datetime.next_year) membership = user.next_year_membership;
+                            var membership = membershipMap[year];
                             
                             if (membership) {
                                 html += '<td>' + membership.status + '/<br/>' + membership.payment_status + '</td>';

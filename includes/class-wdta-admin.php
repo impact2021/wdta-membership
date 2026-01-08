@@ -985,10 +985,11 @@ class WDTA_Admin {
                     $sent_key = $reminder_id . '_' . $target_year;
                     $already_sent = isset($sent_reminders[$sent_key]);
                     
-                    $recipients = WDTA_Database::get_users_without_membership($target_year);
+                    $recipients_before_filter = WDTA_Database::get_users_without_membership($target_year);
+                    $recipient_count_before_filter = count($recipients_before_filter);
                     
                     // Filter out users who have already received this specific reminder
-                    $recipients = array_filter($recipients, function($user) use ($reminder_id, $target_year, $sent_user_reminders) {
+                    $recipients = array_filter($recipients_before_filter, function($user) use ($reminder_id, $target_year, $sent_user_reminders) {
                         $key = $reminder_id . '_' . $target_year . '_' . $user->ID;
                         return !isset($sent_user_reminders[$key]);
                     });
@@ -1001,7 +1002,7 @@ class WDTA_Admin {
                         'is_upcoming' => $is_upcoming,
                         'is_overdue' => $is_overdue,
                         'already_sent_batch' => $already_sent,
-                        'recipient_count_before_filter' => count(WDTA_Database::get_users_without_membership($target_year)),
+                        'recipient_count_before_filter' => $recipient_count_before_filter,
                         'recipient_count_after_filter' => count($recipients),
                         'will_show_on_page' => !$already_sent && count($recipients) > 0
                     );
