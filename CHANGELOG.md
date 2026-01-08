@@ -10,14 +10,14 @@ All notable changes to the WDTA Membership plugin will be documented in this fil
 
 ### Changed
 - Updated `get_users_without_membership()` function to:
-  - Explicitly exclude users with the 'administrator' role from email recipient lists
+  - Explicitly exclude users with administrator privileges (checked via `manage_options` capability) from email recipient lists
   - Explicitly include users with `status = 'grace_period'` in the query to ensure they receive reminder emails
   - Added improved documentation explaining which user categories should receive emails
 
 ### Technical Details
-- Modified `get_users_without_membership()` in `includes/class-wdta-database.php` to use WordPress's built-in `WP_User` class for secure administrator role filtering
-- Administrator filtering now uses PHP-level `array_filter()` with `WP_User` objects and strict type checking, which is more secure than SQL string matching against serialized capability data
-- Updated Query 2 to explicitly check for `m.status = 'grace_period'` in addition to other conditions
+- Modified `get_users_without_membership()` in `includes/class-wdta-database.php` to use WordPress's built-in `user_can()` function for administrator filtering
+- Administrator filtering uses `user_can($user->ID, 'manage_options')` which is the standard WordPress way to check for administrator privileges, more secure and efficient than SQL string matching
+- Updated SQL Query 2 to explicitly check for `m.status = 'grace_period'` in addition to other conditions
 - Version bumped from 3.2 to 3.3
 
 ## [3.2] - 2026-01-08
