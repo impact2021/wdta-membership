@@ -431,11 +431,12 @@ class WDTA_Cron {
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
         // Get all users who will be affected by this deactivation
-        // before we update the database
+        // Only select users whose status will actually change
         $affected_users = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT user_id FROM $table_name 
             WHERE membership_year = %d 
-            AND (payment_status != 'completed' OR status != 'active')",
+            AND payment_status != 'completed'
+            AND status != 'inactive'",
             $year
         ));
         
@@ -451,6 +452,8 @@ class WDTA_Cron {
         
         // Update user roles for all affected users
         // This ensures their WordPress role matches their membership status
+        // Note: We use current year (not $year parameter) because roles should be based
+        // on the user's current year membership status, not the expired year
         if (!empty($affected_users)) {
             $user_roles = WDTA_User_Roles::get_instance();
             $current_year = date('Y');
