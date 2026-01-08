@@ -2,6 +2,41 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.4] - 2026-01-08
+
+### Fixed
+- **CRITICAL FIX: Grace period members now correctly appear in scheduled email lists**: Fixed the actual root cause bug that prevented grace period members from appearing in scheduled email reminder lists.
+  - **What was broken**: On January 1st, unpaid members from the previous year are moved from `status = 'active'` to `status = 'grace_period'`. However, Query 1 in `get_users_without_membership()` was only looking for users with `status = 'active'` in the previous year, so it missed all the grace_period members!
+  - **What was fixed**: Updated Query 1 to include BOTH `status = 'active' OR status = 'grace_period'` when looking at previous year memberships.
+  - **Impact**: Grace period members will now correctly appear in the scheduled email list and receive reminder emails.
+
+### Technical Details
+- Modified Query 1 in `get_users_without_membership()` function (`includes/class-wdta-database.php`):
+  - Changed: `WHERE m.membership_year = %d AND m.status = 'active'`
+  - To: `WHERE m.membership_year = %d AND (m.status = 'active' OR m.status = 'grace_period')`
+  - This ensures that users who were moved to grace_period on Jan 1st are still included in reminder emails for the current year
+- Updated inline documentation to clarify the query logic
+
+### Summary of What Was Wrong and How It Was Fixed
+
+**The Problem:**
+The scheduled email list page was correctly excluding administrators (fixed in v3.3), but grace period unpaid members were STILL NOT SHOWING in the list. This was causing unpaid members who should be receiving reminder emails to be missed.
+
+**Root Cause:**
+The `get_users_without_membership()` function has two SQL queries that are UNIONed together:
+1. Query 1: Users with previous year membership but no current year payment
+2. Query 2: Users with current year membership that is unpaid/grace_period/inactive
+
+On January 1st, the system runs a cron job that moves unpaid members to `grace_period` status (in their PREVIOUS year membership record). However, Query 1 was only checking for `status = 'active'` in the previous year, completely missing all the `grace_period` members!
+
+**The Fix:**
+Changed Query 1 to check for `(status = 'active' OR status = 'grace_period')` so it includes users who:
+- Had active membership last year and haven't renewed (status still 'active')
+- Had active membership last year, didn't renew, and were moved to 'grace_period' on Jan 1st
+
+**Verification:**
+After this fix, grace period members correctly appear in the scheduled email lists on the admin page at `/wp-admin/admin.php?page=wdta-scheduled-emails`.
+
 ## [3.3] - 2026-01-08
 
 ### Fixed

@@ -191,7 +191,8 @@ class WDTA_Database {
     /**
      * Get users without membership for current year
      * Returns users who should receive reminder emails, including:
-     * 1. Users who had active membership in previous year but no completed membership in current year
+     * 1. Users who had active OR grace_period membership in previous year but no completed membership in current year
+     *    (This includes users moved to grace_period on Jan 1st who are still unpaid)
      * 2. Users who have current year membership with grace_period status (unpaid, receiving reminders)
      * 3. Users who have current year membership with inactive status or incomplete payment
      * 
@@ -208,14 +209,15 @@ class WDTA_Database {
         $table_name = self::get_table_name();
         
         // Get all users who should receive reminders using UNION for optimal performance
-        // Query 1: Users with active membership in previous year but no completed payment in current year
+        // Query 1: Users with active OR grace_period membership in previous year but no completed payment in current year
+        //          This catches users who were active last year and haven't renewed, including those moved to grace_period on Jan 1
         // Query 2: Users with current year membership that is in grace_period, inactive, or payment not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
             INNER JOIN {$table_name} m ON u.ID = m.user_id
             WHERE m.membership_year = %d
-            AND m.status = 'active'
+            AND (m.status = 'active' OR m.status = 'grace_period')
             AND u.ID NOT IN (
                 SELECT user_id FROM {$table_name} 
                 WHERE membership_year = %d 
