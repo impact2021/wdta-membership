@@ -991,7 +991,7 @@ class WDTA_Admin {
                 if ($is_upcoming || $is_overdue) {
                     $reminder_id = isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}";
                     $sent_key = $reminder_id . '_' . $target_year;
-                    $already_sent = isset($sent_reminders[$sent_key]);
+                    $already_sent_batch = isset($sent_reminders[$sent_key]);
                     
                     // Get recipients from cache or database
                     if (!isset($recipients_cache[$target_year])) {
@@ -1013,10 +1013,10 @@ class WDTA_Admin {
                         'target_year' => $target_year,
                         'is_upcoming' => $is_upcoming,
                         'is_overdue' => $is_overdue,
-                        'already_sent_batch' => $already_sent,
+                        'already_sent_batch' => $already_sent_batch,
                         'recipient_count_before_filter' => $recipient_count_before_filter,
                         'recipient_count_after_filter' => count($recipients),
-                        'will_show_on_page' => !$already_sent && count($recipients) > 0
+                        'will_show_on_page' => count($recipients) > 0
                     );
                 }
             }
