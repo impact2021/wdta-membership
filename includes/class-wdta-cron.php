@@ -93,11 +93,6 @@ class WDTA_Cron {
     }
     
     /**
-     * Cache for sent reminders to avoid multiple database queries
-     */
-    private static $sent_reminders_cache = null;
-    
-    /**
      * Process dynamic reminders based on configuration
      */
     private static function process_dynamic_reminders($current_year, $next_year) {
@@ -109,9 +104,6 @@ class WDTA_Cron {
         
         $today = new DateTime();
         // Don't reset time - we need actual time for hours/minutes calculations
-        
-        // Load sent reminders cache once for all reminder checks
-        self::$sent_reminders_cache = get_option('wdta_sent_reminders', array());
         
         // Check reminders for both current and previous year's expiry dates
         // This ensures we catch overdue "before" reminders that were scheduled
@@ -169,20 +161,14 @@ class WDTA_Cron {
                     $target_year = $expiry_year;
                 }
                 
-                // Check if the send date has passed and this reminder hasn't been sent yet for this target year
-                // This allows reminders to be sent even if the cron didn't run on the exact send date
-                if ($today >= $send_date && !self::reminder_already_sent($reminder_id, $target_year)) {
-                    // Send reminders
+                // Check if the send date has passed
+                // Individual user tracking prevents duplicate sends
+                if ($today >= $send_date) {
+                    // Send reminders to users who haven't received them yet
                     self::send_dynamic_reminder($reminder, $target_year);
-                    
-                    // Mark this reminder as sent for this year
-                    self::mark_reminder_sent($reminder_id, $target_year);
                 }
             }
         }
-        
-        // Clear cache after processing
-        self::$sent_reminders_cache = null;
     }
     
     /**
@@ -204,39 +190,14 @@ class WDTA_Cron {
         return "reminder_{$timing}_{$unit}_{$period}";
     }
     
-    /**
-     * Generate a unique key for tracking sent reminders
-     */
-    private static function get_sent_reminder_key($reminder_id, $year) {
-        // Ensure reminder_id is a string for consistent key generation
-        return strval($reminder_id) . '_' . $year;
-    }
-    
-    /**
-     * Check if a reminder has already been sent for a specific year
-     */
-    private static function reminder_already_sent($reminder_id, $year) {
-        $key = self::get_sent_reminder_key($reminder_id, $year);
-        return isset(self::$sent_reminders_cache[$key]);
-    }
-    
-    /**
-     * Mark a reminder as sent for a specific year
-     */
-    private static function mark_reminder_sent($reminder_id, $year) {
-        $key = self::get_sent_reminder_key($reminder_id, $year);
-        
-        // Update cache first to prevent duplicate sends in same execution
-        self::$sent_reminders_cache[$key] = true;
-        
-        // Persist to database
-        update_option('wdta_sent_reminders', self::$sent_reminders_cache);
-    }
     
     /**
      * Public method to mark a reminder as sent for a specific year
-     * Used when admin manually sends all overdue emails via the "Send All Now" button
-     * This prevents the cron from sending duplicate emails
+     * 
+     * DEPRECATED: This method is no longer used as the system now relies on
+     * individual user-level tracking only. Kept for backward compatibility.
+     * The batch-level tracking is maintained in the database for historical
+     * purposes and debugging, but is not used for send logic.
      * 
      * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
@@ -259,7 +220,7 @@ class WDTA_Cron {
         $sent_reminders = get_option('wdta_sent_reminders', array());
         $key = $reminder_id . '_' . $year;
         
-        // Mark as sent
+        // Mark as sent (for historical/debugging purposes only)
         $sent_reminders[$key] = true;
         
         // Persist to database
