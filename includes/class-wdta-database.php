@@ -181,6 +181,9 @@ class WDTA_Database {
     
     /**
      * Get users without membership for current year
+     * Returns users who should receive reminder emails, including:
+     * 1. Users who had active membership in previous year but no completed membership in current year
+     * 2. Users who have current year membership with inactive status or incomplete payment
      */
     public static function get_users_without_membership($year = null) {
         global $wpdb;
@@ -191,20 +194,33 @@ class WDTA_Database {
         
         $table_name = self::get_table_name();
         
-        // Get all users who had membership in previous year but not current year
-        // OR have current year membership but payment is not completed
+        // Get all users who:
+        // 1. Had active membership in previous year but don't have completed payment in current year
+        // 2. OR have current year membership with status = 'inactive' or payment not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
-            INNER JOIN {$table_name} m ON u.ID = m.user_id
-            WHERE m.membership_year = %d
-            AND m.status = 'active'
-            AND u.ID NOT IN (
-                SELECT user_id FROM {$table_name} 
-                WHERE membership_year = %d 
-                AND payment_status = 'completed'
+            WHERE u.ID IN (
+                -- Users with active membership in previous year but no completed payment in current year
+                SELECT DISTINCT m.user_id
+                FROM {$table_name} m
+                WHERE m.membership_year = %d
+                AND m.status = 'active'
+                AND m.user_id NOT IN (
+                    SELECT user_id FROM {$table_name} 
+                    WHERE membership_year = %d 
+                    AND payment_status = 'completed'
+                    AND status = 'active'
+                )
             )
-        ", $year - 1, $year));
+            OR u.ID IN (
+                -- Users with current year membership that is inactive or payment not completed
+                SELECT DISTINCT user_id
+                FROM {$table_name}
+                WHERE membership_year = %d
+                AND (status = 'inactive' OR payment_status != 'completed' OR status != 'active')
+            )
+        ", $year - 1, $year, $year));
         
         return $users;
     }
