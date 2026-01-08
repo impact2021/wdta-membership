@@ -111,8 +111,21 @@ class WDTA_User_Roles {
     private function determine_membership_role($user_id, $year) {
         $membership = WDTA_Database::get_user_membership($user_id, $year);
         
-        // No membership record - check if they had one previously
+        // No membership record for current year - check if they had one previously
         if (!$membership) {
+            // Check if they have a grace_period membership from previous year
+            // This scenario occurs when update_user_role() is called with the current year (e.g., 2026)
+            // after the system has already updated previous year (e.g., 2025) memberships to grace_period
+            // status on January 1st, but the user doesn't yet have a current year membership record
+            $previous_year = $year - 1;
+            $previous_membership = WDTA_Database::get_user_membership($user_id, $previous_year);
+            
+            if ($previous_membership && isset($previous_membership->status) && $previous_membership->status === 'grace_period') {
+                // User has grace_period status from last year, so they should be grace_period_member
+                // This gives them continued access until April 1st
+                return 'grace_period_member';
+            }
+            
             // Check if user has any membership record
             $has_any_membership = $this->user_has_any_membership($user_id);
             if ($has_any_membership) {
