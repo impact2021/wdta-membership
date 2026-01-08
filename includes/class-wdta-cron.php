@@ -153,13 +153,15 @@ class WDTA_Cron {
                 // Adjust send date based on period (before or after)
                 if ($period === 'before') {
                     $send_date->modify("-{$offset}");
-                    // For "before" reminders, target year is the year after expiry
-                    $target_year = $expiry_year + 1;
                 } else {
                     $send_date->modify("+{$offset}");
-                    // For "after" reminders, target year is the expiry year
-                    $target_year = $expiry_year;
                 }
+                
+                // Both "before" and "after" reminders relative to Dec 31, YYYY target YYYY+1 memberships
+                // Dec 31 is the deadline for paying the next year's membership
+                // "Before" reminders (Nov/Dec) remind people to pay before deadline
+                // "After" reminders (Jan/Feb) remind people who missed the deadline
+                $target_year = $expiry_year + 1;
                 
                 // Check if the send date has passed
                 // Individual user tracking (wdta_sent_reminder_users) prevents duplicate sends

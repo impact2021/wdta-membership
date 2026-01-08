@@ -979,11 +979,15 @@ class WDTA_Admin {
                 
                 if ($period === 'before') {
                     $send_date->modify("-{$offset}");
-                    $target_year = $expiry_year + 1;
                 } else {
                     $send_date->modify("+{$offset}");
-                    $target_year = $expiry_year;
                 }
+                
+                // Both "before" and "after" reminders relative to Dec 31, YYYY target YYYY+1 memberships
+                // Dec 31 is the deadline for paying the next year's membership
+                // "Before" reminders (Nov/Dec) remind people to pay before deadline
+                // "After" reminders (Jan/Feb) remind people who missed the deadline
+                $target_year = $expiry_year + 1;
                 
                 $is_upcoming = ($send_date >= $now && $send_date <= $end_date);
                 $is_overdue = ($send_date < $now && $send_date >= $overdue_start_date);
