@@ -214,11 +214,8 @@ class WDTA_Database {
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
             INNER JOIN {$table_name} m ON u.ID = m.user_id
-            INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
             WHERE m.membership_year = %d
             AND m.status = 'active'
-            AND um.meta_key = '{$wpdb->prefix}capabilities'
-            AND um.meta_value NOT LIKE '%%administrator%%'
             AND u.ID NOT IN (
                 SELECT user_id FROM {$table_name} 
                 WHERE membership_year = %d 
@@ -229,14 +226,19 @@ class WDTA_Database {
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
             INNER JOIN {$table_name} m ON u.ID = m.user_id
-            INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
             WHERE m.membership_year = %d
-            AND um.meta_key = '{$wpdb->prefix}capabilities'
-            AND um.meta_value NOT LIKE '%%administrator%%'
             AND (m.status = 'grace_period' OR m.status = 'inactive' OR m.payment_status != 'completed')
         ", $year - 1, $year, $year));
         
-        return $users;
+        // Filter out administrators using WordPress's built-in role checking
+        // This is more secure than SQL string matching against serialized data
+        $filtered_users = array_filter($users, function($user) {
+            $user_obj = new WP_User($user->ID);
+            return !in_array('administrator', $user_obj->roles, true);
+        });
+        
+        // Re-index the array to ensure sequential keys after filtering
+        return array_values($filtered_users);
     }
     
     /**
