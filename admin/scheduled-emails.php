@@ -116,30 +116,24 @@ foreach ($reminders as $reminder) {
         if ($is_upcoming || $is_overdue) {
             // Get reminder ID
             $reminder_id = isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}";
-            $sent_key = $reminder_id . '_' . $target_year;
             
-            // Check if already sent (entire reminder batch)
-            $already_sent = isset($sent_reminders[$sent_key]);
+            // Get recipients using cache
+            $recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
             
-            if (!$already_sent) {
-                // Get recipients using cache
-                $recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
-                
-                // Filter out users who have already received this specific reminder
-                $recipients = wdta_filter_sent_recipients($recipients, $reminder_id, $target_year, $sent_user_reminders);
-                
-                // Only add if there are recipients remaining
-                // Skip showing scheduled emails that have no recipients to send to
-                if (!empty($recipients)) {
-                    $scheduled_emails[] = array(
-                        'reminder' => $reminder,
-                        'send_date' => $send_date,
-                        'target_year' => $target_year,
-                        'recipients' => $recipients,
-                        'already_sent' => false,
-                        'is_overdue' => $is_overdue
-                    );
-                }
+            // Filter out users who have already received this specific reminder
+            $recipients = wdta_filter_sent_recipients($recipients, $reminder_id, $target_year, $sent_user_reminders);
+            
+            // Only add if there are recipients remaining
+            // Skip showing scheduled emails that have no recipients to send to
+            if (!empty($recipients)) {
+                $scheduled_emails[] = array(
+                    'reminder' => $reminder,
+                    'send_date' => $send_date,
+                    'target_year' => $target_year,
+                    'recipients' => $recipients,
+                    'already_sent' => false,
+                    'is_overdue' => $is_overdue
+                );
             }
         }
     }
