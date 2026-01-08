@@ -181,6 +181,9 @@ class WDTA_Database {
     
     /**
      * Get users without membership for current year
+     * Returns users who should receive reminder emails, including:
+     * 1. Users who had active membership in previous year but no completed membership in current year
+     * 2. Users who have current year membership with inactive status or incomplete payment
      */
     public static function get_users_without_membership($year = null) {
         global $wpdb;
@@ -191,8 +194,9 @@ class WDTA_Database {
         
         $table_name = self::get_table_name();
         
-        // Get all users who had membership in previous year but not current year
-        // OR have current year membership but payment is not completed
+        // Get all users who should receive reminders using UNION for optimal performance
+        // Query 1: Users with active membership in previous year but no completed payment in current year
+        // Query 2: Users with current year membership that is inactive or payment not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
@@ -203,8 +207,15 @@ class WDTA_Database {
                 SELECT user_id FROM {$table_name} 
                 WHERE membership_year = %d 
                 AND payment_status = 'completed'
+                AND status = 'active'
             )
-        ", $year - 1, $year));
+            UNION
+            SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
+            FROM {$wpdb->users} u
+            INNER JOIN {$table_name} m ON u.ID = m.user_id
+            WHERE m.membership_year = %d
+            AND (m.status = 'inactive' OR m.payment_status != 'completed')
+        ", $year - 1, $year, $year));
         
         return $users;
     }

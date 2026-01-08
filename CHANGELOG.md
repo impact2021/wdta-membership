@@ -2,7 +2,23 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
-## [3.1.0] - 2025-11-24
+## [3.1.0] - 2026-01-08
+
+### Fixed
+- **Email scheduling for inactive users**: Fixed critical bug where users with inactive membership status were not being included in email reminder schedules
+- Users with current year membership records that have `status = 'inactive'` or incomplete payments now correctly receive reminder emails
+- Ensures that all unpaid members receive "After X days past the deadline" reminder emails regardless of whether they have an inactive membership record
+
+### Changed
+- Updated `get_users_without_membership()` function to include two categories of users:
+  1. Users who had active membership in previous year but no completed payment in current year (existing behavior)
+  2. Users who have current year membership with inactive status or incomplete payment (new behavior)
+
+### Technical Details
+- Modified `includes/class-wdta-database.php` to use UNION query that catches both previous year active members and current year inactive members
+- Ensures comprehensive email reminder delivery to all members who need to renew
+
+## [3.2.0] - 2025-11-24
 
 ### Fixed
 - **Payment amount mismatch**: Fixed critical bug where backend charged hardcoded $970.90 while frontend displayed dynamic price from settings

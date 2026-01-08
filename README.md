@@ -207,6 +207,11 @@ This plugin is licensed under GPL v2 or later.
 
 ## Changelog
 
+### Version 3.1.0
+- Fixed email scheduling for inactive users
+- Users with inactive membership status now correctly receive reminder emails
+- Comprehensive email reminder delivery to all unpaid members
+
 ### Version 3.0.0
 - Fixed Edit button on admin memberships list page
 - Improved JavaScript event handling
