@@ -2,6 +2,23 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.3] - 2026-01-08
+
+### Fixed
+- **Email recipient list excludes administrators**: Fixed critical bug where administrators were being included in scheduled email reminder lists. Administrators don't pay for membership and should not receive payment reminder emails.
+- **Grace period members now included in email lists**: Fixed bug where members in grace_period status were not always being included in the scheduled email reminder lists. Grace period members should continue to receive reminder emails until they pay or their access is revoked on April 1st.
+
+### Changed
+- Updated `get_users_without_membership()` function to:
+  - Explicitly exclude users with the 'administrator' role from email recipient lists
+  - Explicitly include users with `status = 'grace_period'` in the query to ensure they receive reminder emails
+  - Added improved documentation explaining which user categories should receive emails
+
+### Technical Details
+- Modified SQL query in `includes/class-wdta-database.php` to join with `wp_usermeta` table to filter out administrators
+- Updated Query 2 to explicitly check for `m.status = 'grace_period'` in addition to other conditions
+- Version bumped from 3.2 to 3.3
+
 ## [3.2] - 2026-01-08
 
 ### Added
