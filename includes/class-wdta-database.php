@@ -192,6 +192,7 @@ class WDTA_Database {
         $table_name = self::get_table_name();
         
         // Get all users who had membership in previous year but not current year
+        // OR have current year membership but payment is not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
@@ -199,7 +200,9 @@ class WDTA_Database {
             WHERE m.membership_year = %d
             AND m.status = 'active'
             AND u.ID NOT IN (
-                SELECT user_id FROM {$table_name} WHERE membership_year = %d
+                SELECT user_id FROM {$table_name} 
+                WHERE membership_year = %d 
+                AND payment_status = 'completed'
             )
         ", $year - 1, $year));
         
