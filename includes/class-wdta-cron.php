@@ -456,13 +456,29 @@ class WDTA_Cron {
         // on the user's current year membership status, not the expired year
         if (!empty($affected_users)) {
             $user_roles = WDTA_User_Roles::get_instance();
+            
+            // Ensure user roles class is available
+            if (!$user_roles) {
+                error_log('WDTA: User roles class not available in deactivate_expired_memberships');
+                return;
+            }
+            
             $current_year = date('Y');
             
             foreach ($affected_users as $user_id) {
-                // Update role based on current year membership status
-                // This will set them to inactive_member if they don't have
-                // an active membership for the current year
-                $user_roles->update_user_role($user_id, $current_year);
+                try {
+                    // Update role based on current year membership status
+                    // This will set them to inactive_member if they don't have
+                    // an active membership for the current year
+                    $user_roles->update_user_role($user_id, $current_year);
+                } catch (Exception $e) {
+                    // Log the error but continue processing other users
+                    error_log(sprintf(
+                        'WDTA: Failed to update role for user %d in deactivate_expired_memberships: %s',
+                        $user_id,
+                        $e->getMessage()
+                    ));
+                }
             }
         }
     }
