@@ -192,7 +192,11 @@ class WDTA_Database {
      * Get users without membership for current year
      * Returns users who should receive reminder emails, including:
      * 1. Users who had active membership in previous year but no completed membership in current year
-     * 2. Users who have current year membership with inactive status or incomplete payment
+     * 2. Users who have current year membership with grace_period status (unpaid, receiving reminders)
+     * 3. Users who have current year membership with inactive status or incomplete payment
+     * 
+     * Excludes:
+     * - Administrators (they don't pay for membership)
      */
     public static function get_users_without_membership($year = null) {
         global $wpdb;
@@ -205,7 +209,7 @@ class WDTA_Database {
         
         // Get all users who should receive reminders using UNION for optimal performance
         // Query 1: Users with active membership in previous year but no completed payment in current year
-        // Query 2: Users with current year membership that is inactive or payment not completed
+        // Query 2: Users with current year membership that is in grace_period, inactive, or payment not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
@@ -223,10 +227,18 @@ class WDTA_Database {
             FROM {$wpdb->users} u
             INNER JOIN {$table_name} m ON u.ID = m.user_id
             WHERE m.membership_year = %d
-            AND (m.status = 'inactive' OR m.payment_status != 'completed')
+            AND (m.status = 'grace_period' OR m.status = 'inactive' OR m.payment_status != 'completed')
         ", $year - 1, $year, $year));
         
-        return $users;
+        // Filter out administrators using WordPress's built-in capability checking
+        // Using user_can() is more efficient and secure than creating WP_User objects
+        // Administrators have 'manage_options' capability and shouldn't receive payment reminders
+        $filtered_users = array_filter($users, function($user) {
+            return !user_can($user->ID, 'manage_options');
+        });
+        
+        // Re-index the array to ensure sequential keys after filtering
+        return array_values($filtered_users);
     }
     
     /**
