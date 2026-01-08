@@ -162,7 +162,8 @@ class WDTA_Cron {
                 }
                 
                 // Check if the send date has passed
-                // Individual user tracking prevents duplicate sends
+                // Individual user tracking (wdta_sent_reminder_users) prevents duplicate sends
+                // by checking each user in send_dynamic_reminder() via has_user_received_reminder()
                 if ($today >= $send_date) {
                     // Send reminders to users who haven't received them yet
                     self::send_dynamic_reminder($reminder, $target_year);
@@ -194,10 +195,10 @@ class WDTA_Cron {
     /**
      * Public method to mark a reminder as sent for a specific year
      * 
-     * DEPRECATED: This method is no longer used as the system now relies on
-     * individual user-level tracking only. Kept for backward compatibility.
-     * The batch-level tracking is maintained in the database for historical
-     * purposes and debugging, but is not used for send logic.
+     * @deprecated since 3.4 This method is no longer used in send logic. The system now relies on
+     * individual user-level tracking only (see mark_user_reminder_sent and has_user_received_reminder).
+     * Kept for backward compatibility. The batch-level tracking is maintained in the database for 
+     * historical purposes and debugging, but is not used for determining which reminders to send.
      * 
      * @param string|int $reminder_id The reminder identifier
      * @param int $year The target year for the reminder
