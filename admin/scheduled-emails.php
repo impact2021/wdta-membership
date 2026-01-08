@@ -629,9 +629,8 @@ jQuery(document).ready(function($) {
                         html += '<p><strong>Possible reasons:</strong></p>';
                         html += '<ul>';
                         html += '<li>All reminders are disabled</li>';
-                        html += '<li>All reminders have already been sent (check sent_reminders below)</li>';
                         html += '<li>No reminders fall within the date window (overdue within 6 months, or upcoming within 3 months)</li>';
-                        html += '<li>All potential recipients have already received individual reminders</li>';
+                        html += '<li>No users qualify for reminders (nobody had active membership last year)</li>';
                         html += '</ul>';
                     } else {
                         html += '<table class="widefat striped" style="background: #fff;"><thead><tr><th>Reminder</th><th>Send Date</th><th>Year</th><th>Status</th><th>Recipients</th><th>Will Show?</th></tr></thead><tbody>';
@@ -640,15 +639,15 @@ jQuery(document).ready(function($) {
                             var willShow = e.will_show_on_page ? '✓ YES' : '✗ NO';
                             var willShowColor = e.will_show_on_page ? '#00a32a' : '#d63638';
                             var reason = '';
-                            if (e.recipient_count_after_filter === 0) {
+                            if (e.recipient_count_before_filter === 0) {
+                                reason = 'No recipients qualify for this year';
+                            } else if (e.recipient_count_after_filter === 0) {
                                 var numFiltered = e.recipient_count_before_filter - e.recipient_count_after_filter;
-                                if (numFiltered > 0) {
-                                    reason = numFiltered + ' user' + (numFiltered !== 1 ? 's' : '') + ' already received individual reminder';
-                                } else {
-                                    reason = 'No recipients qualify';
-                                }
-                            } else if (e.already_sent_batch) {
-                                reason = 'Note: Batch marked as sent (for historical tracking only)';
+                                reason = 'All ' + numFiltered + ' recipient' + (numFiltered !== 1 ? 's' : '') + ' already sent (will show as "Completed")';
+                            } else if (e.recipient_count_after_filter < e.recipient_count_before_filter) {
+                                var numPending = e.recipient_count_after_filter;
+                                var numSent = e.recipient_count_before_filter - e.recipient_count_after_filter;
+                                reason = numPending + ' pending, ' + numSent + ' already sent';
                             }
                             
                             html += '<tr>';
@@ -656,7 +655,7 @@ jQuery(document).ready(function($) {
                             html += '<td>' + e.send_date + '</td>';
                             html += '<td>' + e.target_year + '</td>';
                             html += '<td>' + statusText + '</td>';
-                            html += '<td>' + e.recipient_count_after_filter + ' (was ' + e.recipient_count_before_filter + ' before filter)</td>';
+                            html += '<td>' + e.recipient_count_after_filter + ' pending (was ' + e.recipient_count_before_filter + ' total)</td>';
                             html += '<td style="font-weight: bold; color: ' + willShowColor + ';">' + willShow + (reason ? '<br/><small>' + reason + '</small>' : '') + '</td>';
                             html += '</tr>';
                         });
