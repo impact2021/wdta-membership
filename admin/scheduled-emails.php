@@ -692,10 +692,11 @@ jQuery(document).ready(function($) {
                         html += '<td style="color: ' + (user.is_admin ? '#d63638' : '#00a32a') + ';">' + (user.is_admin ? 'YES' : 'NO') + '</td>';
                         
                         // Create membership mapping for cleaner access
-                        var membershipMap = {};
-                        membershipMap[data.current_datetime.previous_year] = user.prev_year_membership;
-                        membershipMap[data.current_datetime.current_year] = user.curr_year_membership;
-                        membershipMap[data.current_datetime.next_year] = user.next_year_membership;
+                        var membershipMap = {
+                            [data.current_datetime.previous_year]: user.prev_year_membership,
+                            [data.current_datetime.current_year]: user.curr_year_membership,
+                            [data.current_datetime.next_year]: user.next_year_membership
+                        };
                         
                         [data.current_datetime.previous_year, data.current_datetime.current_year, data.current_datetime.next_year].forEach(function(year) {
                             var membership = membershipMap[year];

@@ -941,6 +941,9 @@ class WDTA_Admin {
         $sent_reminders = get_option('wdta_sent_reminders', array());
         $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
         
+        // Cache recipients by year to avoid redundant database calls
+        $recipients_cache = array();
+        
         foreach ($reminders as $reminder) {
             if (empty($reminder['enabled'])) {
                 continue;
@@ -985,7 +988,11 @@ class WDTA_Admin {
                     $sent_key = $reminder_id . '_' . $target_year;
                     $already_sent = isset($sent_reminders[$sent_key]);
                     
-                    $recipients_before_filter = WDTA_Database::get_users_without_membership($target_year);
+                    // Get recipients from cache or database
+                    if (!isset($recipients_cache[$target_year])) {
+                        $recipients_cache[$target_year] = WDTA_Database::get_users_without_membership($target_year);
+                    }
+                    $recipients_before_filter = $recipients_cache[$target_year];
                     $recipient_count_before_filter = count($recipients_before_filter);
                     
                     // Filter out users who have already received this specific reminder
