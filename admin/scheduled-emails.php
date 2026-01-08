@@ -118,20 +118,27 @@ foreach ($reminders as $reminder) {
             $reminder_id = isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}";
             
             // Get recipients using cache
-            $recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
+            $all_recipients = wdta_get_cached_recipients($target_year, $recipients_cache);
             
             // Filter out users who have already received this specific reminder
-            $recipients = wdta_filter_sent_recipients($recipients, $reminder_id, $target_year, $sent_user_reminders);
+            $pending_recipients = wdta_filter_sent_recipients($all_recipients, $reminder_id, $target_year, $sent_user_reminders);
             
-            // Only add if there are recipients remaining
-            // Skip showing scheduled emails that have no recipients to send to
-            if (!empty($recipients)) {
+            // Calculate how many users already received this reminder
+            $sent_count = count($all_recipients) - count($pending_recipients);
+            
+            // Show the reminder if:
+            // 1. There are pending recipients to send to, OR
+            // 2. All recipients were sent (so user can see what was sent)
+            // Only hide if there are no recipients at all (nobody qualifies for this year)
+            if (!empty($all_recipients)) {
                 $scheduled_emails[] = array(
                     'reminder' => $reminder,
                     'send_date' => $send_date,
                     'target_year' => $target_year,
-                    'recipients' => $recipients,
-                    'already_sent' => false,
+                    'recipients' => $pending_recipients,
+                    'all_recipients' => $all_recipients,
+                    'sent_count' => $sent_count,
+                    'already_sent' => empty($pending_recipients),
                     'is_overdue' => $is_overdue
                 );
             }
@@ -234,6 +241,9 @@ function wdta_time_until($send_date, $current_time) {
             $reminder = $email['reminder'];
             $send_date = $email['send_date'];
             $recipients = $email['recipients'];
+            $all_recipients = $email['all_recipients'];
+            $sent_count = $email['sent_count'];
+            $already_sent = $email['already_sent'];
             $target_year = $email['target_year'];
             $time_until = wdta_time_until($send_date, $current_time);
             
@@ -246,9 +256,17 @@ function wdta_time_until($send_date, $current_time) {
             $send_date_format = ($unit === 'hours' || $unit === 'minutes') 
                 ? 'l, F j, Y \a\t g:i A' 
                 : 'l, F j, Y';
+            
+            // Determine border color based on status
+            $border_color = $already_sent ? '#00a32a' : ($time_until['overdue'] ? '#d63638' : '#2271b1');
         ?>
         
-        <div class="wdta-scheduled-email-card" style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; padding: 20px; margin: 20px 0; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+        <div class="wdta-scheduled-email-card" style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid <?php echo esc_attr($border_color); ?>; padding: 20px; margin: 20px 0; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+            <?php if ($already_sent) : ?>
+                <div style="background: #d7f1dd; border: 1px solid #00a32a; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    <strong style="color: #00a32a;">✓ Completed</strong> - All recipients (<?php echo $sent_count; ?>) have already received this reminder
+                </div>
+            <?php endif; ?>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 300px;">
                     <h3 style="margin-top: 0; margin-bottom: 10px;">
@@ -268,14 +286,25 @@ function wdta_time_until($send_date, $current_time) {
                 </div>
                 
                 <div style="text-align: right; min-width: 200px;">
-                    <div style="background: <?php echo $time_until['overdue'] ? '#fcf0f1' : '#f0f0f1'; ?>; padding: 15px 20px; border-radius: 4px; display: inline-block;">
-                        <div style="font-size: 14px; color: <?php echo $time_until['overdue'] ? '#d63638' : '#646970'; ?>; margin-bottom: 5px;">
-                            <?php echo $time_until['overdue'] ? 'Overdue' : 'Time until send'; ?>
+                    <?php if ($already_sent) : ?>
+                        <div style="background: #d7f1dd; padding: 15px 20px; border-radius: 4px; display: inline-block; border: 1px solid #00a32a;">
+                            <div style="font-size: 14px; color: #00a32a; margin-bottom: 5px;">
+                                Status
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: #00a32a;">
+                                All Sent
+                            </div>
                         </div>
-                        <div style="font-size: 18px; font-weight: 600; color: <?php echo $time_until['overdue'] ? '#d63638' : '#1d2327'; ?>;">
-                            <?php echo esc_html($time_until['text']); ?>
+                    <?php else : ?>
+                        <div style="background: <?php echo $time_until['overdue'] ? '#fcf0f1' : '#f0f0f1'; ?>; padding: 15px 20px; border-radius: 4px; display: inline-block;">
+                            <div style="font-size: 14px; color: <?php echo $time_until['overdue'] ? '#d63638' : '#646970'; ?>; margin-bottom: 5px;">
+                                <?php echo $time_until['overdue'] ? 'Overdue' : 'Time until send'; ?>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: <?php echo $time_until['overdue'] ? '#d63638' : '#1d2327'; ?>;">
+                                <?php echo esc_html($time_until['text']); ?>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -283,19 +312,33 @@ function wdta_time_until($send_date, $current_time) {
             
             <div>
                 <h4 class="wdta-recipients-header" style="margin-top: 0; margin-bottom: 10px;">
-                    <span class="wdta-recipients-count">Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)</span>
-                    <?php if ($time_until['overdue'] && !empty($recipients)) : ?>
-                        <button type="button" class="button button-primary wdta-send-all-now" 
-                                data-reminder-id="<?php echo esc_attr(isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}"); ?>"
-                                data-target-year="<?php echo esc_attr($target_year); ?>"
-                                data-user-ids="<?php echo esc_attr(json_encode(array_map(function($u) { return $u->ID; }, $recipients))); ?>"
-                                style="margin-left: 10px;">
-                            Send All Now
-                        </button>
+                    <?php if ($already_sent) : ?>
+                        <span class="wdta-recipients-count">All <?php echo count($all_recipients); ?> recipient<?php echo count($all_recipients) !== 1 ? 's' : ''; ?> already received this reminder</span>
+                    <?php else : ?>
+                        <span class="wdta-recipients-count">Pending Recipients (<?php echo count($recipients); ?> user<?php echo count($recipients) !== 1 ? 's' : ''; ?>)</span>
+                        <?php if ($sent_count > 0) : ?>
+                            <span style="color: #646970; font-weight: normal; font-size: 14px;"> - <?php echo $sent_count; ?> already sent</span>
+                        <?php endif; ?>
+                        <?php if ($time_until['overdue'] && !empty($recipients)) : ?>
+                            <button type="button" class="button button-primary wdta-send-all-now" 
+                                    data-reminder-id="<?php echo esc_attr(isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}"); ?>"
+                                    data-target-year="<?php echo esc_attr($target_year); ?>"
+                                    data-user-ids="<?php echo esc_attr(json_encode(array_map(function($u) { return $u->ID; }, $recipients))); ?>"
+                                    style="margin-left: 10px;">
+                                Send All Now
+                            </button>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </h4>
                 
-                <?php if (empty($recipients)) : ?>
+                <?php if ($already_sent) : ?>
+                    <p style="color: #00a32a; font-style: italic; margin-bottom: 5px;">
+                        ✓ This reminder was successfully sent to all <?php echo count($all_recipients); ?> recipient<?php echo count($all_recipients) !== 1 ? 's' : ''; ?>.
+                    </p>
+                    <p class="description">
+                        Recipients were users who had an active membership in <?php echo esc_html($target_year - 1); ?> but didn't have a completed membership for <?php echo esc_html($target_year); ?> at the time of sending.
+                    </p>
+                <?php elseif (empty($recipients)) : ?>
                     <p style="color: #646970; font-style: italic;">No users currently match the criteria for this reminder.</p>
                     <p class="description">Users who had an active membership in <?php echo esc_html($target_year - 1); ?> but don't have a membership for <?php echo esc_html($target_year); ?> will receive this email.</p>
                 <?php else : ?>
