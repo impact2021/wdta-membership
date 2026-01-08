@@ -832,11 +832,11 @@ class WDTA_Admin {
             'disabled_count' => count(array_filter($reminders, function($r) { return empty($r['enabled']); })),
             'reminders' => array_map(function($r) {
                 return array(
-                    'id' => isset($r['id']) ? $r['id'] : 'not_set',
+                    'id' => $r['id'] ?? 'not_set',
                     'enabled' => !empty($r['enabled']),
-                    'timing' => isset($r['timing']) ? $r['timing'] : 'not_set',
-                    'unit' => isset($r['unit']) ? $r['unit'] : 'not_set',
-                    'period' => isset($r['period']) ? $r['period'] : 'not_set',
+                    'timing' => $r['timing'] ?? 'not_set',
+                    'unit' => $r['unit'] ?? 'not_set',
+                    'period' => $r['period'] ?? 'not_set',
                     'subject' => isset($r['subject']) ? substr($r['subject'], 0, 50) . '...' : 'not_set'
                 );
             }, $reminders)
@@ -855,6 +855,11 @@ class WDTA_Admin {
             'total_sent' => count($sent_user_reminders),
             'sample' => array_slice(array_keys($sent_user_reminders), 0, 10)
         );
+        
+        // Extract recipient IDs once for efficient lookup
+        $recipient_ids_prev = array_map(function($u) { return $u->ID; }, $recipients_prev);
+        $recipient_ids_curr = array_map(function($u) { return $u->ID; }, $recipients_curr);
+        $recipient_ids_next = array_map(function($u) { return $u->ID; }, $recipients_next);
         
         // Get sample of users and their membership status
         $sample_users = array_slice($all_users, 0, 10);
@@ -884,9 +889,9 @@ class WDTA_Admin {
                     'payment_status' => $next_membership->payment_status
                 ) : null,
                 'would_receive_reminders_for' => array(
-                    $previous_year => in_array($user->ID, array_map(function($u) { return $u->ID; }, $recipients_prev)),
-                    $current_year => in_array($user->ID, array_map(function($u) { return $u->ID; }, $recipients_curr)),
-                    $next_year => in_array($user->ID, array_map(function($u) { return $u->ID; }, $recipients_next))
+                    $previous_year => in_array($user->ID, $recipient_ids_prev),
+                    $current_year => in_array($user->ID, $recipient_ids_curr),
+                    $next_year => in_array($user->ID, $recipient_ids_next)
                 )
             );
         }
