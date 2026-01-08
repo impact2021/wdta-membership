@@ -2,6 +2,16 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.6] - 2026-01-08
+
+### Changed
+- **Cleaned up Scheduled Emails page**: Simplified the scheduled emails page for better usability
+  - Removed Debug/Sync button and debug panel
+  - Removed "Automatic Processing" notification about hourly cron jobs
+  - Removed "Note" about recipient list changes
+  - Replaced verbose description with single concise sentence: "Scheduled emails that will be sent within the next 90 days"
+  - Maintained all core functionality (viewing scheduled emails, Send Now buttons, recipient lists)
+
 ## [3.5] - 2026-01-08
 
 ### Added
