@@ -101,13 +101,15 @@ foreach ($reminders as $reminder) {
         // Adjust send date based on period
         if ($period === 'before') {
             $send_date->modify("-{$offset}");
-            // For "before" reminders, target year is the year after expiry
-            $target_year = $expiry_year + 1;
         } else {
             $send_date->modify("+{$offset}");
-            // For "after" reminders, target year is the expiry year
-            $target_year = $expiry_year;
         }
+        
+        // Both "before" and "after" reminders relative to Dec 31, YYYY target YYYY+1 memberships
+        // Dec 31 is the deadline for paying the next year's membership
+        // "Before" reminders (Nov/Dec) remind people to pay before deadline
+        // "After" reminders (Jan/Feb) remind people who missed the deadline  
+        $target_year = $expiry_year + 1;
         
         // Check if send date is within our window (either upcoming or overdue but not too old)
         $is_upcoming = ($send_date >= $now && $send_date <= $end_date);
