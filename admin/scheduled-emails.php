@@ -597,10 +597,15 @@ jQuery(document).ready(function($) {
                             var willShow = e.will_show_on_page ? '✓ YES' : '✗ NO';
                             var willShowColor = e.will_show_on_page ? '#00a32a' : '#d63638';
                             var reason = '';
-                            if (e.already_sent_batch) {
-                                reason = 'Already sent (batch)';
-                            } else if (e.recipient_count_after_filter === 0) {
-                                reason = 'No recipients after filtering';
+                            if (e.recipient_count_after_filter === 0) {
+                                var numFiltered = e.recipient_count_before_filter - e.recipient_count_after_filter;
+                                if (numFiltered > 0) {
+                                    reason = numFiltered + ' user' + (numFiltered !== 1 ? 's' : '') + ' already received individual reminder';
+                                } else {
+                                    reason = 'No recipients qualify';
+                                }
+                            } else if (e.already_sent_batch) {
+                                reason = 'Note: Batch marked as sent (for historical tracking only)';
                             }
                             
                             html += '<tr>';
