@@ -18,7 +18,7 @@ All notable changes to the WDTA Membership plugin will be documented in this fil
 - Modified `includes/class-wdta-database.php` to use UNION query that catches both previous year active members and current year inactive members
 - Ensures comprehensive email reminder delivery to all members who need to renew
 
-## [3.1.0] - 2025-11-24
+## [3.2.0] - 2025-11-24
 
 ### Fixed
 - **Payment amount mismatch**: Fixed critical bug where backend charged hardcoded $970.90 while frontend displayed dynamic price from settings

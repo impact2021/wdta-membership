@@ -194,32 +194,27 @@ class WDTA_Database {
         
         $table_name = self::get_table_name();
         
-        // Get all users who:
-        // 1. Had active membership in previous year but don't have completed payment in current year
-        // 2. OR have current year membership with status = 'inactive' or payment not completed
+        // Get all users who should receive reminders using UNION for optimal performance
+        // Query 1: Users with active membership in previous year but no completed payment in current year
+        // Query 2: Users with current year membership that is inactive or payment not completed
         $users = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
             FROM {$wpdb->users} u
-            WHERE u.ID IN (
-                -- Users with active membership in previous year but no completed payment in current year
-                SELECT DISTINCT m.user_id
-                FROM {$table_name} m
-                WHERE m.membership_year = %d
-                AND m.status = 'active'
-                AND m.user_id NOT IN (
-                    SELECT user_id FROM {$table_name} 
-                    WHERE membership_year = %d 
-                    AND payment_status = 'completed'
-                    AND status = 'active'
-                )
+            INNER JOIN {$table_name} m ON u.ID = m.user_id
+            WHERE m.membership_year = %d
+            AND m.status = 'active'
+            AND u.ID NOT IN (
+                SELECT user_id FROM {$table_name} 
+                WHERE membership_year = %d 
+                AND payment_status = 'completed'
+                AND status = 'active'
             )
-            OR u.ID IN (
-                -- Users with current year membership that is inactive or payment not completed
-                SELECT DISTINCT user_id
-                FROM {$table_name}
-                WHERE membership_year = %d
-                AND (status = 'inactive' OR payment_status != 'completed' OR status != 'active')
-            )
+            UNION
+            SELECT DISTINCT u.ID, u.user_email, u.user_login, u.display_name
+            FROM {$wpdb->users} u
+            INNER JOIN {$table_name} m ON u.ID = m.user_id
+            WHERE m.membership_year = %d
+            AND (m.status = 'inactive' OR m.payment_status != 'completed')
         ", $year - 1, $year, $year));
         
         return $users;
