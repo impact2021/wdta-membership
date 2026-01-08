@@ -207,6 +207,17 @@ This plugin is licensed under GPL v2 or later.
 
 ## Changelog
 
+### Version 3.4
+- **CRITICAL FIX**: Fixed bug preventing grace period members from appearing in scheduled email lists
+- Grace period members now correctly appear in email reminder schedules
+- Root cause: Query was only checking for 'active' status in previous year, missing 'grace_period' status
+- Fixed: Updated query to check for both 'active' OR 'grace_period' status in previous year memberships
+
+### Version 3.3
+- Fixed bug where administrators were included in scheduled email reminder lists
+- Administrators now properly excluded from payment reminder emails
+- Uses WordPress's built-in capability checking for more secure filtering
+
 ### Version 3.2
 - Re-introduced grace period functionality for unpaid memberships
 - Unpaid members move to grace_period status on Jan 1 (retain full access until Apr 1)
