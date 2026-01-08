@@ -416,28 +416,126 @@ class WDTA_Cron {
     public static function process_membership_expiry() {
         $current_date = date('Y-m-d');
         
-        // Check if it's January 1st - deactivate expired memberships from previous year
+        // Check if it's January 1st - move unpaid members to grace period
         if (date('m-d') === '01-01') {
             $previous_year = date('Y') - 1;
-            self::deactivate_expired_memberships($previous_year);
+            self::move_to_grace_period($previous_year);
+        }
+        
+        // Check if it's April 1st - deactivate grace period members
+        if (date('m-d') === '04-01') {
+            $current_year = date('Y');
+            self::deactivate_grace_period_members($current_year);
         }
     }
     
     /**
-     * Deactivate expired memberships after December 31st
+     * Move unpaid members to grace period on January 1st
+     * Grace period members retain full access but continue to receive reminder emails
      */
-    private static function deactivate_expired_memberships($year) {
+    private static function move_to_grace_period($year) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wdta_memberships';
         
+        // Get all users who will be moved to grace period
+        // Only select users who are currently active but haven't paid
+        $affected_users = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT user_id FROM $table_name 
+            WHERE membership_year = %d 
+            AND payment_status != 'completed'
+            AND status = 'active'",
+            $year
+        ));
+        
         // Update all memberships for the year that haven't been paid
-        // Set status to 'inactive' for all non-completed payments
+        // Set status to 'grace_period' for unpaid active memberships
+        $wpdb->query($wpdb->prepare(
+            "UPDATE $table_name 
+            SET status = 'grace_period' 
+            WHERE membership_year = %d 
+            AND payment_status != 'completed'
+            AND status = 'active'",
+            $year
+        ));
+        
+        // Update user roles for all affected users
+        // This ensures their WordPress role matches their membership status
+        if (!empty($affected_users)) {
+            $user_roles = WDTA_User_Roles::get_instance();
+            
+            // Ensure user roles class is available
+            if (!$user_roles) {
+                error_log('WDTA: User roles class not available in move_to_grace_period');
+                return;
+            }
+            
+            $current_year = date('Y');
+            
+            foreach ($affected_users as $user_id) {
+                try {
+                    // Update role based on current year membership status
+                    // This will set them to grace_period_member
+                    $user_roles->update_user_role($user_id, $current_year);
+                } catch (Exception $e) {
+                    // Log the error but continue processing other users
+                    error_log(sprintf(
+                        'WDTA: Failed to update role for user %d in move_to_grace_period: %s',
+                        $user_id,
+                        $e->getMessage()
+                    ));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Deactivate grace period members on April 1st
+     * After 3 months of grace period, members lose access to restricted content
+     */
+    private static function deactivate_grace_period_members($year) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wdta_memberships';
+        
+        // Get all users in grace period who will be deactivated
+        $affected_users = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT user_id FROM $table_name 
+            WHERE membership_year = %d 
+            AND status = 'grace_period'",
+            $year
+        ));
+        
+        // Update all grace period memberships to inactive
         $wpdb->query($wpdb->prepare(
             "UPDATE $table_name 
             SET status = 'inactive' 
             WHERE membership_year = %d 
-            AND (payment_status != 'completed' OR status != 'active')",
+            AND status = 'grace_period'",
             $year
         ));
+        
+        // Update user roles for all affected users
+        if (!empty($affected_users)) {
+            $user_roles = WDTA_User_Roles::get_instance();
+            
+            // Ensure user roles class is available
+            if (!$user_roles) {
+                error_log('WDTA: User roles class not available in deactivate_grace_period_members');
+                return;
+            }
+            
+            foreach ($affected_users as $user_id) {
+                try {
+                    // Update role to inactive_member
+                    $user_roles->update_user_role($user_id, $year);
+                } catch (Exception $e) {
+                    // Log the error but continue processing other users
+                    error_log(sprintf(
+                        'WDTA: Failed to update role for user %d in deactivate_grace_period_members: %s',
+                        $user_id,
+                        $e->getMessage()
+                    ));
+                }
+            }
+        }
     }
 }

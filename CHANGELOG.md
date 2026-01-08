@@ -2,6 +2,43 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.2] - 2026-01-08
+
+### Added
+- **Grace period functionality**: Re-introduced grace period for unpaid memberships
+- Added `grace_period_member` user role back to the system
+- Grace period members retain full access to restricted content while receiving reminder emails
+- 3-month grace period (January 1 - March 31) for members who haven't renewed
+
+### Changed
+- **January 1st behavior**: Unpaid members now move to `grace_period` status instead of becoming immediately inactive
+- **March 31st behavior**: Grace period members become `inactive` and lose access to restricted content
+- Updated access control to allow both `active_member` and `grace_period_member` roles to access restricted pages
+- Enhanced role determination logic to handle three states: active, grace_period, and inactive
+
+### Technical Details
+- Modified `includes/class-wdta-cron.php`:
+  - Added `move_to_grace_period()` function called on January 1st
+  - Added `deactivate_grace_period_members()` function called on April 1st
+  - Both functions include role synchronization with error handling
+- Modified `includes/class-wdta-user-roles.php`:
+  - Re-added `grace_period_member` role in `add_custom_roles()`
+  - Updated `determine_membership_role()` to handle grace_period status
+- Modified `includes/class-wdta-database.php`:
+  - Updated `has_active_membership()` to allow grace_period members access
+
+### How It Works
+**Timeline:**
+1. **Before Dec 31**: Active members with completed payments
+2. **Jan 1**: Unpaid active members → `grace_period_member` role (retain full access)
+3. **Jan 1 - Mar 31**: Grace period members continue to receive reminder emails and have full access
+4. **Apr 1**: Grace period members → `inactive_member` role (lose access to restricted content)
+
+**User States:**
+- `active_member`: Paid membership, full access
+- `grace_period_member`: Unpaid after Jan 1, full access until Apr 1, continues receiving reminder emails
+- `inactive_member`: No access to restricted content
+
 ## [3.1.0] - 2026-01-08
 
 ### Fixed

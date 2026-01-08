@@ -76,6 +76,7 @@ class WDTA_Database {
     
     /**
      * Check if user has active membership
+     * Active members and grace period members both have access to restricted content
      */
     public static function has_active_membership($user_id, $year = null) {
         if ($year === null) {
@@ -88,17 +89,25 @@ class WDTA_Database {
             return false;
         }
         
-        // Check if payment is complete and membership is active
-        // Payment status must be 'completed' and status must be 'active'
-        if ($membership->payment_status !== 'completed' || $membership->status !== 'active') {
-            return false;
+        // Allow access for:
+        // 1. Active members: payment completed and status is 'active'
+        // 2. Grace period members: status is 'grace_period' (unpaid but still have access until Apr 1)
+        
+        // Active member with completed payment
+        if ($membership->payment_status === 'completed' && $membership->status === 'active') {
+            // Check if not expired (expiry date is in the future or today)
+            $expiry = strtotime($membership->expiry_date);
+            $today = strtotime(date('Y-m-d'));
+            return $expiry >= $today;
         }
         
-        // Check if not expired (expiry date is in the future or today)
-        $expiry = strtotime($membership->expiry_date);
-        $today = strtotime(date('Y-m-d'));
+        // Grace period member (has access even without payment until Apr 1)
+        if ($membership->status === 'grace_period') {
+            return true;
+        }
         
-        return $expiry >= $today;
+        // All other statuses (inactive, pending, etc.) do not have access
+        return false;
     }
     
     /**

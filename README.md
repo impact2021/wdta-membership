@@ -207,6 +207,12 @@ This plugin is licensed under GPL v2 or later.
 
 ## Changelog
 
+### Version 3.2
+- Re-introduced grace period functionality for unpaid memberships
+- Unpaid members move to grace_period status on Jan 1 (retain full access until Apr 1)
+- Grace period members continue receiving reminder emails
+- Grace period members become inactive on Apr 1 and lose access
+
 ### Version 3.1.0
 - Fixed email scheduling for inactive users
 - Users with inactive membership status now correctly receive reminder emails
