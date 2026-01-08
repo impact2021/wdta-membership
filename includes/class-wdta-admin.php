@@ -44,6 +44,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_add_membership', array($this, 'add_membership'));
         add_action('wp_ajax_wdta_send_scheduled_email', array($this, 'send_scheduled_email'));
         add_action('wp_ajax_wdta_mark_reminder_sent', array($this, 'mark_reminder_sent'));
+        add_action('wp_ajax_wdta_debug_scheduled_emails', array($this, 'debug_scheduled_emails'));
     }
     
     /**
@@ -743,5 +744,284 @@ class WDTA_Admin {
         }
         
         add_settings_error('wdta_emails', 'emails_updated', 'Email templates saved successfully.', 'updated');
+    }
+    
+    /**
+     * Debug scheduled emails (AJAX)
+     * 
+     * Provides detailed diagnostic information about why emails may or may not be showing
+     * in the scheduled emails list. This helps troubleshoot issues with email scheduling.
+     * 
+     * Returns:
+     * - User counts (total, admins, potential recipients)
+     * - Membership statistics for previous/current/next year
+     * - Reminder configuration details
+     * - Sent reminder status
+     * - Grace period members
+     * - Detailed breakdown of why each user is included/excluded
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function debug_scheduled_emails() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wdta_memberships';
+        
+        $current_year = (int) date('Y');
+        $previous_year = $current_year - 1;
+        $next_year = $current_year + 1;
+        
+        $debug_info = array();
+        
+        // Get all users
+        $all_users = get_users(array('fields' => array('ID', 'user_email', 'display_name')));
+        $debug_info['total_users'] = count($all_users);
+        
+        // Count administrators
+        $admins = array_filter($all_users, function($user) {
+            return user_can($user->ID, 'manage_options');
+        });
+        $debug_info['admin_count'] = count($admins);
+        $debug_info['admin_users'] = array_map(function($user) {
+            return array(
+                'id' => $user->ID,
+                'email' => $user->user_email,
+                'name' => $user->display_name
+            );
+        }, array_values($admins));
+        
+        // Get users without membership for each year
+        $recipients_prev = WDTA_Database::get_users_without_membership($previous_year);
+        $recipients_curr = WDTA_Database::get_users_without_membership($current_year);
+        $recipients_next = WDTA_Database::get_users_without_membership($next_year);
+        
+        $debug_info['recipients'] = array(
+            'for_year_' . $previous_year => count($recipients_prev),
+            'for_year_' . $current_year => count($recipients_curr),
+            'for_year_' . $next_year => count($recipients_next)
+        );
+        
+        // Get membership counts by year and status
+        foreach (array($previous_year, $current_year, $next_year) as $year) {
+            $memberships = $wpdb->get_results($wpdb->prepare(
+                "SELECT status, payment_status, COUNT(*) as count 
+                FROM $table_name 
+                WHERE membership_year = %d 
+                GROUP BY status, payment_status",
+                $year
+            ));
+            
+            $debug_info['memberships_year_' . $year] = array();
+            foreach ($memberships as $m) {
+                $key = $m->status . '/' . $m->payment_status;
+                $debug_info['memberships_year_' . $year][$key] = (int) $m->count;
+            }
+        }
+        
+        // Get reminder configuration
+        $reminders = get_option('wdta_email_reminders', array());
+        $debug_info['reminder_config'] = array(
+            'total_reminders' => count($reminders),
+            'enabled_count' => count(array_filter($reminders, function($r) { return !empty($r['enabled']); })),
+            'disabled_count' => count(array_filter($reminders, function($r) { return empty($r['enabled']); })),
+            'reminders' => array_map(function($r) {
+                return array(
+                    'id' => $r['id'] ?? 'not_set',
+                    'enabled' => !empty($r['enabled']),
+                    'timing' => $r['timing'] ?? 'not_set',
+                    'unit' => $r['unit'] ?? 'not_set',
+                    'period' => $r['period'] ?? 'not_set',
+                    'subject' => isset($r['subject']) ? substr($r['subject'], 0, 50) . '...' : 'not_set'
+                );
+            }, $reminders)
+        );
+        
+        // Get sent reminders
+        $sent_reminders = get_option('wdta_sent_reminders', array());
+        $debug_info['sent_reminders'] = array(
+            'total_sent' => count($sent_reminders),
+            'list' => array_keys($sent_reminders)
+        );
+        
+        // Get sent user reminders
+        $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
+        $debug_info['sent_user_reminders'] = array(
+            'total_sent' => count($sent_user_reminders),
+            'sample' => array_slice(array_keys($sent_user_reminders), 0, 10)
+        );
+        
+        // Extract recipient IDs once for efficient lookup
+        $recipient_ids_prev = array_map(function($u) { return $u->ID; }, $recipients_prev);
+        $recipient_ids_curr = array_map(function($u) { return $u->ID; }, $recipients_curr);
+        $recipient_ids_next = array_map(function($u) { return $u->ID; }, $recipients_next);
+        
+        // Get sample of users and their membership status
+        $sample_users = array_slice($all_users, 0, 10);
+        $debug_info['sample_user_analysis'] = array();
+        
+        foreach ($sample_users as $user) {
+            $is_admin = user_can($user->ID, 'manage_options');
+            $prev_membership = WDTA_Database::get_user_membership($user->ID, $previous_year);
+            $curr_membership = WDTA_Database::get_user_membership($user->ID, $current_year);
+            $next_membership = WDTA_Database::get_user_membership($user->ID, $next_year);
+            
+            $debug_info['sample_user_analysis'][] = array(
+                'id' => $user->ID,
+                'email' => $user->user_email,
+                'name' => $user->display_name,
+                'is_admin' => $is_admin,
+                'prev_year_membership' => $prev_membership ? array(
+                    'status' => $prev_membership->status,
+                    'payment_status' => $prev_membership->payment_status
+                ) : null,
+                'curr_year_membership' => $curr_membership ? array(
+                    'status' => $curr_membership->status,
+                    'payment_status' => $curr_membership->payment_status
+                ) : null,
+                'next_year_membership' => $next_membership ? array(
+                    'status' => $next_membership->status,
+                    'payment_status' => $next_membership->payment_status
+                ) : null,
+                'would_receive_reminders_for' => array(
+                    $previous_year => in_array($user->ID, $recipient_ids_prev),
+                    $current_year => in_array($user->ID, $recipient_ids_curr),
+                    $next_year => in_array($user->ID, $recipient_ids_next)
+                )
+            );
+        }
+        
+        // Current date/time info
+        $now = new DateTime();
+        $debug_info['current_datetime'] = array(
+            'now' => $now->format('Y-m-d H:i:s'),
+            'timezone' => $now->getTimezone()->getName(),
+            'current_year' => $current_year,
+            'previous_year' => $previous_year,
+            'next_year' => $next_year
+        );
+        
+        // Calculate what should be showing on the page
+        $debug_info['expected_scheduled_emails'] = $this->calculate_expected_scheduled_emails($reminders, $current_year, $now);
+        
+        wp_send_json_success($debug_info);
+    }
+    
+    /**
+     * Calculate what emails should be showing on the scheduled emails page
+     * 
+     * @param array $reminders Reminder configurations
+     * @param int $current_year Current year
+     * @param DateTime $now Current date/time
+     * @return array List of expected scheduled emails
+     */
+    private function calculate_expected_scheduled_emails($reminders, $current_year, $now) {
+        $expected = array();
+        
+        if (empty($reminders)) {
+            return array('message' => 'No reminders configured');
+        }
+        
+        $previous_year = $current_year - 1;
+        $next_year = $current_year + 1;
+        $expiry_time = WDTA_Cron::EXPIRY_TIME;
+        
+        $end_date = clone $now;
+        $end_date->modify('+3 months');
+        
+        $overdue_start_date = clone $now;
+        $overdue_start_date->modify('-6 months');
+        
+        $expiry_dates = array(
+            $previous_year => new DateTime($previous_year . '-12-31 ' . $expiry_time),
+            $current_year => new DateTime($current_year . '-12-31 ' . $expiry_time),
+            $next_year => new DateTime($next_year . '-12-31 ' . $expiry_time)
+        );
+        
+        $sent_reminders = get_option('wdta_sent_reminders', array());
+        $sent_user_reminders = get_option('wdta_sent_reminder_users', array());
+        
+        // Cache recipients by year to avoid redundant database calls
+        $recipients_cache = array();
+        
+        foreach ($reminders as $reminder) {
+            if (empty($reminder['enabled'])) {
+                continue;
+            }
+            
+            $timing = intval($reminder['timing']);
+            $unit = isset($reminder['unit']) ? $reminder['unit'] : 'days';
+            $period = isset($reminder['period']) ? $reminder['period'] : 'before';
+            
+            foreach ($expiry_dates as $expiry_year => $expiry_date) {
+                $send_date = clone $expiry_date;
+                
+                switch ($unit) {
+                    case 'minutes':
+                        $offset = $timing . ' minutes';
+                        break;
+                    case 'hours':
+                        $offset = $timing . ' hours';
+                        break;
+                    case 'weeks':
+                        $offset = ($timing * 7) . ' days';
+                        break;
+                    case 'days':
+                    default:
+                        $offset = $timing . ' days';
+                        break;
+                }
+                
+                if ($period === 'before') {
+                    $send_date->modify("-{$offset}");
+                    $target_year = $expiry_year + 1;
+                } else {
+                    $send_date->modify("+{$offset}");
+                    $target_year = $expiry_year;
+                }
+                
+                $is_upcoming = ($send_date >= $now && $send_date <= $end_date);
+                $is_overdue = ($send_date < $now && $send_date >= $overdue_start_date);
+                
+                if ($is_upcoming || $is_overdue) {
+                    $reminder_id = isset($reminder['id']) ? $reminder['id'] : "reminder_{$timing}_{$unit}_{$period}";
+                    $sent_key = $reminder_id . '_' . $target_year;
+                    $already_sent = isset($sent_reminders[$sent_key]);
+                    
+                    // Get recipients from cache or database
+                    if (!isset($recipients_cache[$target_year])) {
+                        $recipients_cache[$target_year] = WDTA_Database::get_users_without_membership($target_year);
+                    }
+                    $recipients_before_filter = $recipients_cache[$target_year];
+                    $recipient_count_before_filter = count($recipients_before_filter);
+                    
+                    // Filter out users who have already received this specific reminder
+                    $recipients = array_filter($recipients_before_filter, function($user) use ($reminder_id, $target_year, $sent_user_reminders) {
+                        $key = $reminder_id . '_' . $target_year . '_' . $user->ID;
+                        return !isset($sent_user_reminders[$key]);
+                    });
+                    
+                    $expected[] = array(
+                        'reminder_id' => $reminder_id,
+                        'timing' => $timing . ' ' . $unit . ' ' . $period,
+                        'send_date' => $send_date->format('Y-m-d H:i:s'),
+                        'target_year' => $target_year,
+                        'is_upcoming' => $is_upcoming,
+                        'is_overdue' => $is_overdue,
+                        'already_sent_batch' => $already_sent,
+                        'recipient_count_before_filter' => $recipient_count_before_filter,
+                        'recipient_count_after_filter' => count($recipients),
+                        'will_show_on_page' => !$already_sent && count($recipients) > 0
+                    );
+                }
+            }
+        }
+        
+        return $expected;
     }
 }
