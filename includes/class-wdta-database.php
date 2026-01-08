@@ -230,13 +230,11 @@ class WDTA_Database {
             AND (m.status = 'grace_period' OR m.status = 'inactive' OR m.payment_status != 'completed')
         ", $year - 1, $year, $year));
         
-        // Filter out administrators using WordPress's built-in role checking
-        // This is more secure than SQL string matching against serialized data
-        // Note: WP_User constructor uses internal caching, so this is reasonably efficient
-        // even for larger user sets (this function is called infrequently during cron jobs)
+        // Filter out administrators using WordPress's built-in capability checking
+        // Using user_can() is more efficient and secure than creating WP_User objects
+        // Administrators have 'manage_options' capability and shouldn't receive payment reminders
         $filtered_users = array_filter($users, function($user) {
-            $user_obj = new WP_User($user->ID);
-            return !in_array('administrator', $user_obj->roles, true);
+            return !user_can($user->ID, 'manage_options');
         });
         
         // Re-index the array to ensure sequential keys after filtering
