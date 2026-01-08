@@ -477,6 +477,106 @@ The plugin uses WordPress Cron to schedule and send emails automatically.
 
 ---
 
+## Troubleshooting Scheduled Emails
+
+### Debug / Sync Button
+
+The Scheduled Emails page includes a powerful **Debug / Sync** button to help diagnose why emails may not be appearing in the list.
+
+#### How to use it:
+
+1. Go to **WDTA Membership → Scheduled Emails**
+2. Click the **"Debug / Sync"** button in the top right
+3. Wait for the diagnostic report to load
+4. Review the information to identify the issue
+
+#### What the debug report shows:
+
+**📊 Summary**
+- Total users in database
+- How many administrators are excluded
+- Number of recipients for each year (previous, current, next)
+- Current date/time and timezone
+
+**⚙️ Reminder Configuration**
+- How many reminders are configured
+- How many are enabled vs disabled
+- Details of each reminder (timing, subject, enabled status)
+
+**📅 Expected Scheduled Emails**
+- What should be showing on the page right now
+- Why each email will or won't appear
+- Recipient counts before and after filtering
+- Send dates and overdue/upcoming status
+
+**👥 Membership Statistics**
+- Breakdown of memberships by year
+- Status categories (active, grace_period, inactive, etc.)
+- Payment status for each category
+
+**📤 Sent Reminders**
+- Which reminder batches have already been sent
+- Individual user reminder tracking
+- Prevents duplicate emails
+
+**🔒 Administrator Users**
+- Lists all admin users who are excluded from emails
+- Administrators don't need to pay for membership
+
+**🔍 Sample User Analysis**
+- Shows first 10 users and their membership status
+- Displays which years each user would receive reminders for
+- Helps identify if the filtering logic is working correctly
+
+#### Common issues and solutions:
+
+**Problem: "No emails should be showing"**
+
+Possible causes:
+- All reminders are disabled → Enable at least one reminder in **Emails** settings
+- All reminders already sent → Check the "Sent Reminders" section to confirm
+- No reminders within date window → Reminders only show if overdue (within 6 months) or upcoming (within 3 months)
+- No recipients after filtering → All users have already received individual reminders
+
+**Problem: "Expected emails show but page is empty"**
+
+This could be a caching or display issue:
+1. Click the **"Refresh Page"** button at the bottom of the debug output
+2. Clear your browser cache
+3. Check if you're filtering by a specific status
+4. Verify JavaScript is enabled in your browser
+
+**Problem: "Recipients count is 0"**
+
+Possible causes:
+- All users are administrators → Admins are excluded from payment reminders
+- All users have active paid memberships → No reminders needed
+- All users have already received this specific reminder → Check "Sent User Reminders"
+
+**Problem: "Grace period members not showing"**
+
+After January 1st, unpaid members are moved to `grace_period` status. The debug report will show:
+- How many users are in grace_period status (in Membership Statistics)
+- Whether they're being included as recipients (in Sample User Analysis)
+- If the grace_period filtering is working correctly
+
+#### Using the debug information:
+
+1. **Check Summary first**: Verify there are actual users and recipients in the system
+2. **Review Reminder Configuration**: Make sure you have at least one enabled reminder
+3. **Look at Expected Scheduled Emails**: This tells you exactly what should show and why
+4. **Examine Sent Reminders**: If a reminder was already sent, it won't show again
+5. **Analyze Sample Users**: See if the membership logic is working correctly for real users
+
+#### After reviewing the debug output:
+
+- If you find an issue with reminder configuration → Go to **Emails** and fix it
+- If reminders were already sent but shouldn't have been → Clear the `wdta_sent_reminders` option in the database
+- If users aren't showing as expected → Check their membership records in **All Memberships**
+- If you need more help → Share the debug output with your developer
+
+---
+
 ## Support & Troubleshooting
 
 ### For detailed troubleshooting:

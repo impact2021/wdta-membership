@@ -2,6 +2,43 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.5] - 2026-01-08
+
+### Added
+- **Debug / Sync Button on Scheduled Emails Page**: Added powerful diagnostic tool to troubleshoot why scheduled emails may not be appearing in the list.
+  - **Location**: WDTA Membership → Scheduled Emails → Click "Debug / Sync" button in top right
+  - **Purpose**: Provides comprehensive diagnostic information to identify configuration issues, data problems, or filtering logic errors
+  - **What it shows**:
+    - User counts (total, admins, recipients by year)
+    - Membership statistics (breakdown by status and payment status for each year)
+    - Reminder configuration (enabled/disabled, timing details)
+    - Expected scheduled emails (what should show and why)
+    - Sent reminders tracking (batch and individual user level)
+    - Administrator users (excluded from emails)
+    - Sample user analysis (membership status and reminder eligibility)
+    - Current date/time and timezone information
+  - **Benefits**: 
+    - No more guessing why emails aren't showing
+    - Clear explanations of filtering logic
+    - Identifies configuration errors immediately
+    - Shows exactly which users should receive which reminders
+    - Helps verify grace period members are included correctly
+
+### Technical Details
+- Added `debug_scheduled_emails()` AJAX endpoint in `class-wdta-admin.php`
+- Added `calculate_expected_scheduled_emails()` helper method to predict what should display
+- Added debug UI panel to `admin/scheduled-emails.php` with collapsible sections
+- JavaScript handles AJAX call and formats comprehensive HTML output
+- Debug report includes color-coded status indicators and detailed tables
+- All diagnostic queries use same logic as actual scheduled email display
+- Provides "Refresh Page" button after reviewing debug information
+
+### Documentation
+- Added "Troubleshooting Scheduled Emails" section to HOW-IT-WORKS.md
+- Documented common issues and their solutions
+- Provided step-by-step guide on using the debug output
+- Explained what each section of the debug report means
+
 ## [3.4] - 2026-01-08
 
 ### Fixed
