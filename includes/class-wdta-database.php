@@ -232,6 +232,8 @@ class WDTA_Database {
         
         // Filter out administrators using WordPress's built-in role checking
         // This is more secure than SQL string matching against serialized data
+        // Note: WP_User constructor uses internal caching, so this is reasonably efficient
+        // even for larger user sets (this function is called infrequently during cron jobs)
         $filtered_users = array_filter($users, function($user) {
             $user_obj = new WP_User($user->ID);
             return !in_array('administrator', $user_obj->roles, true);
