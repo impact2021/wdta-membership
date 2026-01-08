@@ -1016,7 +1016,7 @@ class WDTA_Admin {
                         'already_sent_batch' => $already_sent_batch,
                         'recipient_count_before_filter' => $recipient_count_before_filter,
                         'recipient_count_after_filter' => count($recipients),
-                        'will_show_on_page' => $recipient_count_before_filter > 0  // Show if there are any recipients (sent or pending)
+                        'will_show_on_page' => count($recipients) > 0
                     );
                 }
             }
