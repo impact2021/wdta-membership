@@ -68,6 +68,104 @@ jQuery(document).ready(function($) {
         $('#wdta-edit-membership-modal').removeClass('wdta-modal-active');
     });
     
+    // Preview payment confirmation email (using event delegation)
+    $(document).on('click', '.wdta-preview-payment-email', function(e) {
+        e.preventDefault();
+        
+        // Check if wdtaAdmin is defined
+        if (typeof wdtaAdmin === 'undefined') {
+            alert('Error: Admin scripts not loaded properly. Please refresh the page.');
+            return;
+        }
+        
+        var button = $(this);
+        var userId = button.data('user-id');
+        var year = button.data('year');
+        
+        button.prop('disabled', true).text('Loading...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_preview_payment_confirmation',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: year
+            },
+            success: function(response) {
+                button.prop('disabled', false).text('Preview Email');
+                
+                if (response.success) {
+                    // Populate preview modal
+                    $('#preview-email-to').text(response.data.to);
+                    $('#preview-email-subject').text(response.data.subject);
+                    $('#preview-email-body').html(response.data.html);
+                    
+                    // Show modal
+                    $('#wdta-email-preview-modal').addClass('wdta-modal-active');
+                } else {
+                    alert('Error: ' + response.data.message);
+                }
+            },
+            error: function() {
+                button.prop('disabled', false).text('Preview Email');
+                alert('An error occurred while loading the preview. Please try again.');
+            }
+        });
+    });
+    
+    // Resend payment confirmation email (using event delegation)
+    $(document).on('click', '.wdta-resend-payment-email', function(e) {
+        e.preventDefault();
+        
+        // Check if wdtaAdmin is defined
+        if (typeof wdtaAdmin === 'undefined') {
+            alert('Error: Admin scripts not loaded properly. Please refresh the page.');
+            return;
+        }
+        
+        var button = $(this);
+        var userId = button.data('user-id');
+        var year = button.data('year');
+        
+        if (!confirm('Are you sure you want to resend the payment confirmation email?')) {
+            return;
+        }
+        
+        button.prop('disabled', true).text('Sending...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_resend_payment_confirmation',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: year
+            },
+            success: function(response) {
+                button.prop('disabled', false).text('Resend Email');
+                
+                if (response.success) {
+                    alert(response.data.message);
+                } else {
+                    alert('Error: ' + response.data.message);
+                }
+            },
+            error: function() {
+                button.prop('disabled', false).text('Resend Email');
+                alert('An error occurred while sending the email. Please try again.');
+            }
+        });
+    });
+    
+    // Close email preview modal (using event delegation)
+    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-close, #wdta-email-preview-modal .wdta-modal-overlay', function(e) {
+        e.preventDefault();
+        $('#wdta-email-preview-modal').removeClass('wdta-modal-active');
+    });
+    
     // Check if wdtaAdmin is defined for AJAX operations
     if (typeof wdtaAdmin === 'undefined') {
         console.error('wdtaAdmin object is not defined! Ajax calls will fail.');
@@ -275,92 +373,6 @@ jQuery(document).ready(function($) {
                 submitButton.prop('disabled', false).text(originalText);
             }
         });
-    });
-    
-    // Preview payment confirmation email (using event delegation)
-    $(document).on('click', '.wdta-preview-payment-email', function(e) {
-        e.preventDefault();
-        
-        var button = $(this);
-        var userId = button.data('user-id');
-        var year = button.data('year');
-        
-        button.prop('disabled', true).text('Loading...');
-        
-        $.ajax({
-            url: wdtaAdmin.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'wdta_preview_payment_confirmation',
-                nonce: wdtaAdmin.nonce,
-                user_id: userId,
-                year: year
-            },
-            success: function(response) {
-                button.prop('disabled', false).text('Preview Email');
-                
-                if (response.success) {
-                    // Populate preview modal
-                    $('#preview-email-to').text(response.data.to);
-                    $('#preview-email-subject').text(response.data.subject);
-                    $('#preview-email-body').html(response.data.html);
-                    
-                    // Show modal
-                    $('#wdta-email-preview-modal').addClass('wdta-modal-active');
-                } else {
-                    alert('Error: ' + response.data.message);
-                }
-            },
-            error: function() {
-                button.prop('disabled', false).text('Preview Email');
-                alert('An error occurred while loading the preview. Please try again.');
-            }
-        });
-    });
-    
-    // Resend payment confirmation email (using event delegation)
-    $(document).on('click', '.wdta-resend-payment-email', function(e) {
-        e.preventDefault();
-        
-        var button = $(this);
-        var userId = button.data('user-id');
-        var year = button.data('year');
-        
-        if (!confirm('Are you sure you want to resend the payment confirmation email?')) {
-            return;
-        }
-        
-        button.prop('disabled', true).text('Sending...');
-        
-        $.ajax({
-            url: wdtaAdmin.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'wdta_resend_payment_confirmation',
-                nonce: wdtaAdmin.nonce,
-                user_id: userId,
-                year: year
-            },
-            success: function(response) {
-                button.prop('disabled', false).text('Resend Email');
-                
-                if (response.success) {
-                    alert(response.data.message);
-                } else {
-                    alert('Error: ' + response.data.message);
-                }
-            },
-            error: function() {
-                button.prop('disabled', false).text('Resend Email');
-                alert('An error occurred while sending the email. Please try again.');
-            }
-        });
-    });
-    
-    // Close email preview modal (using event delegation)
-    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-close, #wdta-email-preview-modal .wdta-modal-overlay', function(e) {
-        e.preventDefault();
-        $('#wdta-email-preview-modal').removeClass('wdta-modal-active');
     });
     
 });
