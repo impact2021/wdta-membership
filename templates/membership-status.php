@@ -53,6 +53,9 @@ $current_year = date('Y');
         
         <?php if ($membership->status === 'active'): ?>
             <p class="wdta-success">✓ Your membership is active and in good standing.</p>
+        <?php elseif ($membership->status === 'grace_period'): ?>
+            <p class="wdta-warning">⚠ Your membership payment is overdue. You currently have access during the grace period (until March 31), but you must complete your payment to maintain access beyond this date.</p>
+            <p><a href="<?php echo home_url('/membership'); ?>" class="button button-primary">Make Payment Now</a></p>
         <?php elseif ($membership->payment_status === 'pending_verification'): ?>
             <p class="wdta-info">Your payment is being verified. You will receive an email once your membership is activated.</p>
         <?php elseif ($membership->status === 'pending'): ?>

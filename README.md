@@ -11,10 +11,10 @@ A comprehensive WordPress membership plugin for WDTA (Workplace Drug Testing Aus
 
 ### 🔒 Access Control
 - Restrict specific pages to active members only
-- Automatic access revocation after expiry (December 31st deadline)
+- Automatic access revocation after grace period expires (March 31st)
+- 3-month grace period (January 1 - March 31) for unpaid memberships
 - Custom access denied pages
 - Admin bypass for testing
-- Binary membership status (active/inactive only - no grace period)
 
 ### 📧 Automated Email Notifications
 The plugin features a **dynamic email reminder system** that allows you to:

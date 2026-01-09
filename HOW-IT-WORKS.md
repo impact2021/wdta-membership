@@ -303,11 +303,18 @@ The plugin can restrict specific WordPress pages to active members only.
 
 ### Grace period:
 
-**Important**: This plugin uses **binary membership status** - there is **no grace period**.
+**Grace Period Functionality (Re-introduced in v3.2):**
 
-- On January 1st, any unpaid membership from the previous year becomes inactive
-- Members immediately lose access to restricted content
-- This is intentional to encourage timely payment
+- On January 1st, unpaid members from the previous year are moved to `grace_period` status
+- Grace period members retain full access to restricted content until March 31st
+- Grace period members continue to receive reminder emails
+- On April 1st, grace period members are moved to inactive status and lose access to restricted content
+
+**Timeline:**
+1. **Before Dec 31**: Active members with completed payments
+2. **Jan 1**: Unpaid active members → `grace_period` status (retain full access)
+3. **Jan 1 - Mar 31**: Grace period (90 days) - members have full access and receive reminders
+4. **Apr 1**: Grace period members → `inactive` status (lose access to restricted content)
 
 ---
 
