@@ -342,11 +342,13 @@ if (!defined('ABSPATH')) {
 
 <style>
 #wdta-edit-membership-modal,
-#wdta-add-membership-modal {
+#wdta-add-membership-modal,
+#wdta-email-preview-modal {
     display: none;
 }
 #wdta-edit-membership-modal.wdta-modal-active,
-#wdta-add-membership-modal.wdta-modal-active {
+#wdta-add-membership-modal.wdta-modal-active,
+#wdta-email-preview-modal.wdta-modal-active {
     display: block;
 }
 .wdta-modal-overlay {
