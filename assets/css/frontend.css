@@ -64,7 +64,8 @@
 
 .wdta-success-message,
 .wdta-info-message,
-.wdta-error-message {
+.wdta-error-message,
+.wdta-warning-message {
     padding: 15px 20px;
     margin: 20px 0;
     border-radius: 4px;
@@ -83,7 +84,48 @@
     color: #0c5460;
 }
 
+.wdta-warning-message {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
 .wdta-error-message {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* Status message classes (without -message suffix) */
+.wdta-success,
+.wdta-info,
+.wdta-warning,
+.wdta-error {
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.wdta-success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.wdta-info {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+.wdta-warning {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.wdta-error {
     background: #f8d7da;
     border-color: #dc3545;
     color: #721c24;
