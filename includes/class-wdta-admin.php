@@ -45,6 +45,8 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_send_scheduled_email', array($this, 'send_scheduled_email'));
         add_action('wp_ajax_wdta_mark_reminder_sent', array($this, 'mark_reminder_sent'));
         add_action('wp_ajax_wdta_debug_scheduled_emails', array($this, 'debug_scheduled_emails'));
+        add_action('wp_ajax_wdta_resend_payment_confirmation', array($this, 'resend_payment_confirmation'));
+        add_action('wp_ajax_wdta_preview_payment_confirmation', array($this, 'preview_payment_confirmation'));
     }
     
     /**
@@ -1027,5 +1029,150 @@ class WDTA_Admin {
         }
         
         return $expected;
+    }
+    
+    /**
+     * Resend payment confirmation email (AJAX)
+     * 
+     * Resends the payment confirmation email to a member for a specific year.
+     * This is useful when emails were not delivered or members request a copy.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The user ID
+     * - year (int): The membership year
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function resend_payment_confirmation() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : 0;
+        
+        if (!$user_id || !$year) {
+            wp_send_json_error(array('message' => 'Invalid user ID or year'));
+            return;
+        }
+        
+        // Get user data
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Get membership data
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        if (!$membership) {
+            wp_send_json_error(array('message' => 'Membership not found'));
+            return;
+        }
+        
+        // Send the payment confirmation email
+        $amount = $membership->payment_amount;
+        $result = WDTA_Membership_Email::send_payment_confirmation($user_id, $year, $amount);
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => 'Payment confirmation email sent successfully to ' . esc_html($user->user_email)
+            ));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to send email'));
+        }
+    }
+    
+    /**
+     * Preview payment confirmation email (AJAX)
+     * 
+     * Generates a preview of the payment confirmation email that would be sent
+     * to a member for a specific year. This allows admins to review the email
+     * content before sending.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The user ID
+     * - year (int): The membership year
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response with HTML preview and exits
+     */
+    public function preview_payment_confirmation() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : 0;
+        
+        if (!$user_id || !$year) {
+            wp_send_json_error(array('message' => 'Invalid user ID or year'));
+            return;
+        }
+        
+        // Get user data
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Get membership data
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        if (!$membership) {
+            wp_send_json_error(array('message' => 'Membership not found'));
+            return;
+        }
+        
+        // Generate the email content (same as send_payment_confirmation but don't send)
+        $amount = $membership->payment_amount;
+        
+        // Build email content using the same method as WDTA_Membership_Email::send_payment_confirmation
+        $subject = 'WDTA Membership Payment Confirmation';
+        
+        $message = '<!DOCTYPE html>';
+        $message .= '<html>';
+        $message .= '<head><meta charset="UTF-8"></head>';
+        $message .= '<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">';
+        $message .= '<div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px;">';
+        $message .= '<h2>Payment Confirmation</h2>';
+        $message .= '<p>Hello ' . esc_html($user->display_name) . ',</p>';
+        $message .= '<p>Thank you for your payment! Your WDTA membership for ' . esc_html($year) . ' is now active.</p>';
+        $message .= '<p><strong>Payment Details:</strong></p>';
+        $message .= '<ul>';
+        $message .= '<li>Membership Year: ' . esc_html($year) . '</li>';
+        $message .= '<li>Amount Paid: $' . esc_html(number_format($amount, 2)) . '</li>';
+        $message .= '<li>Payment Date: ' . esc_html(date('F j, Y')) . '</li>';
+        $message .= '</ul>';
+        $message .= '<p>If you have any questions, please contact us.</p>';
+        $message .= '</div>';
+        $message .= '<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px;">';
+        $message .= '<p>&copy; ' . date('Y') . ' ' . esc_html(get_bloginfo('name')) . '. All rights reserved.</p>';
+        $message .= '</div>';
+        $message .= '</body>';
+        $message .= '</html>';
+        
+        wp_send_json_success(array(
+            'subject' => $subject,
+            'to' => $user->user_email,
+            'html' => $message
+        ));
     }
 }

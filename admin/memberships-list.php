@@ -127,6 +127,20 @@ if (!defined('ABSPATH')) {
                                     Reject
                                 </button>
                             <?php endif; ?>
+                            <?php if ($membership->payment_status === 'completed'): ?>
+                                <button class="button wdta-preview-payment-email" 
+                                        data-user-id="<?php echo esc_attr($membership->user_id); ?>"
+                                        data-year="<?php echo esc_attr($membership->membership_year); ?>"
+                                        title="Preview payment confirmation email">
+                                    Preview Email
+                                </button>
+                                <button class="button wdta-resend-payment-email" 
+                                        data-user-id="<?php echo esc_attr($membership->user_id); ?>"
+                                        data-year="<?php echo esc_attr($membership->membership_year); ?>"
+                                        title="Resend payment confirmation email">
+                                    Resend Email
+                                </button>
+                            <?php endif; ?>
                             <button class="button button-link-delete wdta-delete-membership" 
                                     data-user-id="<?php echo esc_attr($membership->user_id); ?>"
                                     data-year="<?php echo esc_attr($membership->membership_year); ?>">
@@ -299,6 +313,29 @@ if (!defined('ABSPATH')) {
                     <button type="button" class="button wdta-modal-close">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Email Preview Modal -->
+<div id="wdta-email-preview-modal">
+    <div class="wdta-modal-overlay"></div>
+    <div class="wdta-modal-content" style="max-width: 800px;">
+        <div class="wdta-modal-header">
+            <h2>Email Preview</h2>
+            <button class="wdta-modal-close">&times;</button>
+        </div>
+        <div class="wdta-modal-body">
+            <div class="email-preview-meta" style="background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 3px;">
+                <p style="margin: 5px 0;"><strong>To:</strong> <span id="preview-email-to"></span></p>
+                <p style="margin: 5px 0;"><strong>Subject:</strong> <span id="preview-email-subject"></span></p>
+            </div>
+            <div class="email-preview-content" style="border: 1px solid #ddd; padding: 20px; background: white; max-height: 500px; overflow-y: auto;">
+                <div id="preview-email-body"></div>
+            </div>
+            <div class="wdta-modal-actions">
+                <button type="button" class="button wdta-modal-close">Close</button>
+            </div>
         </div>
     </div>
 </div>
