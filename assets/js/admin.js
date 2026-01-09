@@ -3,6 +3,15 @@
  */
 
 jQuery(document).ready(function($) {
+    // Helper function to check if wdtaAdmin is loaded
+    function checkWdtaAdmin() {
+        if (typeof wdtaAdmin === 'undefined') {
+            alert('Error: Admin scripts not loaded properly. Please refresh the page.');
+            return false;
+        }
+        return true;
+    }
+    
     // Add membership - open modal (using event delegation)
     // This handler doesn't require wdtaAdmin, so register it first
     $(document).on('click', '.wdta-add-membership', function(e) {
@@ -73,8 +82,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         
         // Check if wdtaAdmin is defined
-        if (typeof wdtaAdmin === 'undefined') {
-            alert('Error: Admin scripts not loaded properly. Please refresh the page.');
+        if (!checkWdtaAdmin()) {
             return;
         }
         
@@ -120,8 +128,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         
         // Check if wdtaAdmin is defined
-        if (typeof wdtaAdmin === 'undefined') {
-            alert('Error: Admin scripts not loaded properly. Please refresh the page.');
+        if (!checkWdtaAdmin()) {
             return;
         }
         
@@ -160,9 +167,14 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Close email preview modal (using event delegation)
-    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-close, #wdta-email-preview-modal .wdta-modal-overlay', function(e) {
+    // Close email preview modal - close button (using event delegation)
+    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-close', function(e) {
         e.preventDefault();
+        $('#wdta-email-preview-modal').removeClass('wdta-modal-active');
+    });
+    
+    // Close email preview modal - overlay click (using event delegation)
+    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-overlay', function() {
         $('#wdta-email-preview-modal').removeClass('wdta-modal-active');
     });
     
