@@ -174,7 +174,7 @@ jQuery(document).ready(function($) {
     });
     
     // Close email preview modal - overlay click (using event delegation)
-    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-overlay', function() {
+    $(document).on('click', '#wdta-email-preview-modal .wdta-modal-overlay', function(e) {
         $('#wdta-email-preview-modal').removeClass('wdta-modal-active');
     });
     
