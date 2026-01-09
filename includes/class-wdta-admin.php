@@ -1150,12 +1150,8 @@ class WDTA_Admin {
         // Generate the email content (same as send_payment_confirmation but don't send)
         $amount = $membership->payment_amount;
         
-        // Use actual payment date if available, otherwise use current date
-        $payment_date_formatted = !empty($membership->payment_date) 
-            ? date('F j, Y', strtotime($membership->payment_date))
-            : date('F j, Y');
-        
         // Build email content using the same method as WDTA_Membership_Email::send_payment_confirmation
+        // Note: The "Payment Date" field shows current date (when email is sent), not the original payment date
         $subject = 'WDTA Membership Payment Confirmation';
         
         $message = '<!DOCTYPE html>';
@@ -1170,7 +1166,7 @@ class WDTA_Admin {
         $message .= '<ul>';
         $message .= '<li>Membership Year: ' . esc_html($year) . '</li>';
         $message .= '<li>Amount Paid: $' . esc_html(number_format($amount, 2)) . '</li>';
-        $message .= '<li>Payment Date: ' . esc_html($payment_date_formatted) . '</li>';
+        $message .= '<li>Payment Date: ' . esc_html(date('F j, Y')) . '</li>';
         $message .= '</ul>';
         $message .= '<p>If you have any questions, please contact us.</p>';
         $message .= '</div>';
