@@ -56,6 +56,7 @@ require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-access-control.ph
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-payment-stripe.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-payment-bank.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-email-notifications.php';
+require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-membership-email.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-admin.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-cron.php';
 require_once WDTA_MEMBERSHIP_PLUGIN_DIR . 'includes/class-wdta-user-roles.php';
