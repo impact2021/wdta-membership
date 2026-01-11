@@ -216,7 +216,7 @@ class WDTA_PDF_Receipt {
         // Save PDF to file
         file_put_contents($file_path, $pdf_content);
         
-        return file_path;
+        return $file_path;
     }
     
     /**

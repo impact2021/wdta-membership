@@ -8,6 +8,7 @@ A comprehensive WordPress membership plugin for WDTA (Workplace Drug Testing Aus
 - **Stripe Integration**: Accept credit card payments securely
 - **Bank Transfer Support**: Allow members to pay via bank transfer with admin verification
 - **Annual Fee**: $950 AUD per year
+- **PDF Receipts**: Automatic PDF receipt generation and email attachment upon membership activation
 
 ### 🔒 Access Control
 - Restrict specific pages to active members only
@@ -32,6 +33,17 @@ The plugin features a **dynamic email reminder system** that allows you to:
 
 **Special emails:**
 - **January 1st**: Inactive users report (sent to admins) - can be enabled/disabled separately
+
+### 📄 PDF Receipts
+- **Automatic Generation**: PDF receipts are automatically generated when membership is activated
+- **Professional Design**: Receipts include WDTA logo, member details, payment breakdown, and receipt number
+- **Email Attachment**: PDF receipts are automatically attached to confirmation emails
+- **Receipt Structure**:
+  - Receipt number (format: WDTA-YEAR-XXXXXX)
+  - Payment date and method
+  - Member information (name, email, membership year)
+  - Payment breakdown (membership fee + processing fee if applicable)
+  - Total amount paid
 
 ### 🎛️ Admin Dashboard
 - View all memberships by year and status
@@ -158,8 +170,11 @@ wdta-membership/
 │   ├── class-wdta-payment-stripe.php
 │   ├── class-wdta-payment-bank.php
 │   ├── class-wdta-email-notifications.php
+│   ├── class-wdta-pdf-receipt.php
 │   ├── class-wdta-admin.php
-│   └── class-wdta-cron.php
+│   ├── class-wdta-cron.php
+│   └── lib-fpdf/
+│       └── fpdf.php              # PDF generation library
 ├── admin/
 │   ├── memberships-list.php
 │   └── settings.php
@@ -206,6 +221,14 @@ For issues, questions, or feature requests, please contact the WDTA development 
 This plugin is licensed under GPL v2 or later.
 
 ## Changelog
+
+### Version 3.7
+- **NEW FEATURE**: Automatic PDF receipt generation for membership payments
+- PDF receipts are automatically generated when membership is activated (both Stripe and bank transfer)
+- Receipts include WDTA logo, member details, payment breakdown, and unique receipt number
+- PDF receipts are attached to confirmation emails
+- Receipt format: Professional A4 layout with all payment details
+- Receipts stored temporarily and cleaned up after email is sent
 
 ### Version 3.4
 - **CRITICAL FIX**: Fixed bug preventing grace period members from appearing in scheduled email lists
