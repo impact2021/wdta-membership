@@ -173,6 +173,8 @@ Your bank transfer payment of $950.00 AUD for {year} has been verified.
 
 Your WDTA membership is now active and will remain valid until December 31, {year}.
 
+A PDF receipt is attached to this email for your records.
+
 Best regards,
 WDTA Team');
         
@@ -204,7 +206,26 @@ WDTA Team');
             }
         }
         
-        wp_mail($to, $subject, $message, $headers);
+        // Generate and attach PDF receipt
+        $attachments = array();
+        $membership = WDTA_Database::get_membership($user_id, $year);
+        if ($membership) {
+            $pdf_path = WDTA_PDF_Receipt::save_receipt($user_id, $year, $membership);
+            if ($pdf_path && file_exists($pdf_path)) {
+                $attachments[] = $pdf_path;
+            }
+        }
+        
+        wp_mail($to, $subject, $message, $headers, $attachments);
+        
+        // Clean up temporary PDF file
+        if (!empty($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (file_exists($attachment)) {
+                    @unlink($attachment);
+                }
+            }
+        }
     }
     
     /**
