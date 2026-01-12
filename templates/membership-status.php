@@ -51,6 +51,18 @@ $current_year = date('Y');
             </tr>
         </table>
         
+        <?php if ($membership->payment_status === 'completed'): ?>
+            <div class="wdta-receipt-actions">
+                <button type="button" 
+                        class="button wdta-resend-receipt-btn" 
+                        data-user-id="<?php echo esc_attr(get_current_user_id()); ?>"
+                        data-year="<?php echo esc_attr($membership->membership_year); ?>">
+                    Resend Receipt Email
+                </button>
+                <span class="wdta-receipt-message" style="display:none; margin-left: 10px;"></span>
+            </div>
+        <?php endif; ?>
+        
         <?php if ($membership->status === 'active'): ?>
             <p class="wdta-success">✓ Your membership is active and in good standing.</p>
         <?php elseif ($membership->status === 'grace_period'): ?>

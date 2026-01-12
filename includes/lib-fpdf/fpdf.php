@@ -370,7 +370,7 @@ class FPDF {
         $this->_put('/ProcSet [/PDF /Text /ImageC]');
         $this->_put('/Font <<');
         foreach ($this->fonts as $font)
-            $this->_put('/F'.$font['i'].' '.$font['i'].' 0 R');
+            $this->_put('/F'.$font['i'].' '.$font['n'].' 0 R');
         $this->_put('>>');
         if (count($this->images)>0) {
             $this->_put('/XObject <<');
@@ -383,8 +383,9 @@ class FPDF {
     }
     
     protected function _putfonts() {
-        foreach ($this->fonts as $font) {
+        foreach ($this->fonts as $k=>$font) {
             $this->_newobj();
+            $this->fonts[$k]['n'] = $this->n;  // Store actual object number
             $this->_put('<</Type /Font');
             $this->_put('/BaseFont /'.$font['name']);
             $this->_put('/Subtype /Type1');
