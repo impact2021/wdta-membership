@@ -65,7 +65,8 @@ $receipts = $wpdb->get_results($wpdb->prepare(
             <?php else: ?>
                 <?php foreach ($receipts as $receipt): ?>
                     <?php 
-                    $user = get_userdata($receipt->user_id);
+                    $user_id = intval($receipt->user_id);
+                    $user = get_userdata($user_id);
                     if (!$user) {
                         continue;
                     }

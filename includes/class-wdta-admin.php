@@ -1262,25 +1262,13 @@ class WDTA_Admin {
             return;
         }
         
-        // Save to temporary file
-        $upload_dir = wp_upload_dir();
-        $receipts_dir = $upload_dir['basedir'] . '/wdta-receipts';
-        
-        if (!file_exists($receipts_dir)) {
-            wp_mkdir_p($receipts_dir);
-        }
-        
-        $filename = 'WDTA-Receipt-' . $year . '-' . sanitize_file_name($user->display_name) . '.pdf';
-        $filepath = $receipts_dir . '/' . $filename;
-        
-        file_put_contents($filepath, $pdf_content);
-        
-        // Return the download URL
-        $download_url = $upload_dir['baseurl'] . '/wdta-receipts/' . $filename;
+        // Encode PDF as base64 for sending via AJAX
+        $pdf_base64 = base64_encode($pdf_content);
+        $filename = 'WDTA-Receipt-' . $year . '-' . $user_id . '-' . sanitize_file_name($user->display_name) . '.pdf';
         
         wp_send_json_success(array(
             'message' => 'Receipt generated successfully',
-            'download_url' => $download_url,
+            'pdf_data' => $pdf_base64,
             'filename' => $filename
         ));
     }

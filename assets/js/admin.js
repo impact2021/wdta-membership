@@ -413,13 +413,24 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    // Create a temporary link and trigger download
+                    // Convert base64 PDF data to blob and trigger download
+                    var binaryString = atob(response.data.pdf_data);
+                    var bytes = new Uint8Array(binaryString.length);
+                    for (var i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    var blob = new Blob([bytes], { type: 'application/pdf' });
+                    
+                    // Create download link
                     var link = document.createElement('a');
-                    link.href = response.data.download_url;
+                    link.href = window.URL.createObjectURL(blob);
                     link.download = response.data.filename;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    
+                    // Clean up
+                    window.URL.revokeObjectURL(link.href);
                     
                     button.prop('disabled', false).text(originalText);
                 } else {
