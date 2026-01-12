@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FPDF_VERSION', '1.86');
+define('FPDF_VERSION', '1.85');
 
 class FPDF {
     protected $page = 0;
