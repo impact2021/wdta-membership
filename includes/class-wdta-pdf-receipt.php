@@ -327,15 +327,23 @@ class WDTA_PDF_Receipt {
         $receipts_dir = $upload_dir['basedir'] . '/wdta-receipts';
         
         if (!file_exists($receipts_dir)) {
-            wp_mkdir_p($receipts_dir);
+            if (!wp_mkdir_p($receipts_dir)) {
+                error_log('WDTA PDF Receipt: Failed to create receipts directory: ' . $receipts_dir);
+                return false;
+            }
         }
         
         // Generate filename
         $filename = 'receipt-' . $year . '-user-' . $user_id . '-' . time() . '.pdf';
         $file_path = $receipts_dir . '/' . $filename;
         
-        // Save PDF to file
-        file_put_contents($file_path, $pdf_content);
+        // Save PDF to file with error handling
+        $bytes_written = @file_put_contents($file_path, $pdf_content);
+        
+        if ($bytes_written === false || $bytes_written === 0) {
+            error_log('WDTA PDF Receipt: Failed to write PDF to file: ' . $file_path);
+            return false;
+        }
         
         return $file_path;
     }
