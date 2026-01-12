@@ -111,6 +111,13 @@ class FPDF {
     }
     
     function SetTextColor($r, $g=null, $b=null) {
+        // Validate and clamp RGB values to 0-255 range
+        $r = max(0, min(255, intval($r)));
+        if ($g !== null) {
+            $g = max(0, min(255, intval($g)));
+            $b = max(0, min(255, intval($b)));
+        }
+        
         if ($g===null)
             $this->TextColor = sprintf('%.3F g', $r/255);
         else
@@ -118,6 +125,13 @@ class FPDF {
     }
     
     function SetDrawColor($r, $g=null, $b=null) {
+        // Validate and clamp RGB values to 0-255 range
+        $r = max(0, min(255, intval($r)));
+        if ($g !== null) {
+            $g = max(0, min(255, intval($g)));
+            $b = max(0, min(255, intval($b)));
+        }
+        
         if ($g===null)
             $this->DrawColor = sprintf('%.3F G', $r/255);
         else
@@ -127,6 +141,8 @@ class FPDF {
     }
     
     function SetLineWidth($width) {
+        // Validate line width is a positive number
+        $width = max(0.001, floatval($width));
         $this->LineWidth = $width;
         if ($this->page > 0)
             $this->_out(sprintf('%.2F w', $width*$this->k));
@@ -433,7 +449,8 @@ class FPDF {
     protected function _putfonts() {
         foreach ($this->fonts as $k=>$font) {
             $this->_newobj();
-            $this->fonts[$k]['n'] = $this->n;  // Store actual object number
+            // Store actual object number AFTER _newobj() increments $this->n
+            $this->fonts[$k]['n'] = $this->n;
             $this->_put('<</Type /Font');
             $this->_put('/BaseFont /'.$font['name']);
             $this->_put('/Subtype /Type1');
@@ -446,7 +463,8 @@ class FPDF {
     protected function _putimages() {
         foreach ($this->images as $file=>$info) {
             $this->_newobj();
-            $this->images[$file]['n'] = $this->n;  // Store actual object number
+            // Store actual object number AFTER _newobj() increments $this->n
+            $this->images[$file]['n'] = $this->n;
             $this->_put('<</Type /XObject');
             $this->_put('/Subtype /Image');
             $this->_put('/Width '.$info['w']);
