@@ -1103,13 +1103,13 @@ class WDTA_Admin {
             return;
         }
         
-        // Send the payment confirmation email
+        // Send the payment confirmation email with PDF receipt attached
         $amount = $membership->payment_amount;
         $result = WDTA_Membership_Email::send_payment_confirmation($user_id, $year, $amount);
         
         if ($result) {
             wp_send_json_success(array(
-                'message' => 'Payment confirmation email sent successfully to ' . esc_html($user->user_email)
+                'message' => 'Payment confirmation email with PDF receipt sent successfully to ' . esc_html($user->user_email)
             ));
         } else {
             wp_send_json_error(array('message' => 'Failed to send email'));

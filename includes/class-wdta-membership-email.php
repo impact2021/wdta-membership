@@ -142,11 +142,36 @@ class WDTA_Membership_Email {
         $message .= '<li>Membership Year: ' . esc_html($year) . '</li>';
         $message .= '<li>Amount Paid: $' . esc_html(number_format($amount, 2)) . '</li>';
         $message .= '<li>Payment Date: ' . esc_html(date('F j, Y')) . '</li>';
+        $message .= '<li>Valid Until: December 31, ' . esc_html($year) . '</li>';
         $message .= '</ul>';
+        $message .= '<p>A PDF receipt is attached to this email for your records.</p>';
         $message .= '<p>If you have any questions, please contact us.</p>';
         $message .= self::get_email_footer();
         
-        return wp_mail($user->user_email, $subject, $message, $headers);
+        // Generate and attach PDF receipt
+        $attachments = array();
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        if ($membership) {
+            $pdf_path = WDTA_PDF_Receipt::save_receipt($user_id, $year, $membership);
+            if ($pdf_path && file_exists($pdf_path)) {
+                $attachments[] = $pdf_path;
+            }
+        }
+        
+        $result = wp_mail($user->user_email, $subject, $message, $headers, $attachments);
+        
+        // Clean up temporary PDF file
+        // Using @ to suppress warnings since temporary files may already be deleted
+        // or may not exist due to generation failures
+        if (!empty($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (file_exists($attachment)) {
+                    @unlink($attachment);
+                }
+            }
+        }
+        
+        return $result;
     }
     
     /**
