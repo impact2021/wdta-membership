@@ -7,8 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Get filter parameters
-$current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+// Define earliest year for filtering (when the plugin was first used)
+define('WDTA_EARLIEST_YEAR', 2020);
+
+// Get filter parameters with validation
+$requested_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+$max_year = date('Y') + 1;
+$current_year = ($requested_year >= WDTA_EARLIEST_YEAR && $requested_year <= $max_year) ? $requested_year : date('Y');
 
 // Get all memberships with completed payments
 global $wpdb;
@@ -33,7 +38,10 @@ $receipts = $wpdb->get_results($wpdb->prepare(
             
             <label for="year">Year:</label>
             <select name="year" id="year">
-                <?php for ($y = date('Y') + 1; $y >= 2020; $y--): ?>
+                <?php 
+                $max_year = date('Y') + 1;
+                for ($y = $max_year; $y >= WDTA_EARLIEST_YEAR; $y--): 
+                ?>
                     <option value="<?php echo $y; ?>" <?php selected($current_year, $y); ?>>
                         <?php echo $y; ?>
                     </option>
