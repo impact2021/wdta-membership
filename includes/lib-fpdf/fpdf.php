@@ -166,6 +166,15 @@ class FPDF {
         $this->x = $this->lMargin;
     }
     
+    function SetX($x) {
+        $this->x = $x;
+    }
+    
+    function SetXY($x, $y) {
+        $this->x = $x;
+        $this->y = $y;
+    }
+    
     function Image($file, $x, $y, $w=0, $h=0) {
         if (!isset($this->images[$file])) {
             $info = $this->_parseimage($file);
