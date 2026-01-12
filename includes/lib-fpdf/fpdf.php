@@ -120,15 +120,13 @@ class FPDF {
         if ($txt!=='') {
             $dx = $align=='R' ? $w - $this->cMargin - $this->GetStringWidth($txt) : ($align=='C' ? ($w - $this->GetStringWidth($txt))/2 : $this->cMargin);
             // Include font selection and text color in each text object
-            if (isset($this->CurrentFont)) {
-                $s .= sprintf('BT /F%d %.2F Tf %s %.2F %.2F Td (%s) Tj ET', 
-                    $this->CurrentFont['i'], 
-                    $this->FontSizePt, 
-                    $this->TextColor,
-                    ($this->x+$dx)*$k, 
-                    ($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k, 
-                    $this->_escape($txt));
-            }
+            $s .= sprintf('BT /F%d %.2F Tf %s %.2F %.2F Td (%s) Tj ET', 
+                $this->CurrentFont['i'], 
+                $this->FontSizePt, 
+                $this->TextColor,
+                ($this->x+$dx)*$k, 
+                ($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k, 
+                $this->_escape($txt));
         }
         
         if ($s)
