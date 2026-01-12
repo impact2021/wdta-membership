@@ -114,11 +114,16 @@ class WDTA_PDF_Receipt {
             $pdf = new FPDF();
             $pdf->AddPage();
             
+            // Define colors
+            $primary_color = array(33, 113, 181); // Professional blue
+            $gray_light = array(245, 245, 245);
+            $gray_medium = array(200, 200, 200);
+            
             // Header with logo
             $logo_path = self::get_logo_path();
             if ($logo_path && file_exists($logo_path)) {
                 try {
-                    $pdf->Image($logo_path, 10, 10, 50);
+                    $pdf->Image($logo_path, 15, 15, 60);
                 } catch (Exception $e) {
                     // Logo failed, continue without it
                     error_log('WDTA PDF Receipt: Failed to add logo - ' . $e->getMessage());
@@ -128,139 +133,171 @@ class WDTA_PDF_Receipt {
             }
             
             // Organization details in header (top right)
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->SetXY(70, 10);
-            $pdf->MultiCell(0, 5, $org_name, 0, 'R');
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->SetXY(120, 15);
+            $pdf->MultiCell(0, 6, $org_name, 0, 'R');
+            
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
             
             if (!empty($org_address)) {
-                $pdf->SetFont('Arial', '', 9);
-                $pdf->SetX(70);
+                $pdf->SetX(120);
                 $pdf->MultiCell(0, 4, $org_address, 0, 'R');
             }
             
-            $pdf->SetFont('Arial', '', 9);
             if (!empty($org_phone)) {
-                $pdf->SetX(70);
+                $pdf->SetX(120);
                 $pdf->Cell(0, 4, 'Phone: ' . $org_phone, 0, 1, 'R');
             }
             if (!empty($org_email)) {
-                $pdf->SetX(70);
+                $pdf->SetX(120);
                 $pdf->Cell(0, 4, 'Email: ' . $org_email, 0, 1, 'R');
             }
             if (!empty($org_website)) {
-                $pdf->SetX(70);
+                $pdf->SetX(120);
                 $pdf->Cell(0, 4, 'Web: ' . $org_website, 0, 1, 'R');
             }
             if (!empty($org_abn)) {
-                $pdf->SetX(70);
+                $pdf->SetX(120);
                 $pdf->Cell(0, 4, 'ABN: ' . $org_abn, 0, 1, 'R');
             }
             
-            $pdf->Ln(5);
+            $pdf->Ln(10);
             
-            // Title
-            $pdf->SetFont('Arial', 'B', 20);
-            $pdf->Cell(0, 10, 'MEMBERSHIP RECEIPT', 0, 1, 'C');
-            $pdf->Ln(5);
+            // Title with decorative line
+            $pdf->SetFont('Arial', 'B', 24);
+            $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->Cell(0, 12, 'TAX RECEIPT', 0, 1, 'C');
             
-            // Receipt details section
-            $pdf->SetFont('Arial', 'B', 14);
-            $pdf->Cell(0, 10, 'Receipt Details', 0, 1);
-            $pdf->SetFont('Arial', '', 11);
+            // Decorative line under title
+            $pdf->SetDrawColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->SetLineWidth(0.5);
+            $pdf->Line(15, $pdf->GetY() + 2, 195, $pdf->GetY() + 2);
+            $pdf->Ln(8);
+            
+            // Reset colors and line width
+            $pdf->SetDrawColor(0, 0, 0);
+            $pdf->SetLineWidth(0.2);
+            $pdf->SetTextColor(0, 0, 0);
+            
+            // Receipt details section with styled header
+            $pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->Cell(0, 8, 'Receipt Details', 0, 1, 'L', true);
+            
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Arial', '', 10);
             
             // Receipt number
             $receipt_number = 'WDTA-' . $year . '-' . str_pad($membership->id, 6, '0', STR_PAD_LEFT);
-            $pdf->SetFillColor(240, 240, 240);
-            $pdf->Cell(70, 8, 'Receipt Number:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $receipt_number, 1, 1);
+            $pdf->SetFillColor($gray_light[0], $gray_light[1], $gray_light[2]);
+            $pdf->Cell(70, 7, 'Receipt Number:', 'LTB', 0, 'L', true);
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->Cell(0, 7, $receipt_number, 'RTB', 1);
             
             // Date issued
-            $pdf->Cell(70, 8, 'Date Issued:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, wdta_format_date(current_time('mysql')), 1, 1);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Cell(70, 7, 'Date Issued:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, wdta_format_date(current_time('mysql')), 'RB', 1);
             
             // Payment date
             $payment_date = !empty($membership->payment_date) ? wdta_format_date($membership->payment_date) : wdta_format_date(current_time('mysql'));
-            $pdf->Cell(70, 8, 'Payment Date:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $payment_date, 1, 1);
+            $pdf->Cell(70, 7, 'Payment Date:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, $payment_date, 'RB', 1);
             
             // Payment method
             $payment_method = $membership->payment_method === 'stripe' ? 'Credit Card (Stripe)' : 'Bank Transfer';
-            $pdf->Cell(70, 8, 'Payment Method:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $payment_method, 1, 1);
+            $pdf->Cell(70, 7, 'Payment Method:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, $payment_method, 'RB', 1);
             
             $pdf->Ln(5);
             
-            // Member information section
-            $pdf->SetFont('Arial', 'B', 14);
-            $pdf->Cell(0, 10, 'Member Information', 0, 1);
-            $pdf->SetFont('Arial', '', 11);
+            // Member information section with styled header
+            $pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->Cell(0, 8, 'Member Information', 0, 1, 'L', true);
             
-            $pdf->Cell(70, 8, 'Member Name:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $user->display_name, 1, 1);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFillColor($gray_light[0], $gray_light[1], $gray_light[2]);
             
-            $pdf->Cell(70, 8, 'Email:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $user->user_email, 1, 1);
+            $pdf->Cell(70, 7, 'Member Name:', 'LTB', 0, 'L', true);
+            $pdf->Cell(0, 7, $user->display_name, 'RTB', 1);
             
-            $pdf->Cell(70, 8, 'Membership Year:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, $year, 1, 1);
+            $pdf->Cell(70, 7, 'Email:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, $user->user_email, 'RB', 1);
             
-            $pdf->Cell(70, 8, 'Valid From:', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, 'January 1, ' . $year, 1, 1);
+            $pdf->Cell(70, 7, 'Membership Year:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, $year, 'RB', 1);
             
-            $pdf->Cell(70, 8, 'Valid Until:', 1, 0, 'L', true);
+            $pdf->Cell(70, 7, 'Valid From:', 'LB', 0, 'L', true);
+            $pdf->Cell(0, 7, 'January 1, ' . $year, 'RB', 1);
+            
+            $pdf->Cell(70, 7, 'Valid Until:', 'LB', 0, 'L', true);
             $expiry_display = !empty($membership->expiry_date) ? wdta_format_date($membership->expiry_date) : 'December 31, ' . $year;
-            $pdf->Cell(0, 8, $expiry_display, 1, 1);
+            $pdf->Cell(0, 7, $expiry_display, 'RB', 1);
             
             $pdf->Ln(5);
             
-            // Payment breakdown section
-            $pdf->SetFont('Arial', 'B', 14);
-            $pdf->Cell(0, 10, 'Payment Breakdown', 0, 1);
+            // Payment breakdown section with styled header
+            $pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->Cell(0, 8, 'Payment Breakdown', 0, 1, 'L', true);
             
             // Table header
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->Cell(120, 8, 'Description', 1, 0, 'L', true);
-            $pdf->Cell(0, 8, 'Amount (AUD)', 1, 1, 'R', true);
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->SetFillColor($gray_medium[0], $gray_medium[1], $gray_medium[2]);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(130, 8, 'Description', 'LTRB', 0, 'L', true);
+            $pdf->Cell(0, 8, 'Amount (AUD)', 'LTRB', 1, 'R', true);
             
             // Get membership base price
             $base_price = floatval(get_option('wdta_membership_price', 950.00));
             
             // Membership fee
-            $pdf->SetFont('Arial', '', 11);
+            $pdf->SetFont('Arial', '', 10);
             $pdf->SetFillColor(255, 255, 255);
-            $pdf->Cell(120, 8, 'Annual Membership Fee', 1, 0);
-            $pdf->Cell(0, 8, '$' . number_format($base_price, 2), 1, 1, 'R');
+            $pdf->Cell(130, 7, 'Annual Membership Fee', 'LR', 0);
+            $pdf->Cell(0, 7, '$' . number_format($base_price, 2), 'LR', 1, 'R');
             
             // Stripe surcharge if applicable
             $total = $base_price;
             if ($membership->payment_method === 'stripe') {
                 $surcharge = $base_price * 0.022; // 2.2% surcharge
-                $pdf->Cell(120, 8, 'Credit Card Processing Fee (2.2%)', 1, 0);
-                $pdf->Cell(0, 8, '$' . number_format($surcharge, 2), 1, 1, 'R');
+                $pdf->Cell(130, 7, 'Credit Card Processing Fee (2.2%)', 'LR', 0);
+                $pdf->Cell(0, 7, '$' . number_format($surcharge, 2), 'LR', 1, 'R');
                 $total = $base_price + $surcharge;
             }
             
-            // Total
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->SetFillColor(240, 240, 240);
-            $pdf->Cell(120, 10, 'Total Paid', 1, 0, 'L', true);
-            $pdf->Cell(0, 10, '$' . number_format($total, 2), 1, 1, 'R', true);
+            // Total with styling
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFillColor($gray_light[0], $gray_light[1], $gray_light[2]);
+            $pdf->Cell(130, 9, 'Total Paid', 'LTRB', 0, 'L', true);
+            $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
+            $pdf->Cell(0, 9, '$' . number_format($total, 2), 'LTRB', 1, 'R', true);
             
-            $pdf->Ln(8);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Ln(10);
             
-            // Footer notes
+            // Footer notes with subtle styling
             $pdf->SetFont('Arial', '', 10);
-            $pdf->MultiCell(0, 5, 'Thank you for your membership with ' . $org_name . '. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.');
+            $pdf->SetFillColor($gray_light[0], $gray_light[1], $gray_light[2]);
+            $pdf->MultiCell(0, 5, 'Thank you for your membership with ' . $org_name . '. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.', 0, 'L');
             
             $pdf->Ln(3);
-            $pdf->SetFont('Arial', 'I', 9);
-            $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at ' . $org_email . '.');
+            $pdf->SetFont('Arial', 'I', 8);
+            $pdf->SetTextColor(100, 100, 100);
+            $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at ' . $org_email . '.', 0, 'L');
             
-            // Add footer
+            // Add footer with page number
             $pdf->SetY(-15);
             $pdf->SetFont('Arial', 'I', 8);
-            $pdf->Cell(0, 10, $org_name . ' - ' . $org_website . ' - Page 1', 0, 0, 'C');
+            $pdf->SetTextColor(100, 100, 100);
+            $pdf->Cell(0, 10, $org_name . ' | ' . $org_website . ' | Page 1 of 1', 0, 0, 'C');
             
             // Return PDF as string
             return $pdf->Output('S');
@@ -290,15 +327,23 @@ class WDTA_PDF_Receipt {
         $receipts_dir = $upload_dir['basedir'] . '/wdta-receipts';
         
         if (!file_exists($receipts_dir)) {
-            wp_mkdir_p($receipts_dir);
+            if (!wp_mkdir_p($receipts_dir)) {
+                error_log('WDTA PDF Receipt: Failed to create receipts directory: ' . $receipts_dir);
+                return false;
+            }
         }
         
         // Generate filename
         $filename = 'receipt-' . $year . '-user-' . $user_id . '-' . time() . '.pdf';
         $file_path = $receipts_dir . '/' . $filename;
         
-        // Save PDF to file
-        file_put_contents($file_path, $pdf_content);
+        // Save PDF to file with error handling
+        $bytes_written = @file_put_contents($file_path, $pdf_content);
+        
+        if ($bytes_written === false || $bytes_written === 0) {
+            error_log('WDTA PDF Receipt: Failed to write PDF to file: ' . $file_path);
+            return false;
+        }
         
         return $file_path;
     }

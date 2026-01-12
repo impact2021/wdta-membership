@@ -169,6 +169,53 @@ WDTA Team'),
             </tr>
         </table>
         
+        <h2>Receipt Email</h2>
+        
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="wdta_email_receipt">Receipt Email Template</label></th>
+                <td>
+                    <input type="text" id="wdta_email_receipt_subject" name="wdta_email_receipt_subject" 
+                           value="<?php echo esc_attr(get_option('wdta_email_receipt_subject', 'Your WDTA Membership Receipt for {year}')); ?>" 
+                           class="large-text" placeholder="Email Subject">
+                    <br><br>
+                    <?php
+                    $default_org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
+                    $default_receipt_body = "Dear {user_name},
+
+Please find attached your membership receipt for {year}.
+
+Receipt Details:
+- Receipt Number: {receipt_number}
+- Amount Paid: \${amount} AUD
+- Payment Date: {payment_date}
+- Valid Until: December 31, {year}
+
+This receipt serves as proof of payment for your WDTA membership.
+
+If you have any questions about this receipt, please contact us at {$default_org_email}.
+
+Best regards,
+WDTA Team";
+                    
+                    wp_editor(
+                        get_option('wdta_email_receipt_body', $default_receipt_body),
+                        'wdta_email_receipt_body',
+                        array(
+                            'textarea_rows' => 12,
+                            'media_buttons' => false,
+                            'teeny' => false,
+                            'tinymce' => array(
+                                'toolbar1' => 'bold,italic,underline,link,bullist,numlist,alignleft,aligncenter,alignright',
+                            ),
+                        )
+                    );
+                    ?>
+                    <p class="description">Sent when admin sends a receipt email from the Receipts page. Available placeholders: {user_name}, {user_email}, {year}, {amount}, {receipt_number}, {payment_date}</p>
+                </td>
+            </tr>
+        </table>
+        
         <h2>Payment Reminder Emails</h2>
         
         <table class="form-table">

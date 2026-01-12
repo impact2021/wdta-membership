@@ -48,6 +48,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_resend_payment_confirmation', array($this, 'resend_payment_confirmation'));
         add_action('wp_ajax_wdta_preview_payment_confirmation', array($this, 'preview_payment_confirmation'));
         add_action('wp_ajax_wdta_download_receipt', array($this, 'download_receipt'));
+        add_action('wp_ajax_wdta_send_receipt_email', array($this, 'send_receipt_email'));
     }
     
     /**
@@ -269,29 +270,6 @@ class WDTA_Admin {
         }
         if (isset($_POST['wdta_renewal_url'])) {
             update_option('wdta_renewal_url', esc_url_raw($_POST['wdta_renewal_url']));
-        }
-        
-        // Organization details for receipts
-        if (isset($_POST['wdta_org_name'])) {
-            update_option('wdta_org_name', sanitize_text_field($_POST['wdta_org_name']));
-        }
-        if (isset($_POST['wdta_org_address'])) {
-            update_option('wdta_org_address', sanitize_textarea_field($_POST['wdta_org_address']));
-        }
-        if (isset($_POST['wdta_org_abn'])) {
-            update_option('wdta_org_abn', sanitize_text_field($_POST['wdta_org_abn']));
-        }
-        if (isset($_POST['wdta_org_phone'])) {
-            update_option('wdta_org_phone', sanitize_text_field($_POST['wdta_org_phone']));
-        }
-        if (isset($_POST['wdta_org_email'])) {
-            update_option('wdta_org_email', sanitize_email($_POST['wdta_org_email']));
-        }
-        if (isset($_POST['wdta_org_website'])) {
-            update_option('wdta_org_website', esc_url_raw($_POST['wdta_org_website']));
-        }
-        if (isset($_POST['wdta_org_logo_url'])) {
-            update_option('wdta_org_logo_url', esc_url_raw($_POST['wdta_org_logo_url']));
         }
         
         // Year cutoff settings
@@ -751,7 +729,8 @@ class WDTA_Admin {
         $confirmation_templates = array(
             'stripe_confirmation',
             'bank_pending',
-            'bank_approved'
+            'bank_approved',
+            'receipt'
         );
         
         foreach ($confirmation_templates as $template) {
@@ -1302,6 +1281,135 @@ class WDTA_Admin {
             error_log('WDTA PDF Receipt: Exception during receipt generation - ' . $e->getMessage());
             wp_send_json_error(array('message' => 'An error occurred while generating the receipt: ' . $e->getMessage()));
             return;
+        }
+    }
+    
+    /**
+     * Send receipt email (AJAX)
+     * 
+     * Sends a customizable receipt email with PDF attachment to a member.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The user ID
+     * - year (int): The membership year
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Sends JSON response and exits
+     */
+    public function send_receipt_email() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : 0;
+        
+        if (!$user_id || !$year) {
+            wp_send_json_error(array('message' => 'Invalid user ID or year'));
+            return;
+        }
+        
+        // Get user data
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Get membership data
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        if (!$membership) {
+            wp_send_json_error(array('message' => 'Membership not found'));
+            return;
+        }
+        
+        // Verify payment is completed
+        if ($membership->payment_status !== 'completed') {
+            wp_send_json_error(array('message' => 'Receipt email only available for completed payments'));
+            return;
+        }
+        
+        // Get email template
+        $subject = get_option('wdta_email_receipt_subject', 'Your WDTA Membership Receipt for {year}');
+        $body = get_option('wdta_email_receipt_body', 'Dear {user_name},
+
+Please find attached your membership receipt for {year}.
+
+Best regards,
+WDTA Team');
+        
+        // Replace placeholders
+        $receipt_number = 'WDTA-' . $year . '-' . str_pad($membership->id, 6, '0', STR_PAD_LEFT);
+        $payment_date = !empty($membership->payment_date) ? wdta_format_date($membership->payment_date) : wdta_format_date(current_time('mysql'));
+        $amount = number_format($membership->payment_amount, 2);
+        
+        $placeholders = array(
+            '{user_name}' => $user->display_name,
+            '{user_email}' => $user->user_email,
+            '{year}' => $year,
+            '{amount}' => $amount,
+            '{receipt_number}' => $receipt_number,
+            '{payment_date}' => $payment_date
+        );
+        
+        $subject = str_replace(array_keys($placeholders), array_values($placeholders), $subject);
+        $body = str_replace(array_keys($placeholders), array_values($placeholders), $body);
+        
+        // Build HTML email
+        $message = '<!DOCTYPE html>';
+        $message .= '<html>';
+        $message .= '<head><meta charset="UTF-8"></head>';
+        $message .= '<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">';
+        $message .= '<div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px;">';
+        $message .= wpautop($body);
+        $message .= '</div>';
+        $message .= '<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px;">';
+        $message .= '<p>&copy; ' . date('Y') . ' ' . esc_html(get_bloginfo('name')) . '. All rights reserved.</p>';
+        $message .= '</div>';
+        $message .= '</body>';
+        $message .= '</html>';
+        
+        // Prepare headers
+        $from_email = get_option('wdta_email_from_address', get_option('admin_email'));
+        $from_name = get_option('wdta_email_from_name', get_bloginfo('name'));
+        
+        $headers = array();
+        $headers[] = 'Content-Type: text/html; charset=UTF-8';
+        $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
+        
+        // Generate PDF and attach
+        $attachments = array();
+        $pdf_path = WDTA_PDF_Receipt::save_receipt($user_id, $year, $membership);
+        if ($pdf_path && file_exists($pdf_path)) {
+            $attachments[] = $pdf_path;
+        }
+        
+        // Send email
+        $result = wp_mail($user->user_email, $subject, $message, $headers, $attachments);
+        
+        // Clean up temporary PDF file
+        if (!empty($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (file_exists($attachment)) {
+                    @unlink($attachment);
+                }
+            }
+        }
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => 'Receipt email sent successfully to ' . esc_html($user->user_email)
+            ));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to send email'));
         }
     }
 }

@@ -445,4 +445,48 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // Send receipt email (using event delegation)
+    $(document).on('click', '.wdta-send-receipt-email', function(e) {
+        e.preventDefault();
+        
+        if (!checkWdtaAdmin()) {
+            return;
+        }
+        
+        var button = $(this);
+        var userId = button.data('user-id');
+        var year = button.data('year');
+        var originalText = button.text();
+        
+        if (!confirm('Send receipt email to this member?')) {
+            return;
+        }
+        
+        button.prop('disabled', true).text('Sending...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_send_receipt_email',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: year
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    button.prop('disabled', false).text(originalText);
+                } else {
+                    alert('Error: ' + response.data.message);
+                    button.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+    
 });
