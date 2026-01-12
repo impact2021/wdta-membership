@@ -2,6 +2,58 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.9] - 2026-01-12
+
+### Added
+- **Organization Details Settings**: Added new settings section for organization information displayed on PDF receipts
+  - Organization Name (defaults to "Workplace Drug Testing Association")
+  - Organization Address (full mailing address)
+  - ABN / GST Number (Australian Business Number)
+  - Contact Phone
+  - Contact Email (defaults to "admin@wdta.org.au")
+  - Website URL (defaults to "https://www.wdta.org.au")
+  - Logo URL (customizable logo for receipts, cached locally for 7 days)
+  - **Location**: WDTA Membership → Settings → Payment Settings → Organization Details (for Receipts)
+
+### Changed
+- **Improved PDF Receipt Generation**: Enhanced receipt layout and content
+  - Added organization details in header (name, address, phone, email, website, ABN)
+  - Added "Date Issued" field showing when receipt was generated
+  - Added "Valid From" field showing membership start date (January 1)
+  - Improved expiry date display to use actual expiry date from database
+  - Organization details now pulled from admin settings instead of hardcoded values
+  - Logo URL now configurable via admin settings
+  - Logo cache updated to support changing logo URLs (uses MD5 hash of URL)
+  - Logo cache refresh reduced from 30 days to 7 days for more frequent updates
+  - Footer now uses organization name and website from settings
+
+### Fixed
+- **PDF Receipt Content**: Ensured all required information is included in receipts:
+  - Membership year clearly displayed
+  - Payment method (Credit Card or Bank Transfer)
+  - Payment date (when payment was received)
+  - Expiry date (membership validity period)
+  - Receipt number (format: WDTA-YEAR-######)
+  - Complete payment breakdown with fees
+  - Organization contact information
+
+### Technical Details
+- Modified `admin/settings.php` to add organization details fields
+- Updated `includes/class-wdta-admin.php` to save new organization options
+- Enhanced `includes/class-wdta-pdf-receipt.php`:
+  - Replaced hardcoded LOGO_URL constant with `get_logo_url()` method
+  - Updated `get_logo_path()` to support dynamic logo URLs with MD5-based caching
+  - Completely rewrote `generate_receipt()` method with improved layout
+  - Added organization header section to PDF
+  - Added "Date Issued" and "Valid From" fields
+  - Improved footer with dynamic organization details
+
+### Notes
+- Existing installations will use default values for new organization settings
+- Logo cache files are stored in wp-content/uploads/wdta-receipts/
+- PDF receipts are automatically sent when members become active (both Stripe and Bank Transfer)
+- Admins can resend receipts using the "Resend Email" button on the memberships list page
+
 ## [3.8] - 2026-01-12
 
 ### Added

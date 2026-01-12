@@ -12,9 +12,11 @@ if (!defined('ABSPATH')) {
 class WDTA_PDF_Receipt {
     
     /**
-     * WDTA logo URL
+     * Get logo URL from settings or use default
      */
-    const LOGO_URL = 'https://www.wdta.org.au/wp-content/uploads/2025/11/Workplace-Drug-Testing-Association.png';
+    private static function get_logo_url() {
+        return get_option('wdta_org_logo_url', 'https://www.wdta.org.au/wp-content/uploads/2025/11/Workplace-Drug-Testing-Association.png');
+    }
     
     /**
      * Load FPDF library
@@ -29,18 +31,23 @@ class WDTA_PDF_Receipt {
      * Download and cache logo
      */
     private static function get_logo_path() {
+        $logo_url = self::get_logo_url();
+        
         $upload_dir = wp_upload_dir();
         $logo_cache_dir = $upload_dir['basedir'] . '/wdta-receipts';
-        $logo_cache_file = $logo_cache_dir . '/wdta-logo.png';
+        
+        // Create a unique filename based on the URL to handle logo changes
+        $logo_filename = 'wdta-logo-' . md5($logo_url) . '.png';
+        $logo_cache_file = $logo_cache_dir . '/' . $logo_filename;
         
         // Create cache directory if it doesn't exist
         if (!file_exists($logo_cache_dir)) {
             wp_mkdir_p($logo_cache_dir);
         }
         
-        // Download logo if not cached or older than 30 days
-        if (!file_exists($logo_cache_file) || (time() - filemtime($logo_cache_file)) > (30 * 24 * 60 * 60)) {
-            $response = wp_remote_get(self::LOGO_URL, array(
+        // Download logo if not cached or older than 7 days
+        if (!file_exists($logo_cache_file) || (time() - filemtime($logo_cache_file)) > (7 * 24 * 60 * 60)) {
+            $response = wp_remote_get($logo_url, array(
                 'timeout' => 30,
                 'sslverify' => true
             ));
@@ -68,6 +75,14 @@ class WDTA_PDF_Receipt {
             return false;
         }
         
+        // Get organization details from settings
+        $org_name = get_option('wdta_org_name', 'Workplace Drug Testing Association');
+        $org_address = get_option('wdta_org_address', '');
+        $org_abn = get_option('wdta_org_abn', '');
+        $org_phone = get_option('wdta_org_phone', '');
+        $org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
+        $org_website = get_option('wdta_org_website', 'https://www.wdta.org.au');
+        
         // Load FPDF
         self::load_fpdf();
         
@@ -86,10 +101,41 @@ class WDTA_PDF_Receipt {
             }
         }
         
+        // Organization details in header (top right)
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetXY(70, 10);
+        $pdf->MultiCell(0, 5, $org_name, 0, 'R');
+        
+        if (!empty($org_address)) {
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetX(70);
+            $pdf->MultiCell(0, 4, $org_address, 0, 'R');
+        }
+        
+        $pdf->SetFont('Arial', '', 9);
+        if (!empty($org_phone)) {
+            $pdf->SetX(70);
+            $pdf->Cell(0, 4, 'Phone: ' . $org_phone, 0, 1, 'R');
+        }
+        if (!empty($org_email)) {
+            $pdf->SetX(70);
+            $pdf->Cell(0, 4, 'Email: ' . $org_email, 0, 1, 'R');
+        }
+        if (!empty($org_website)) {
+            $pdf->SetX(70);
+            $pdf->Cell(0, 4, 'Web: ' . $org_website, 0, 1, 'R');
+        }
+        if (!empty($org_abn)) {
+            $pdf->SetX(70);
+            $pdf->Cell(0, 4, 'ABN: ' . $org_abn, 0, 1, 'R');
+        }
+        
+        $pdf->Ln(5);
+        
         // Title
         $pdf->SetFont('Arial', 'B', 20);
-        $pdf->Cell(0, 10, 'MEMBERSHIP RECEIPT', 0, 1, 'R');
-        $pdf->Ln(10);
+        $pdf->Cell(0, 10, 'MEMBERSHIP RECEIPT', 0, 1, 'C');
+        $pdf->Ln(5);
         
         // Receipt details section
         $pdf->SetFont('Arial', 'B', 14);
@@ -102,7 +148,11 @@ class WDTA_PDF_Receipt {
         $pdf->Cell(70, 8, 'Receipt Number:', 1, 0, 'L', true);
         $pdf->Cell(0, 8, $receipt_number, 1, 1);
         
-        // Date
+        // Date issued
+        $pdf->Cell(70, 8, 'Date Issued:', 1, 0, 'L', true);
+        $pdf->Cell(0, 8, wdta_format_date(current_time('mysql')), 1, 1);
+        
+        // Payment date
         $payment_date = !empty($membership->payment_date) ? wdta_format_date($membership->payment_date) : wdta_format_date(current_time('mysql'));
         $pdf->Cell(70, 8, 'Payment Date:', 1, 0, 'L', true);
         $pdf->Cell(0, 8, $payment_date, 1, 1);
@@ -128,8 +178,12 @@ class WDTA_PDF_Receipt {
         $pdf->Cell(70, 8, 'Membership Year:', 1, 0, 'L', true);
         $pdf->Cell(0, 8, $year, 1, 1);
         
+        $pdf->Cell(70, 8, 'Valid From:', 1, 0, 'L', true);
+        $pdf->Cell(0, 8, 'January 1, ' . $year, 1, 1);
+        
         $pdf->Cell(70, 8, 'Valid Until:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, 'December 31, ' . $year, 1, 1);
+        $expiry_display = !empty($membership->expiry_date) ? wdta_format_date($membership->expiry_date) : 'December 31, ' . $year;
+        $pdf->Cell(0, 8, $expiry_display, 1, 1);
         
         $pdf->Ln(5);
         
@@ -171,16 +225,16 @@ class WDTA_PDF_Receipt {
         
         // Footer notes
         $pdf->SetFont('Arial', '', 10);
-        $pdf->MultiCell(0, 5, 'Thank you for your membership with the Workplace Drug Testing Association. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.');
+        $pdf->MultiCell(0, 5, 'Thank you for your membership with ' . $org_name . '. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.');
         
         $pdf->Ln(3);
         $pdf->SetFont('Arial', 'I', 9);
-        $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at admin@wdta.org.au');
+        $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at ' . $org_email . '.');
         
         // Add footer
         $pdf->SetY(-15);
         $pdf->SetFont('Arial', 'I', 8);
-        $pdf->Cell(0, 10, 'Workplace Drug Testing Association - www.wdta.org.au - Page 1', 0, 0, 'C');
+        $pdf->Cell(0, 10, $org_name . ' - ' . $org_website . ' - Page 1', 0, 0, 'C');
         
         // Return PDF as string
         return $pdf->Output('S');
