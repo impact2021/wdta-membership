@@ -110,15 +110,79 @@ class FPDF {
             $this->_out($this->FillColor);
     }
     
+    function SetTextColor($r, $g=null, $b=null) {
+        // Validate and clamp RGB values to 0-255 range
+        $r = max(0, min(255, intval($r)));
+        if ($g !== null) {
+            $g = max(0, min(255, intval($g)));
+            $b = max(0, min(255, intval($b)));
+        }
+        
+        if ($g===null)
+            $this->TextColor = sprintf('%.3F g', $r/255);
+        else
+            $this->TextColor = sprintf('%.3F %.3F %.3F rg', $r/255, $g/255, $b/255);
+    }
+    
+    function SetDrawColor($r, $g=null, $b=null) {
+        // Validate and clamp RGB values to 0-255 range
+        $r = max(0, min(255, intval($r)));
+        if ($g !== null) {
+            $g = max(0, min(255, intval($g)));
+            $b = max(0, min(255, intval($b)));
+        }
+        
+        if ($g===null)
+            $this->DrawColor = sprintf('%.3F G', $r/255);
+        else
+            $this->DrawColor = sprintf('%.3F %.3F %.3F RG', $r/255, $g/255, $b/255);
+        if ($this->page > 0)
+            $this->_out($this->DrawColor);
+    }
+    
+    function SetLineWidth($width) {
+        // Validate line width is a positive number
+        $width = max(0.001, floatval($width));
+        $this->LineWidth = $width;
+        if ($this->page > 0)
+            $this->_out(sprintf('%.2F w', $width*$this->k));
+    }
+    
+    function Line($x1, $y1, $x2, $y2) {
+        $this->_out(sprintf('%.2F %.2F m %.2F %.2F l S', 
+            $x1*$this->k, ($this->h-$y1)*$this->k, 
+            $x2*$this->k, ($this->h-$y2)*$this->k));
+    }
+    
+    function GetY() {
+        return $this->y;
+    }
+    
     function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false) {
         $k = $this->k;
         if ($w==0)
             $w = $this->w - $this->rMargin - $this->x;
         
         $s = '';
+        
+        // Handle borders
+        if (is_string($border)) {
+            $x = $this->x;
+            $y = $this->y;
+            if (strpos($border,'L')!==false)
+                $s .= sprintf('%.2F %.2F m %.2F %.2F l S ', $x*$k, ($this->h-$y)*$k, $x*$k, ($this->h-($y+$h))*$k);
+            if (strpos($border,'T')!==false)
+                $s .= sprintf('%.2F %.2F m %.2F %.2F l S ', $x*$k, ($this->h-$y)*$k, ($x+$w)*$k, ($this->h-$y)*$k);
+            if (strpos($border,'R')!==false)
+                $s .= sprintf('%.2F %.2F m %.2F %.2F l S ', ($x+$w)*$k, ($this->h-$y)*$k, ($x+$w)*$k, ($this->h-($y+$h))*$k);
+            if (strpos($border,'B')!==false)
+                $s .= sprintf('%.2F %.2F m %.2F %.2F l S ', $x*$k, ($this->h-($y+$h))*$k, ($x+$w)*$k, ($this->h-($y+$h))*$k);
+        }
+        
+        // Handle fill and simple border
         if ($fill || $border==1) {
             $op = $fill ? ($border==1 ? 'B' : 'f') : 'S';
-            $s = sprintf('%.2F %.2F %.2F %.2F re %s ', $this->x*$k, ($this->h-$this->y)*$k, $w*$k, -$h*$k, $op);
+            $s .= sprintf('%.2F %.2F %.2F %.2F re %s ', $this->x*$k, ($this->h-$this->y)*$k, $w*$k, -$h*$k, $op);
         }
         
         if ($txt!=='') {
@@ -375,7 +439,7 @@ class FPDF {
         if (count($this->images)>0) {
             $this->_put('/XObject <<');
             foreach ($this->images as $image)
-                $this->_put('/I'.$image['i'].' '.$image['i'].' 0 R');
+                $this->_put('/I'.$image['i'].' '.$image['n'].' 0 R');
             $this->_put('>>');
         }
         $this->_put('>>');
@@ -385,7 +449,8 @@ class FPDF {
     protected function _putfonts() {
         foreach ($this->fonts as $k=>$font) {
             $this->_newobj();
-            $this->fonts[$k]['n'] = $this->n;  // Store actual object number
+            // Store actual object number AFTER _newobj() increments $this->n
+            $this->fonts[$k]['n'] = $this->n;
             $this->_put('<</Type /Font');
             $this->_put('/BaseFont /'.$font['name']);
             $this->_put('/Subtype /Type1');
@@ -398,6 +463,8 @@ class FPDF {
     protected function _putimages() {
         foreach ($this->images as $file=>$info) {
             $this->_newobj();
+            // Store actual object number AFTER _newobj() increments $this->n
+            $this->images[$file]['n'] = $this->n;
             $this->_put('<</Type /XObject');
             $this->_put('/Subtype /Image');
             $this->_put('/Width '.$info['w']);
