@@ -272,29 +272,6 @@ class WDTA_Admin {
             update_option('wdta_renewal_url', esc_url_raw($_POST['wdta_renewal_url']));
         }
         
-        // Organization details for receipts
-        if (isset($_POST['wdta_org_name'])) {
-            update_option('wdta_org_name', sanitize_text_field($_POST['wdta_org_name']));
-        }
-        if (isset($_POST['wdta_org_address'])) {
-            update_option('wdta_org_address', sanitize_textarea_field($_POST['wdta_org_address']));
-        }
-        if (isset($_POST['wdta_org_abn'])) {
-            update_option('wdta_org_abn', sanitize_text_field($_POST['wdta_org_abn']));
-        }
-        if (isset($_POST['wdta_org_phone'])) {
-            update_option('wdta_org_phone', sanitize_text_field($_POST['wdta_org_phone']));
-        }
-        if (isset($_POST['wdta_org_email'])) {
-            update_option('wdta_org_email', sanitize_email($_POST['wdta_org_email']));
-        }
-        if (isset($_POST['wdta_org_website'])) {
-            update_option('wdta_org_website', esc_url_raw($_POST['wdta_org_website']));
-        }
-        if (isset($_POST['wdta_org_logo_url'])) {
-            update_option('wdta_org_logo_url', esc_url_raw($_POST['wdta_org_logo_url']));
-        }
-        
         // Year cutoff settings
         if (isset($_POST['wdta_year_cutoff_month'])) {
             update_option('wdta_year_cutoff_month', intval($_POST['wdta_year_cutoff_month']));
