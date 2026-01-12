@@ -387,4 +387,51 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // Download receipt PDF (using event delegation)
+    $(document).on('click', '.wdta-download-receipt', function(e) {
+        e.preventDefault();
+        
+        if (!checkWdtaAdmin()) {
+            return;
+        }
+        
+        var button = $(this);
+        var userId = button.data('user-id');
+        var year = button.data('year');
+        var originalText = button.text();
+        
+        button.prop('disabled', true).text('Generating...');
+        
+        $.ajax({
+            url: wdtaAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wdta_download_receipt',
+                nonce: wdtaAdmin.nonce,
+                user_id: userId,
+                year: year
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Create a temporary link and trigger download
+                    var link = document.createElement('a');
+                    link.href = response.data.download_url;
+                    link.download = response.data.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    button.prop('disabled', false).text(originalText);
+                } else {
+                    alert('Error: ' + response.data.message);
+                    button.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+    
 });
