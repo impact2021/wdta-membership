@@ -67,14 +67,16 @@ class WDTA_PDF_Receipt {
         
         // Verify the cached file is valid before returning
         if (file_exists($logo_cache_file)) {
-            // Check if file is actually an image
+            // Check if file is actually a valid image (suppress warnings for corrupted files)
             $image_info = @getimagesize($logo_cache_file);
             if ($image_info !== false) {
                 return $logo_cache_file;
             } else {
                 error_log('WDTA PDF Receipt: Cached logo file is not a valid image: ' . $logo_cache_file);
-                // Delete invalid file
-                @unlink($logo_cache_file);
+                // Delete invalid file (suppress errors if file is already gone or permission denied)
+                if (@unlink($logo_cache_file) === false && file_exists($logo_cache_file)) {
+                    error_log('WDTA PDF Receipt: Failed to delete invalid cached logo: ' . $logo_cache_file);
+                }
             }
         }
         
