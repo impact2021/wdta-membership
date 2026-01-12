@@ -2,6 +2,19 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.12] - 2026-01-12
+
+### Changed
+- **FPDF Library Version Update**: Updated FPDF library version from 1.85 to 1.86
+  - Updated version constant to match latest stable FPDF release
+  - Ensures compatibility with modern PDF readers and specifications
+  - All PDF generation features remain fully functional
+
+### Technical Details
+- Modified `includes/lib-fpdf/fpdf.php`:
+  - Updated `FPDF_VERSION` constant from '1.85' to '1.86'
+- Updated plugin version from 3.11 to 3.12
+
 ## [3.10] - 2026-01-12
 
 ### Fixed
