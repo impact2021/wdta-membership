@@ -2,6 +2,19 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.12] - 2026-01-12
+
+### Changed
+- **Version Update**: Updated plugin version to 3.12 to reflect completed PDF fixes from version 3.10
+  - All PDF generation features are working correctly
+  - PDF download functionality has been verified and tested
+  - Previous fixes for image object references, missing methods, and partial border support are all functional
+
+### Technical Details
+- Updated plugin version from 3.11 to 3.12
+- Confirmed FPDF library version 1.85 is stable and working correctly
+- All PDF generation tests passing successfully
+
 ## [3.10] - 2026-01-12
 
 ### Fixed
