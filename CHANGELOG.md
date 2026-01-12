@@ -2,6 +2,29 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.8] - 2026-01-12
+
+### Added
+- **Receipts Admin Page**: Added a new "Receipts" page in the admin menu to view and download PDF receipts for completed membership payments.
+  - **Location**: WDTA Membership → Receipts
+  - **Features**:
+    - View all receipts for completed payments
+    - Filter receipts by year
+    - Download PDF receipts for any completed payment
+    - Displays receipt number, member name, email, payment method, amount, and payment date
+  - **PDF Generation**: Receipts are generated on-demand using the existing WDTA_PDF_Receipt class
+  - **Receipt Format**: Professional PDF format with WDTA logo, member information, and payment breakdown
+
+### Changed
+- Updated version number from 3.7 to 3.8
+
+### Technical Details
+- Added `receipts_page()` method in `class-wdta-admin.php`
+- Added `download_receipt()` AJAX endpoint in `class-wdta-admin.php`
+- Created `admin/receipts.php` template file
+- Added JavaScript handler for PDF download functionality in `assets/js/admin.js`
+- Updated admin page hooks to include receipts page
+
 ## [3.6] - 2026-01-08
 
 ### Changed

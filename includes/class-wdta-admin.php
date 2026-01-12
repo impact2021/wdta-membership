@@ -47,6 +47,7 @@ class WDTA_Admin {
         add_action('wp_ajax_wdta_debug_scheduled_emails', array($this, 'debug_scheduled_emails'));
         add_action('wp_ajax_wdta_resend_payment_confirmation', array($this, 'resend_payment_confirmation'));
         add_action('wp_ajax_wdta_preview_payment_confirmation', array($this, 'preview_payment_confirmation'));
+        add_action('wp_ajax_wdta_download_receipt', array($this, 'download_receipt'));
     }
     
     /**
@@ -101,6 +102,15 @@ class WDTA_Admin {
         
         add_submenu_page(
             'wdta-memberships',
+            'Receipts',
+            'Receipts',
+            'manage_options',
+            'wdta-receipts',
+            array($this, 'receipts_page')
+        );
+        
+        add_submenu_page(
+            'wdta-memberships',
             'Documentation',
             'Docs',
             'manage_options',
@@ -120,6 +130,7 @@ class WDTA_Admin {
             'membership_page_wdta-settings',
             'membership_page_wdta-emails',
             'membership_page_wdta-scheduled-emails',
+            'membership_page_wdta-receipts',
             'membership_page_wdta-documentation'
         );
         
@@ -200,6 +211,13 @@ class WDTA_Admin {
      */
     public function scheduled_emails_page() {
         include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/scheduled-emails.php';
+    }
+    
+    /**
+     * Receipts page - shows all receipts
+     */
+    public function receipts_page() {
+        include WDTA_MEMBERSHIP_PLUGIN_DIR . 'admin/receipts.php';
     }
     
     /**
@@ -1180,6 +1198,80 @@ class WDTA_Admin {
             'subject' => $subject,
             'to' => $user->user_email,
             'html' => $message
+        ));
+    }
+    
+    /**
+     * Download receipt PDF (AJAX)
+     * 
+     * Generates and downloads a PDF receipt for a completed membership payment.
+     * 
+     * Security:
+     * - Verifies AJAX nonce to prevent CSRF attacks
+     * - Checks user has 'manage_options' capability
+     * - Validates and sanitizes all input parameters
+     * 
+     * Expected $_POST parameters:
+     * - user_id (int): The user ID
+     * - year (int): The membership year
+     * - nonce (string): WordPress nonce for verification
+     * 
+     * @return void Outputs PDF file and exits
+     */
+    public function download_receipt() {
+        check_ajax_referer('wdta_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : 0;
+        
+        if (!$user_id || !$year) {
+            wp_send_json_error(array('message' => 'Invalid user ID or year'));
+            return;
+        }
+        
+        // Get user data
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+            return;
+        }
+        
+        // Get membership data
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        if (!$membership) {
+            wp_send_json_error(array('message' => 'Membership not found'));
+            return;
+        }
+        
+        // Verify payment is completed
+        if ($membership->payment_status !== 'completed') {
+            wp_send_json_error(array('message' => 'Receipt only available for completed payments'));
+            return;
+        }
+        
+        // Generate the PDF
+        $pdf_content = WDTA_PDF_Receipt::generate_receipt($user_id, $year, $membership);
+        
+        if (!$pdf_content) {
+            wp_send_json_error(array('message' => 'Failed to generate receipt'));
+            return;
+        }
+        
+        // Encode PDF as base64 for sending via AJAX
+        $pdf_base64 = base64_encode($pdf_content);
+        // Include membership ID and timestamp to ensure unique filenames
+        $timestamp = time();
+        $filename = 'WDTA-Receipt-' . $year . '-' . $membership->id . '-' . $user_id . '-' . $timestamp . '.pdf';
+        
+        wp_send_json_success(array(
+            'message' => 'Receipt generated successfully',
+            'pdf_data' => $pdf_base64,
+            'filename' => $filename
         ));
     }
 }
