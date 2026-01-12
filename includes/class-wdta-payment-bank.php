@@ -208,7 +208,7 @@ WDTA Team');
         
         // Generate and attach PDF receipt
         $attachments = array();
-        $membership = WDTA_Database::get_membership($user_id, $year);
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
         if ($membership) {
             $pdf_path = WDTA_PDF_Receipt::save_receipt($user_id, $year, $membership);
             if ($pdf_path && file_exists($pdf_path)) {
