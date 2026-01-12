@@ -89,10 +89,13 @@ class WDTA_Membership {
         // AJAX handlers for login form
         add_action('wp_ajax_nopriv_wdta_ajax_login', array($this, 'handle_ajax_login'));
         add_action('wp_ajax_wdta_ajax_login', array($this, 'handle_ajax_login'));
+        
+        // AJAX handler for resending receipt email
+        add_action('wp_ajax_wdta_resend_receipt_email', array($this, 'handle_resend_receipt_email'));
     }
     
     /**
-     * Enqueue frontend styles
+     * Enqueue frontend styles and scripts
      */
     public function enqueue_frontend_styles() {
         wp_enqueue_style(
@@ -101,6 +104,22 @@ class WDTA_Membership {
             array(),
             WDTA_MEMBERSHIP_VERSION
         );
+        
+        // Enqueue frontend JavaScript
+        wp_enqueue_script('jquery');
+        wp_enqueue_script(
+            'wdta-frontend-js',
+            WDTA_MEMBERSHIP_PLUGIN_URL . 'assets/js/frontend.js',
+            array('jquery'),
+            WDTA_MEMBERSHIP_VERSION,
+            true
+        );
+        
+        // Localize script with AJAX URL and nonce
+        wp_localize_script('wdta-frontend-js', 'wdtaFrontend', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wdta_frontend_nonce')
+        ));
     }
     
     /**
@@ -200,5 +219,60 @@ class WDTA_Membership {
             'message' => 'Login successful!',
             'redirect' => $redirect_url
         ));
+    }
+    
+    /**
+     * Handle AJAX request to resend receipt email
+     */
+    public function handle_resend_receipt_email() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'wdta_frontend_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+            return;
+        }
+        
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in to resend receipts'));
+            return;
+        }
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $year = isset($_POST['year']) ? intval($_POST['year']) : 0;
+        $current_user_id = get_current_user_id();
+        
+        // Verify the user is requesting their own receipt
+        if ($user_id !== $current_user_id) {
+            wp_send_json_error(array('message' => 'You can only resend your own receipts'));
+            return;
+        }
+        
+        if (!$user_id || !$year) {
+            wp_send_json_error(array('message' => 'Invalid request parameters'));
+            return;
+        }
+        
+        // Get membership data
+        $membership = WDTA_Database::get_user_membership($user_id, $year);
+        
+        if (!$membership) {
+            wp_send_json_error(array('message' => 'Membership not found'));
+            return;
+        }
+        
+        // Verify payment is completed
+        if ($membership->payment_status !== 'completed') {
+            wp_send_json_error(array('message' => 'Receipt is only available for completed payments'));
+            return;
+        }
+        
+        // Send the receipt email
+        $result = WDTA_Membership_Email::send_payment_confirmation($user_id, $year, $membership->payment_amount);
+        
+        if ($result) {
+            wp_send_json_success(array('message' => 'Receipt email sent successfully!'));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to send receipt email. Please try again or contact support.'));
+        }
     }
 }

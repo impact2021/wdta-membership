@@ -745,3 +745,51 @@
         padding: 15px;
     }
 }
+
+/* Receipt actions section */
+.wdta-receipt-actions {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.wdta-resend-receipt-btn {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.wdta-resend-receipt-btn:hover {
+    background: #005a87;
+}
+
+.wdta-resend-receipt-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.wdta-receipt-message {
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.wdta-receipt-message.wdta-success {
+    color: #155724;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.wdta-receipt-message.wdta-error {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
