@@ -140,7 +140,7 @@ class WDTA_Membership_Email {
         $message .= '<p><strong>Payment Details:</strong></p>';
         $message .= '<ul>';
         $message .= '<li>Membership Year: ' . esc_html($year) . '</li>';
-        $message .= '<li>Amount Paid: $' . esc_html(number_format($amount, 2)) . ' AUD</li>';
+        $message .= '<li>Amount Paid: $' . esc_html(number_format($amount, 2)) . '</li>';
         $message .= '<li>Payment Date: ' . esc_html(date('F j, Y')) . '</li>';
         $message .= '<li>Valid Until: December 31, ' . esc_html($year) . '</li>';
         $message .= '</ul>';
@@ -161,6 +161,8 @@ class WDTA_Membership_Email {
         $result = wp_mail($user->user_email, $subject, $message, $headers, $attachments);
         
         // Clean up temporary PDF file
+        // Using @ to suppress warnings since temporary files may already be deleted
+        // or may not exist due to generation failures
         if (!empty($attachments)) {
             foreach ($attachments as $attachment) {
                 if (file_exists($attachment)) {
