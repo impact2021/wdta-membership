@@ -80,6 +80,10 @@ class FPDF {
         $this->x = $this->lMargin;
         $this->y = $this->tMargin;
         $this->FontFamily = '';
+        // Initialize default font to ensure CurrentFont is always available
+        if (!isset($this->CurrentFont)) {
+            $this->SetFont('Arial', '', 12);
+        }
     }
     
     function SetFont($family, $style='', $size=12) {
