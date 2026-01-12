@@ -375,7 +375,7 @@ class FPDF {
         if (count($this->images)>0) {
             $this->_put('/XObject <<');
             foreach ($this->images as $image)
-                $this->_put('/I'.$image['i'].' '.$image['i'].' 0 R');
+                $this->_put('/I'.$image['i'].' '.$image['n'].' 0 R');
             $this->_put('>>');
         }
         $this->_put('>>');
@@ -398,6 +398,7 @@ class FPDF {
     protected function _putimages() {
         foreach ($this->images as $file=>$info) {
             $this->_newobj();
+            $this->images[$file]['n'] = $this->n;  // Store actual object number
             $this->_put('<</Type /XObject');
             $this->_put('/Subtype /Image');
             $this->_put('/Width '.$info['w']);
