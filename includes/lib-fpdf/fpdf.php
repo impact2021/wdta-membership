@@ -80,6 +80,10 @@ class FPDF {
         $this->x = $this->lMargin;
         $this->y = $this->tMargin;
         $this->FontFamily = '';
+        // Initialize default font to ensure CurrentFont is always available
+        if (!isset($this->CurrentFont)) {
+            $this->SetFont('Arial', '', 12);
+        }
     }
     
     function SetFont($family, $style='', $size=12) {
@@ -93,10 +97,7 @@ class FPDF {
             $this->fonts[$fontkey] = array('i' => count($this->fonts)+1, 'type' => 'core', 'name' => $this->_getfontname($family, $style));
         }
         $this->CurrentFont = &$this->fonts[$fontkey];
-        
-        if ($this->page > 0) {
-            $this->_out(sprintf('BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt));
-        }
+        // Font will be set in each text object (Cell, MultiCell, etc.) that outputs text
     }
     
     function SetFillColor($r, $g=null, $b=null) {
@@ -122,7 +123,14 @@ class FPDF {
         
         if ($txt!=='') {
             $dx = $align=='R' ? $w - $this->cMargin - $this->GetStringWidth($txt) : ($align=='C' ? ($w - $this->GetStringWidth($txt))/2 : $this->cMargin);
-            $s .= sprintf('BT %.2F %.2F Td (%s) Tj ET', ($this->x+$dx)*$k, ($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k, $this->_escape($txt));
+            // Include font selection and text color in each text object
+            $s .= sprintf('BT /F%d %.2F Tf %s %.2F %.2F Td (%s) Tj ET', 
+                $this->CurrentFont['i'], 
+                $this->FontSizePt, 
+                $this->TextColor,
+                ($this->x+$dx)*$k, 
+                ($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k, 
+                $this->_escape($txt));
         }
         
         if ($s)
