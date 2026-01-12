@@ -110,6 +110,38 @@ class FPDF {
             $this->_out($this->FillColor);
     }
     
+    function SetTextColor($r, $g=null, $b=null) {
+        if ($g===null)
+            $this->TextColor = sprintf('%.3F g', $r/255);
+        else
+            $this->TextColor = sprintf('%.3F %.3F %.3F rg', $r/255, $g/255, $b/255);
+    }
+    
+    function SetDrawColor($r, $g=null, $b=null) {
+        if ($g===null)
+            $this->DrawColor = sprintf('%.3F G', $r/255);
+        else
+            $this->DrawColor = sprintf('%.3F %.3F %.3F RG', $r/255, $g/255, $b/255);
+        if ($this->page > 0)
+            $this->_out($this->DrawColor);
+    }
+    
+    function SetLineWidth($width) {
+        $this->LineWidth = $width;
+        if ($this->page > 0)
+            $this->_out(sprintf('%.2F w', $width*$this->k));
+    }
+    
+    function Line($x1, $y1, $x2, $y2) {
+        $this->_out(sprintf('%.2F %.2F m %.2F %.2F l S', 
+            $x1*$this->k, ($this->h-$y1)*$this->k, 
+            $x2*$this->k, ($this->h-$y2)*$this->k));
+    }
+    
+    function GetY() {
+        return $this->y;
+    }
+    
     function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false) {
         $k = $this->k;
         if ($w==0)
