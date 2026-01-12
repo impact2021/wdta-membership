@@ -2,6 +2,34 @@
 
 All notable changes to the WDTA Membership plugin will be documented in this file.
 
+## [3.10] - 2026-01-12
+
+### Fixed
+- **PDF Generation Error**: Fixed critical error that prevented PDF receipt generation
+  - Replaced `die()` calls with proper exception handling in FPDF library
+  - Added comprehensive error handling and logging in PDF receipt generation
+  - Added validation for logo image files before attempting to load them
+  - PDFs now generate successfully even when logo is unavailable
+  - Improved error messages to provide clear feedback to administrators
+  - Added try-catch blocks throughout PDF generation process
+  - Added missing `SetX()` and `SetXY()` methods to FPDF library
+
+### Technical Details
+- Modified `includes/lib-fpdf/fpdf.php`:
+  - Changed `die()` calls to `throw new Exception()` in `_parseimage()` method
+  - Added `@` error suppression to `getimagesize()` to prevent PHP warnings
+  - Added `SetX()` and `SetXY()` positioning methods
+- Enhanced `includes/class-wdta-pdf-receipt.php`:
+  - Added `try-catch` block to entire `generate_receipt()` method
+  - Enhanced `get_logo_path()` with better validation and error logging
+  - Added image validation using `getimagesize()` before returning cached logo
+  - Improved error logging with descriptive messages
+  - Added fallback to continue without logo if image loading fails
+- Updated `includes/class-wdta-admin.php`:
+  - Wrapped PDF generation in `download_receipt()` with try-catch error handling
+  - Added detailed error messages for failed PDF generation
+  - Improved error logging for debugging
+
 ## [3.9] - 2026-01-12
 
 ### Added

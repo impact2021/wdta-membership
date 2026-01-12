@@ -1277,24 +1277,31 @@ class WDTA_Admin {
             return;
         }
         
-        // Generate the PDF
-        $pdf_content = WDTA_PDF_Receipt::generate_receipt($user_id, $year, $membership);
-        
-        if (!$pdf_content) {
-            wp_send_json_error(array('message' => 'Failed to generate receipt'));
+        // Generate the PDF with error handling
+        try {
+            $pdf_content = WDTA_PDF_Receipt::generate_receipt($user_id, $year, $membership);
+            
+            if (!$pdf_content) {
+                error_log('WDTA PDF Receipt: Failed to generate receipt for user ' . $user_id . ', year ' . $year);
+                wp_send_json_error(array('message' => 'Failed to generate receipt. Please check error logs for details.'));
+                return;
+            }
+            
+            // Encode PDF as base64 for sending via AJAX
+            $pdf_base64 = base64_encode($pdf_content);
+            // Include membership ID and timestamp to ensure unique filenames
+            $timestamp = time();
+            $filename = 'WDTA-Receipt-' . $year . '-' . $membership->id . '-' . $user_id . '-' . $timestamp . '.pdf';
+            
+            wp_send_json_success(array(
+                'message' => 'Receipt generated successfully',
+                'pdf_data' => $pdf_base64,
+                'filename' => $filename
+            ));
+        } catch (Exception $e) {
+            error_log('WDTA PDF Receipt: Exception during receipt generation - ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'An error occurred while generating the receipt: ' . $e->getMessage()));
             return;
         }
-        
-        // Encode PDF as base64 for sending via AJAX
-        $pdf_base64 = base64_encode($pdf_content);
-        // Include membership ID and timestamp to ensure unique filenames
-        $timestamp = time();
-        $filename = 'WDTA-Receipt-' . $year . '-' . $membership->id . '-' . $user_id . '-' . $timestamp . '.pdf';
-        
-        wp_send_json_success(array(
-            'message' => 'Receipt generated successfully',
-            'pdf_data' => $pdf_base64,
-            'filename' => $filename
-        ));
     }
 }

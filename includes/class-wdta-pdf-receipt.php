@@ -54,11 +54,33 @@ class WDTA_PDF_Receipt {
             
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $image_data = wp_remote_retrieve_body($response);
-                file_put_contents($logo_cache_file, $image_data);
+                if (!empty($image_data)) {
+                    file_put_contents($logo_cache_file, $image_data);
+                } else {
+                    error_log('WDTA PDF Receipt: Downloaded logo is empty from URL: ' . $logo_url);
+                }
+            } else {
+                $error_message = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
+                error_log('WDTA PDF Receipt: Failed to download logo from URL: ' . $logo_url . ' - Error: ' . $error_message);
             }
         }
         
-        return file_exists($logo_cache_file) ? $logo_cache_file : false;
+        // Verify the cached file is valid before returning
+        if (file_exists($logo_cache_file)) {
+            // Check if file is actually a valid image (suppress warnings for corrupted files)
+            $image_info = @getimagesize($logo_cache_file);
+            if ($image_info !== false) {
+                return $logo_cache_file;
+            } else {
+                error_log('WDTA PDF Receipt: Cached logo file is not a valid image: ' . $logo_cache_file);
+                // Delete invalid file (suppress errors if file is already gone or permission denied)
+                if (@unlink($logo_cache_file) === false && file_exists($logo_cache_file)) {
+                    error_log('WDTA PDF Receipt: Failed to delete invalid cached logo: ' . $logo_cache_file);
+                }
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -70,174 +92,182 @@ class WDTA_PDF_Receipt {
      * @return string|false PDF content or false on failure
      */
     public static function generate_receipt($user_id, $year, $membership) {
-        $user = get_userdata($user_id);
-        if (!$user) {
+        try {
+            $user = get_userdata($user_id);
+            if (!$user) {
+                error_log('WDTA PDF Receipt: User not found - ID: ' . $user_id);
+                return false;
+            }
+            
+            // Get organization details from settings
+            $org_name = get_option('wdta_org_name', 'Workplace Drug Testing Association');
+            $org_address = get_option('wdta_org_address', '');
+            $org_abn = get_option('wdta_org_abn', '');
+            $org_phone = get_option('wdta_org_phone', '');
+            $org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
+            $org_website = get_option('wdta_org_website', 'https://www.wdta.org.au');
+            
+            // Load FPDF
+            self::load_fpdf();
+            
+            // Create PDF instance
+            $pdf = new FPDF();
+            $pdf->AddPage();
+            
+            // Header with logo
+            $logo_path = self::get_logo_path();
+            if ($logo_path && file_exists($logo_path)) {
+                try {
+                    $pdf->Image($logo_path, 10, 10, 50);
+                } catch (Exception $e) {
+                    // Logo failed, continue without it
+                    error_log('WDTA PDF Receipt: Failed to add logo - ' . $e->getMessage());
+                }
+            } else {
+                error_log('WDTA PDF Receipt: Logo not available, generating receipt without logo');
+            }
+            
+            // Organization details in header (top right)
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetXY(70, 10);
+            $pdf->MultiCell(0, 5, $org_name, 0, 'R');
+            
+            if (!empty($org_address)) {
+                $pdf->SetFont('Arial', '', 9);
+                $pdf->SetX(70);
+                $pdf->MultiCell(0, 4, $org_address, 0, 'R');
+            }
+            
+            $pdf->SetFont('Arial', '', 9);
+            if (!empty($org_phone)) {
+                $pdf->SetX(70);
+                $pdf->Cell(0, 4, 'Phone: ' . $org_phone, 0, 1, 'R');
+            }
+            if (!empty($org_email)) {
+                $pdf->SetX(70);
+                $pdf->Cell(0, 4, 'Email: ' . $org_email, 0, 1, 'R');
+            }
+            if (!empty($org_website)) {
+                $pdf->SetX(70);
+                $pdf->Cell(0, 4, 'Web: ' . $org_website, 0, 1, 'R');
+            }
+            if (!empty($org_abn)) {
+                $pdf->SetX(70);
+                $pdf->Cell(0, 4, 'ABN: ' . $org_abn, 0, 1, 'R');
+            }
+            
+            $pdf->Ln(5);
+            
+            // Title
+            $pdf->SetFont('Arial', 'B', 20);
+            $pdf->Cell(0, 10, 'MEMBERSHIP RECEIPT', 0, 1, 'C');
+            $pdf->Ln(5);
+            
+            // Receipt details section
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Receipt Details', 0, 1);
+            $pdf->SetFont('Arial', '', 11);
+            
+            // Receipt number
+            $receipt_number = 'WDTA-' . $year . '-' . str_pad($membership->id, 6, '0', STR_PAD_LEFT);
+            $pdf->SetFillColor(240, 240, 240);
+            $pdf->Cell(70, 8, 'Receipt Number:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $receipt_number, 1, 1);
+            
+            // Date issued
+            $pdf->Cell(70, 8, 'Date Issued:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, wdta_format_date(current_time('mysql')), 1, 1);
+            
+            // Payment date
+            $payment_date = !empty($membership->payment_date) ? wdta_format_date($membership->payment_date) : wdta_format_date(current_time('mysql'));
+            $pdf->Cell(70, 8, 'Payment Date:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $payment_date, 1, 1);
+            
+            // Payment method
+            $payment_method = $membership->payment_method === 'stripe' ? 'Credit Card (Stripe)' : 'Bank Transfer';
+            $pdf->Cell(70, 8, 'Payment Method:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $payment_method, 1, 1);
+            
+            $pdf->Ln(5);
+            
+            // Member information section
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Member Information', 0, 1);
+            $pdf->SetFont('Arial', '', 11);
+            
+            $pdf->Cell(70, 8, 'Member Name:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $user->display_name, 1, 1);
+            
+            $pdf->Cell(70, 8, 'Email:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $user->user_email, 1, 1);
+            
+            $pdf->Cell(70, 8, 'Membership Year:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, $year, 1, 1);
+            
+            $pdf->Cell(70, 8, 'Valid From:', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, 'January 1, ' . $year, 1, 1);
+            
+            $pdf->Cell(70, 8, 'Valid Until:', 1, 0, 'L', true);
+            $expiry_display = !empty($membership->expiry_date) ? wdta_format_date($membership->expiry_date) : 'December 31, ' . $year;
+            $pdf->Cell(0, 8, $expiry_display, 1, 1);
+            
+            $pdf->Ln(5);
+            
+            // Payment breakdown section
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 10, 'Payment Breakdown', 0, 1);
+            
+            // Table header
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFillColor(220, 220, 220);
+            $pdf->Cell(120, 8, 'Description', 1, 0, 'L', true);
+            $pdf->Cell(0, 8, 'Amount (AUD)', 1, 1, 'R', true);
+            
+            // Get membership base price
+            $base_price = floatval(get_option('wdta_membership_price', 950.00));
+            
+            // Membership fee
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Cell(120, 8, 'Annual Membership Fee', 1, 0);
+            $pdf->Cell(0, 8, '$' . number_format($base_price, 2), 1, 1, 'R');
+            
+            // Stripe surcharge if applicable
+            $total = $base_price;
+            if ($membership->payment_method === 'stripe') {
+                $surcharge = $base_price * 0.022; // 2.2% surcharge
+                $pdf->Cell(120, 8, 'Credit Card Processing Fee (2.2%)', 1, 0);
+                $pdf->Cell(0, 8, '$' . number_format($surcharge, 2), 1, 1, 'R');
+                $total = $base_price + $surcharge;
+            }
+            
+            // Total
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFillColor(240, 240, 240);
+            $pdf->Cell(120, 10, 'Total Paid', 1, 0, 'L', true);
+            $pdf->Cell(0, 10, '$' . number_format($total, 2), 1, 1, 'R', true);
+            
+            $pdf->Ln(8);
+            
+            // Footer notes
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->MultiCell(0, 5, 'Thank you for your membership with ' . $org_name . '. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.');
+            
+            $pdf->Ln(3);
+            $pdf->SetFont('Arial', 'I', 9);
+            $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at ' . $org_email . '.');
+            
+            // Add footer
+            $pdf->SetY(-15);
+            $pdf->SetFont('Arial', 'I', 8);
+            $pdf->Cell(0, 10, $org_name . ' - ' . $org_website . ' - Page 1', 0, 0, 'C');
+            
+            // Return PDF as string
+            return $pdf->Output('S');
+        } catch (Exception $e) {
+            error_log('WDTA PDF Receipt: Exception during PDF generation - ' . $e->getMessage());
             return false;
         }
-        
-        // Get organization details from settings
-        $org_name = get_option('wdta_org_name', 'Workplace Drug Testing Association');
-        $org_address = get_option('wdta_org_address', '');
-        $org_abn = get_option('wdta_org_abn', '');
-        $org_phone = get_option('wdta_org_phone', '');
-        $org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
-        $org_website = get_option('wdta_org_website', 'https://www.wdta.org.au');
-        
-        // Load FPDF
-        self::load_fpdf();
-        
-        // Create PDF instance
-        $pdf = new FPDF();
-        $pdf->AddPage();
-        
-        // Header with logo
-        $logo_path = self::get_logo_path();
-        if ($logo_path && file_exists($logo_path)) {
-            try {
-                $pdf->Image($logo_path, 10, 10, 50);
-            } catch (Exception $e) {
-                // Logo failed, continue without it
-                error_log('WDTA PDF Receipt: Failed to add logo - ' . $e->getMessage());
-            }
-        }
-        
-        // Organization details in header (top right)
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->SetXY(70, 10);
-        $pdf->MultiCell(0, 5, $org_name, 0, 'R');
-        
-        if (!empty($org_address)) {
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->SetX(70);
-            $pdf->MultiCell(0, 4, $org_address, 0, 'R');
-        }
-        
-        $pdf->SetFont('Arial', '', 9);
-        if (!empty($org_phone)) {
-            $pdf->SetX(70);
-            $pdf->Cell(0, 4, 'Phone: ' . $org_phone, 0, 1, 'R');
-        }
-        if (!empty($org_email)) {
-            $pdf->SetX(70);
-            $pdf->Cell(0, 4, 'Email: ' . $org_email, 0, 1, 'R');
-        }
-        if (!empty($org_website)) {
-            $pdf->SetX(70);
-            $pdf->Cell(0, 4, 'Web: ' . $org_website, 0, 1, 'R');
-        }
-        if (!empty($org_abn)) {
-            $pdf->SetX(70);
-            $pdf->Cell(0, 4, 'ABN: ' . $org_abn, 0, 1, 'R');
-        }
-        
-        $pdf->Ln(5);
-        
-        // Title
-        $pdf->SetFont('Arial', 'B', 20);
-        $pdf->Cell(0, 10, 'MEMBERSHIP RECEIPT', 0, 1, 'C');
-        $pdf->Ln(5);
-        
-        // Receipt details section
-        $pdf->SetFont('Arial', 'B', 14);
-        $pdf->Cell(0, 10, 'Receipt Details', 0, 1);
-        $pdf->SetFont('Arial', '', 11);
-        
-        // Receipt number
-        $receipt_number = 'WDTA-' . $year . '-' . str_pad($membership->id, 6, '0', STR_PAD_LEFT);
-        $pdf->SetFillColor(240, 240, 240);
-        $pdf->Cell(70, 8, 'Receipt Number:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $receipt_number, 1, 1);
-        
-        // Date issued
-        $pdf->Cell(70, 8, 'Date Issued:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, wdta_format_date(current_time('mysql')), 1, 1);
-        
-        // Payment date
-        $payment_date = !empty($membership->payment_date) ? wdta_format_date($membership->payment_date) : wdta_format_date(current_time('mysql'));
-        $pdf->Cell(70, 8, 'Payment Date:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $payment_date, 1, 1);
-        
-        // Payment method
-        $payment_method = $membership->payment_method === 'stripe' ? 'Credit Card (Stripe)' : 'Bank Transfer';
-        $pdf->Cell(70, 8, 'Payment Method:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $payment_method, 1, 1);
-        
-        $pdf->Ln(5);
-        
-        // Member information section
-        $pdf->SetFont('Arial', 'B', 14);
-        $pdf->Cell(0, 10, 'Member Information', 0, 1);
-        $pdf->SetFont('Arial', '', 11);
-        
-        $pdf->Cell(70, 8, 'Member Name:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $user->display_name, 1, 1);
-        
-        $pdf->Cell(70, 8, 'Email:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $user->user_email, 1, 1);
-        
-        $pdf->Cell(70, 8, 'Membership Year:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, $year, 1, 1);
-        
-        $pdf->Cell(70, 8, 'Valid From:', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, 'January 1, ' . $year, 1, 1);
-        
-        $pdf->Cell(70, 8, 'Valid Until:', 1, 0, 'L', true);
-        $expiry_display = !empty($membership->expiry_date) ? wdta_format_date($membership->expiry_date) : 'December 31, ' . $year;
-        $pdf->Cell(0, 8, $expiry_display, 1, 1);
-        
-        $pdf->Ln(5);
-        
-        // Payment breakdown section
-        $pdf->SetFont('Arial', 'B', 14);
-        $pdf->Cell(0, 10, 'Payment Breakdown', 0, 1);
-        
-        // Table header
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetFillColor(220, 220, 220);
-        $pdf->Cell(120, 8, 'Description', 1, 0, 'L', true);
-        $pdf->Cell(0, 8, 'Amount (AUD)', 1, 1, 'R', true);
-        
-        // Get membership base price
-        $base_price = floatval(get_option('wdta_membership_price', 950.00));
-        
-        // Membership fee
-        $pdf->SetFont('Arial', '', 11);
-        $pdf->SetFillColor(255, 255, 255);
-        $pdf->Cell(120, 8, 'Annual Membership Fee', 1, 0);
-        $pdf->Cell(0, 8, '$' . number_format($base_price, 2), 1, 1, 'R');
-        
-        // Stripe surcharge if applicable
-        $total = $base_price;
-        if ($membership->payment_method === 'stripe') {
-            $surcharge = $base_price * 0.022; // 2.2% surcharge
-            $pdf->Cell(120, 8, 'Credit Card Processing Fee (2.2%)', 1, 0);
-            $pdf->Cell(0, 8, '$' . number_format($surcharge, 2), 1, 1, 'R');
-            $total = $base_price + $surcharge;
-        }
-        
-        // Total
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->SetFillColor(240, 240, 240);
-        $pdf->Cell(120, 10, 'Total Paid', 1, 0, 'L', true);
-        $pdf->Cell(0, 10, '$' . number_format($total, 2), 1, 1, 'R', true);
-        
-        $pdf->Ln(8);
-        
-        // Footer notes
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->MultiCell(0, 5, 'Thank you for your membership with ' . $org_name . '. This receipt confirms your payment and active membership status for the ' . $year . ' membership year.');
-        
-        $pdf->Ln(3);
-        $pdf->SetFont('Arial', 'I', 9);
-        $pdf->MultiCell(0, 4, 'This is a computer-generated receipt and serves as proof of payment. For any queries, please contact us at ' . $org_email . '.');
-        
-        // Add footer
-        $pdf->SetY(-15);
-        $pdf->SetFont('Arial', 'I', 8);
-        $pdf->Cell(0, 10, $org_name . ' - ' . $org_website . ' - Page 1', 0, 0, 'C');
-        
-        // Return PDF as string
-        return $pdf->Output('S');
     }
     
     /**
