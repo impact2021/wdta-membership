@@ -216,16 +216,16 @@ class FPDF {
     }
     
     protected function _parseimage($file) {
-        $info = getimagesize($file);
+        $info = @getimagesize($file);
         if (!$info)
-            die('Cannot get image info: '.$file);
+            throw new Exception('Cannot get image info: '.$file);
         
         if ($info[2]==2) { // JPEG
             return array('w'=>$info[0], 'h'=>$info[1], 'cs'=>'DeviceRGB', 'bpc'=>8, 'f'=>'DCTDecode', 'data'=>file_get_contents($file));
         } elseif ($info[2]==3) { // PNG
             return array('w'=>$info[0], 'h'=>$info[1], 'cs'=>'DeviceRGB', 'bpc'=>8, 'f'=>'FlateDecode', 'data'=>'');
         }
-        die('Unsupported image type: '.$file);
+        throw new Exception('Unsupported image type: '.$file);
     }
     
     protected function _getfontname($family, $style) {

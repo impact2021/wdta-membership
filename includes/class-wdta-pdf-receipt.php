@@ -54,11 +54,31 @@ class WDTA_PDF_Receipt {
             
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $image_data = wp_remote_retrieve_body($response);
-                file_put_contents($logo_cache_file, $image_data);
+                if (!empty($image_data)) {
+                    file_put_contents($logo_cache_file, $image_data);
+                } else {
+                    error_log('WDTA PDF Receipt: Downloaded logo is empty from URL: ' . $logo_url);
+                }
+            } else {
+                $error_message = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
+                error_log('WDTA PDF Receipt: Failed to download logo from URL: ' . $logo_url . ' - Error: ' . $error_message);
             }
         }
         
-        return file_exists($logo_cache_file) ? $logo_cache_file : false;
+        // Verify the cached file is valid before returning
+        if (file_exists($logo_cache_file)) {
+            // Check if file is actually an image
+            $image_info = @getimagesize($logo_cache_file);
+            if ($image_info !== false) {
+                return $logo_cache_file;
+            } else {
+                error_log('WDTA PDF Receipt: Cached logo file is not a valid image: ' . $logo_cache_file);
+                // Delete invalid file
+                @unlink($logo_cache_file);
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -70,36 +90,40 @@ class WDTA_PDF_Receipt {
      * @return string|false PDF content or false on failure
      */
     public static function generate_receipt($user_id, $year, $membership) {
-        $user = get_userdata($user_id);
-        if (!$user) {
-            return false;
-        }
-        
-        // Get organization details from settings
-        $org_name = get_option('wdta_org_name', 'Workplace Drug Testing Association');
-        $org_address = get_option('wdta_org_address', '');
-        $org_abn = get_option('wdta_org_abn', '');
-        $org_phone = get_option('wdta_org_phone', '');
-        $org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
-        $org_website = get_option('wdta_org_website', 'https://www.wdta.org.au');
-        
-        // Load FPDF
-        self::load_fpdf();
-        
-        // Create PDF instance
-        $pdf = new FPDF();
-        $pdf->AddPage();
-        
-        // Header with logo
-        $logo_path = self::get_logo_path();
-        if ($logo_path && file_exists($logo_path)) {
-            try {
-                $pdf->Image($logo_path, 10, 10, 50);
-            } catch (Exception $e) {
-                // Logo failed, continue without it
-                error_log('WDTA PDF Receipt: Failed to add logo - ' . $e->getMessage());
+        try {
+            $user = get_userdata($user_id);
+            if (!$user) {
+                error_log('WDTA PDF Receipt: User not found - ID: ' . $user_id);
+                return false;
             }
-        }
+            
+            // Get organization details from settings
+            $org_name = get_option('wdta_org_name', 'Workplace Drug Testing Association');
+            $org_address = get_option('wdta_org_address', '');
+            $org_abn = get_option('wdta_org_abn', '');
+            $org_phone = get_option('wdta_org_phone', '');
+            $org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
+            $org_website = get_option('wdta_org_website', 'https://www.wdta.org.au');
+            
+            // Load FPDF
+            self::load_fpdf();
+            
+            // Create PDF instance
+            $pdf = new FPDF();
+            $pdf->AddPage();
+            
+            // Header with logo
+            $logo_path = self::get_logo_path();
+            if ($logo_path && file_exists($logo_path)) {
+                try {
+                    $pdf->Image($logo_path, 10, 10, 50);
+                } catch (Exception $e) {
+                    // Logo failed, continue without it
+                    error_log('WDTA PDF Receipt: Failed to add logo - ' . $e->getMessage());
+                }
+            } else {
+                error_log('WDTA PDF Receipt: Logo not available, generating receipt without logo');
+            }
         
         // Organization details in header (top right)
         $pdf->SetFont('Arial', 'B', 12);
@@ -238,6 +262,10 @@ class WDTA_PDF_Receipt {
         
         // Return PDF as string
         return $pdf->Output('S');
+        } catch (Exception $e) {
+            error_log('WDTA PDF Receipt: Exception during PDF generation - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**
