@@ -65,7 +65,16 @@ $receipts = $wpdb->get_results($wpdb->prepare(
             <?php else: ?>
                 <?php foreach ($receipts as $receipt): ?>
                     <?php 
+                    // Validate user_id exists before using
+                    if (!isset($receipt->user_id)) {
+                        continue;
+                    }
+                    
                     $user_id = intval($receipt->user_id);
+                    if ($user_id <= 0) {
+                        continue;
+                    }
+                    
                     $user = get_userdata($user_id);
                     if (!$user) {
                         continue;

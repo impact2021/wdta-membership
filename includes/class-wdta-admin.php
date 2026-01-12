@@ -1264,7 +1264,9 @@ class WDTA_Admin {
         
         // Encode PDF as base64 for sending via AJAX
         $pdf_base64 = base64_encode($pdf_content);
-        $filename = 'WDTA-Receipt-' . $year . '-' . $user_id . '-' . sanitize_file_name($user->display_name) . '.pdf';
+        // Include membership ID and timestamp to ensure unique filenames
+        $timestamp = time();
+        $filename = 'WDTA-Receipt-' . $year . '-' . $membership->id . '-' . $user_id . '-' . $timestamp . '.pdf';
         
         wp_send_json_success(array(
             'message' => 'Receipt generated successfully',
