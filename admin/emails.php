@@ -181,22 +181,22 @@ WDTA Team'),
                     <br><br>
                     <?php
                     $default_org_email = get_option('wdta_org_email', 'admin@wdta.org.au');
-                    $default_receipt_body = 'Dear {user_name},
+                    $default_receipt_body = "Dear {user_name},
 
 Please find attached your membership receipt for {year}.
 
 Receipt Details:
 - Receipt Number: {receipt_number}
-- Amount Paid: ${amount} AUD
+- Amount Paid: \${amount} AUD
 - Payment Date: {payment_date}
 - Valid Until: December 31, {year}
 
 This receipt serves as proof of payment for your WDTA membership.
 
-If you have any questions about this receipt, please contact us at ' . $default_org_email . '.
+If you have any questions about this receipt, please contact us at {$default_org_email}.
 
 Best regards,
-WDTA Team';
+WDTA Team";
                     
                     wp_editor(
                         get_option('wdta_email_receipt_body', $default_receipt_body),
@@ -210,7 +210,6 @@ WDTA Team';
                             ),
                         )
                     );
-                    ?>
                     ?>
                     <p class="description">Sent when admin sends a receipt email from the Receipts page. Available placeholders: {user_name}, {user_email}, {year}, {amount}, {receipt_number}, {payment_date}</p>
                 </td>
